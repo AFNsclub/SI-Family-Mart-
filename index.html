@@ -3,37 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S I Family Mart | Admin Panel</title>
+    <title>এস আই ফ্যামিলি মার্ট | ইনভেন্টরি ও সেলস</title>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
-        .card { border-radius: 15px; margin-top: 20px; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .header { background: #1a2a6c; color: white; padding: 20px; text-align: center; border-radius: 0 0 20px 20px; }
+        .card { border-radius: 15px; border: none; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .stock-low { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="header">
+<div class="header shadow">
     <h1>এস আই ফ্যামিলি মার্ট</h1>
-    <p>দোকানের হিসাব ও ইনভেন্টরি</p>
+    <p>স্মার্ট ইনভেন্টরি ও সেলস সিস্টেম</p>
 </div>
 
 <div class="container mt-4">
     <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card p-4 shadow">
-                <h4>নতুন বিক্রি (কাপড়/ইমিটেশন গহনা)</h4>
-                <input type="text" id="itemName" class="form-control mb-2" placeholder="পণ্যের নাম">
-                <input type="number" id="salePrice" class="form-control mb-2" placeholder="দাম (টাকা)">
-                <button class="btn btn-success w-100" onclick="addSale()">বিক্রি সেভ করুন</button>
+        <div class="col-md-4 mb-4">
+            <div class="card p-4 shadow-sm bg-white">
+                <h5 class="text-primary">📦 নতুন স্টক যোগ করুন</h5>
+                <input type="text" id="pName" class="form-control mb-2" placeholder="পণ্যের নাম">
+                <input type="number" id="pQty" class="form-control mb-2" placeholder="পরিমাণ (পিস)">
+                <input type="number" id="pPrice" class="form-control mb-2" placeholder="বিক্রয় মূল্য">
+                <button class="btn btn-primary w-100" onclick="updateStock()">স্টক আপডেট করুন</button>
             </div>
         </div>
-        <div class="col-md-6 text-center">
-            <div class="card p-4 shadow">
-                <h4>আজকের মোট বিক্রি</h4>
-                <h2 id="totalSales" class="text-primary">০ টাকা</h2>
-                <div id="salesList" class="text-start mt-3"></div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card p-4 shadow-sm bg-white border-start border-success border-5">
+                <h5 class="text-success">🛒 পণ্য বিক্রি করুন</h5>
+                <select id="saleItemSelect" class="form-select mb-2">
+                    <option value="">পণ্য নির্বাচন করুন</option>
+                </select>
+                <input type="number" id="saleQty" class="form-control mb-2" placeholder="বিক্রির পরিমাণ">
+                <button class="btn btn-success w-100" onclick="makeSale()">বিক্রি সম্পন্ন করুন</button>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card p-4 shadow-sm bg-white">
+                <h5 class="text-warning">📊 বর্তমান স্টকের অবস্থা</h5>
+                <div id="inventoryStatus" style="max-height: 250px; overflow-y: auto;">
+                    সব পণ্য এখানে দেখাবে...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card p-4 shadow-sm mb-5">
+                <h4 class="text-center">আজকের মোট বিক্রি: <span id="todayTotal" class="text-success">০</span> টাকা</h4>
+                <div id="salesReport" class="mt-3"></div>
             </div>
         </div>
     </div>
@@ -41,7 +66,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, addDoc, query, where, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
@@ -55,36 +80,86 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  window.addSale = async function() {
-    const name = document.getElementById('itemName').value;
-    const price = document.getElementById('salePrice').value;
-    const today = new Date().toISOString().split('T')[0];
+  // স্টক আপডেট করার ফাংশন
+  window.updateStock = async function() {
+    const name = document.getElementById('pName').value.trim();
+    const qty = Number(document.getElementById('pQty').value);
+    const price = Number(document.getElementById('pPrice').value);
 
-    if(name && price) {
-      await addDoc(collection(db, "sales"), {
-        item: name,
-        amount: Number(price),
-        date: today,
-        time: new Date().toLocaleTimeString()
-      });
-      document.getElementById('itemName').value = '';
-      document.getElementById('salePrice').value = '';
-      alert("হিসাব সেভ হয়েছে!");
+    if(!name || qty <= 0) return alert("সঠিক নাম ও পরিমাণ দিন");
+
+    const pRef = doc(db, "inventory", name);
+    const pSnap = await getDoc(pRef);
+
+    if (pSnap.exists()) {
+      await updateDoc(pRef, { stock: increment(qty), price: price });
+    } else {
+      await setDoc(pRef, { name: name, stock: qty, price: price });
     }
+    alert(name + " স্টকে যোগ হয়েছে!");
+    document.getElementById('pName').value = '';
+    document.getElementById('pQty').value = '';
   };
 
+  // বিক্রি করার ফাংশন
+  window.makeSale = async function() {
+    const name = document.getElementById('saleItemSelect').value;
+    const qty = Number(document.getElementById('saleQty').value);
+    if(!name || qty <= 0) return alert("পণ্য এবং পরিমাণ সঠিকভাবে দিন");
+
+    const pRef = doc(db, "inventory", name);
+    const pSnap = await getDoc(pRef);
+    const currentStock = pSnap.data().stock;
+    const price = pSnap.data().price;
+
+    if(currentStock < qty) return alert("দুঃখিত! স্টকে পর্যাপ্ত মাল নেই।");
+
+    // স্টক কমানো
+    await updateDoc(pRef, { stock: increment(-qty) });
+
+    // বিক্রির ডাটা সেভ করা
+    const today = new Date().toISOString().split('T')[0];
+    await addDoc(collection(db, "sales"), {
+      item: name,
+      qty: qty,
+      total: price * qty,
+      date: today,
+      time: new Date().toLocaleTimeString()
+    });
+
+    alert("বিক্রি সম্পন্ন হয়েছে!");
+    document.getElementById('saleQty').value = '';
+  };
+
+  // রিয়েল-টাইম স্টক আপডেট দেখা
+  onSnapshot(collection(db, "inventory"), (snapshot) => {
+    let invHtml = "<table class='table table-sm'><tr><th>নাম</th><th>স্টক</th><th>দাম</th></tr>";
+    let selectHtml = "<option value=''>পণ্য নির্বাচন করুন</option>";
+    
+    snapshot.forEach((doc) => {
+      const d = doc.data();
+      const lowClass = d.stock < 5 ? "stock-low" : "";
+      invHtml += `<tr><td>${d.name}</td><td class='${lowClass}'>${d.stock}</td><td>${d.price}</td></tr>`;
+      selectHtml += `<option value="${d.name}">${d.name} (স্টক: ${d.stock})</option>`;
+    });
+    
+    document.getElementById('inventoryStatus').innerHTML = invHtml + "</table>";
+    document.getElementById('saleItemSelect').innerHTML = selectHtml;
+  });
+
+  // আজকের বিক্রির রিপোর্ট
   const todayDate = new Date().toISOString().split('T')[0];
   const q = query(collection(db, "sales"), where("date", "==", todayDate));
   onSnapshot(q, (snapshot) => {
     let total = 0;
-    let html = "<ul>";
+    let html = "<ul class='list-group'>";
     snapshot.forEach((doc) => {
-      total += doc.data().amount;
-      html += `<li>${doc.data().item}: ${doc.data().amount} টাকা</li>`;
+      const d = doc.data();
+      total += d.total;
+      html += `<li class='list-group-item d-flex justify-content-between'><span>${d.item} (${d.qty}টি)</span> <b>${d.total} টাকা</b></li>`;
     });
-    html += "</ul>";
-    document.getElementById('totalSales').innerText = total + " টাকা";
-    document.getElementById('salesList').innerHTML = html;
+    document.getElementById('todayTotal').innerText = total;
+    document.getElementById('salesReport').innerHTML = html + "</ul>";
   });
 </script>
 </body>
