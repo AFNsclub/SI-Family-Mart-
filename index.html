@@ -3,28 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.I. Family Mart | Premium ERP v3.0</title>
+    <title>S.I. Family Mart | Ultimate POS v4.0</title>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --navy: #0f172a; --blue: #2563eb; --green: #10b981; }
-        body { background: #f8fafc; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        :root { --navy: #0f172a; --blue: #2563eb; --accent: #f59e0b; }
+        body { background: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; }
         .glass-header { background: linear-gradient(135deg, var(--navy), #1e293b); color: white; padding: 25px; border-radius: 0 0 30px 30px; text-align: center; }
-        .card { border: none; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .nav-pills .nav-link { border-radius: 50px; font-weight: 600; color: #64748b; }
-        .nav-pills .nav-link.active { background: var(--blue) !important; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .nav-pills .nav-link.active { background: var(--blue) !important; border-radius: 50px; }
         
-        /* Receipt Style */
-        .receipt-box { display: none; background: #fff; padding: 25px; max-width: 450px; margin: 20px auto; border-radius: 15px; border: 1px solid #e2e8f0; }
-        .receipt-header h2 { font-weight: 800; color: var(--navy); margin-bottom: 0; }
-        .receipt-info { display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed #ccc; padding-bottom: 10px; margin-bottom: 15px; }
-        .receipt-footer { text-align: center; margin-top: 20px; font-size: 12px; color: #64748b; border-top: 1px dashed #ccc; padding-top: 15px; }
+        /* Multi-item Cart Table */
+        .cart-table { font-size: 14px; }
+        .cart-item-row:hover { background: #f8fafc; }
+
+        /* Receipt Design */
+        .receipt-box { display: none; background: #fff; padding: 25px; max-width: 450px; margin: 20px auto; border-radius: 15px; border: 1px solid #e2e8f0; color: #333; }
+        .receipt-header h2 { font-weight: 800; margin-bottom: 2px; }
+        .receipt-meta { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 15px; padding: 10px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+        .receipt-footer { text-align: center; margin-top: 25px; font-size: 12px; border-top: 1px dashed #bbb; padding-top: 15px; }
         
-        #barcode-print-area { text-align: center; display: none; background: white; padding: 20px; border-radius: 10px; }
-        @media print { .no-print { display: none !important; } #receipt { display: block !important; border: none; } }
+        @media print { .no-print { display: none !important; } .receipt-box { display: block !important; border: none; width: 100%; margin: 0; padding: 10px; } }
     </style>
 </head>
 <body>
@@ -37,68 +37,64 @@
     </header>
 
     <div class="container mt-4 no-print">
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-md-4"><div class="card p-3 bg-white text-center"><h6>আজকের বিক্রি</h6><h4 id="dS" class="text-primary">০</h4></div></div>
-            <div class="col-6 col-md-4"><div class="card p-3 bg-white text-center"><h6>আজকের লাভ</h6><h4 id="dP" class="text-success">০</h4></div></div>
-            <div class="col-12 col-md-4"><div class="card p-3 bg-white text-center"><h6>ইনভেন্টরি ভ্যালু</h6><h4 id="iV" class="text-info">০</h4></div></div>
-        </div>
-
         <ul class="nav nav-pills nav-justified bg-white p-2 shadow-sm rounded-pill mb-4">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#sale">🛒 বিক্রি</a></li>
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#sale">🛒 সেলস কার্ট</a></li>
             <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#stock">📦 ইনভেন্টরি</a></li>
             <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#report">📊 রিপোর্ট</a></li>
         </ul>
 
         <div class="tab-content">
             <div id="sale" class="tab-pane fade show active">
-                <div class="card p-4">
-                    <h5 class="fw-bold text-primary mb-3">নতুন কাস্টমার মেমো</h5>
-                    <div class="row g-3">
-                        <div class="col-12"><input type="text" id="cust" class="form-control" placeholder="ক্রেতার নাম"></div>
-                        <div class="col-8">
-                            <select id="sItem" class="form-select" onchange="updatePrice()"></select>
-                        </div>
-                        <div class="col-4"><input type="number" id="sQ" class="form-control" value="1" placeholder="পরিমাণ"></div>
-                        <div class="col-12">
-                            <div class="input-group">
-                                <span class="input-group-text">ডিসকাউন্ট</span>
-                                <input type="number" id="sDisc" class="form-control" placeholder="0">
-                                <select id="dType" class="form-select" style="max-width: 80px;">
-                                    <option value="cash">৳</option>
-                                    <option value="percent">%</option>
-                                </select>
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="card p-4">
+                            <h6 class="fw-bold text-primary mb-3">পণ্য যোগ করুন</h6>
+                            <input type="text" id="cust" class="form-control mb-3" placeholder="ক্রেতার নাম">
+                            <select id="sItem" class="form-select mb-3"></select>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6"><input type="number" id="sQ" class="form-control" value="1" placeholder="পরিমাণ"></div>
+                                <div class="col-6"><button class="btn btn-warning w-100 fw-bold" onclick="addToCart()">+ কার্টে দিন</button></div>
                             </div>
                         </div>
-                        <button class="btn btn-primary w-100 py-2 rounded-pill shadow" onclick="processSale()">বিক্রি সম্পন্ন ও মেমো দেখুন</button>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="card p-4">
+                            <h6 class="fw-bold text-dark mb-3">বিক্রয় তালিকা (Cart)</h6>
+                            <div class="table-responsive">
+                                <table class="table cart-table">
+                                    <thead><tr><th>পণ্য</th><th>দাম</th><th>Qty</th><th>মোট</th><th>-</th></tr></thead>
+                                    <tbody id="cartBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3 border-top pt-3">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">ছাড়</span>
+                                            <input type="number" id="totalDisc" class="form-control" placeholder="0">
+                                            <select id="totalDType" class="form-select" style="max-width: 60px;"><option value="cash">৳</option><option value="percent">%</option></select>
+                                        </div>
+                                    </div>
+                                    <div class="col-6"><button class="btn btn-success w-100 fw-bold" onclick="finalizeSale()">মেমো প্রিন্ট করুন</button></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div id="stock" class="tab-pane fade">
                 <div class="card p-4">
-                    <h5 class="fw-bold text-primary mb-3">মাল ক্রয় ও বারকোড</h5>
+                    <h6 class="fw-bold text-primary mb-3">নতুন মাল স্টকে তোলা</h6>
                     <div class="row g-2 mb-3">
-                        <div class="col-md-3"><input type="text" id="bc" class="form-control" placeholder="বারকোড/কোড"></div>
+                        <div class="col-md-3"><input type="text" id="pID" class="form-control" placeholder="বারকোড"></div>
                         <div class="col-md-3"><input type="text" id="pN" class="form-control" placeholder="পণ্যের নাম"></div>
                         <div class="col-md-2"><input type="number" id="tBuy" class="form-control" placeholder="মোট ক্রয় মূল্য"></div>
                         <div class="col-md-2"><input type="number" id="tQty" class="form-control" placeholder="মোট পিস"></div>
-                        <div class="col-md-2"><input type="number" id="pS" class="form-control" placeholder="একটির বেচা দাম"></div>
+                        <div class="col-md-2"><input type="number" id="pS" class="form-control" placeholder="১টির বেচা"></div>
                     </div>
-                    <button class="btn btn-dark w-100 rounded-pill mb-4" onclick="addStock()">স্টক আপডেট করুন</button>
-                    
-                    <div id="stockList" class="table-responsive"></div>
-                </div>
-            </div>
-
-            <div id="report" class="tab-pane fade">
-                <div class="card p-4">
-                    <h5 class="fw-bold text-primary mb-3">হিসাব-নিকাশ</h5>
-                    <div class="row g-2">
-                        <div class="col-5"><input type="date" id="dF" class="form-control"></div>
-                        <div class="col-5"><input type="date" id="dT" class="form-control"></div>
-                        <div class="col-2"><button class="btn btn-primary w-100" onclick="search()">OK</button></div>
-                    </div>
-                    <div id="searchRes" class="mt-3"></div>
+                    <button class="btn btn-dark w-100 rounded-pill" onclick="addStock()">সেভ করুন</button>
+                    <div id="stockList" class="mt-4 table-responsive"></div>
                 </div>
             </div>
         </div>
@@ -106,57 +102,43 @@
 
     <div id="receipt" class="receipt-box">
         <div class="receipt-header text-center">
-            <h2>S.I. FAMILY MART</h2>
+            <h2 class="fw-bold">S.I. FAMILY MART</h2>
             <p class="small">বংশীপুর, শ্যামনগর, সাতক্ষীরা | 📞 01568683171</p>
-            <hr>
         </div>
         
-        <div class="receipt-info">
-            <div>
-                <span>ক্রেতা: <b id="rCust"></b></span><br>
-                <span>মেমো: <b id="rID"></b></span>
-            </div>
-            <div class="text-end">
-                <span>তারিখ: <b id="rDate"></b></span>
-            </div>
+        <div class="receipt-meta">
+            <div>ক্রেতা: <b id="rCust"></b><br>মেমো: <b id="rID"></b></div>
+            <div class="text-end">তারিখ: <b id="rDate"></b><br>সময়: <b id="rTime"></b></div>
         </div>
 
-        <table class="table table-sm mt-3">
-            <thead><tr class="border-bottom"><th>বিবরণ</th><th class="text-center">পরিমাণ</th><th class="text-end">মোট</th></tr></thead>
-            <tbody><tr><td id="rItem"></td><td id="rQty" class="text-center"></td><td id="rSub" class="text-end"></td></tr></tbody>
+        <table class="table table-sm" style="font-size: 14px;">
+            <thead><tr class="border-bottom"><th>বিবরণ</th><th class="text-center">QTY</th><th class="text-end">টাকা</th></tr></thead>
+            <tbody id="rItemsBody"></tbody>
         </table>
         
-        <div id="rDiscRow" class="text-end text-danger small" style="display:none; border-top: 1px solid #eee; padding-top: 5px;">
-            ডিসকাউন্ট: -<span id="rDisc"></span>৳
+        <div class="border-top pt-2">
+            <div class="d-flex justify-content-between"><span>উপ-মোট:</span> <span id="rSub">0</span>৳</div>
+            <div id="rDiscRow" class="d-flex justify-content-between text-danger" style="display:none !important;"><span>ডিসকাউন্ট:</span> -<span id="rDisc">0</span>৳</div>
+            <div class="d-flex justify-content-between fw-bold fs-4 mt-1" style="color: var(--navy);"><span>মোট দেয়:</span> <span id="rGrand">0</span>৳</div>
         </div>
-        <h4 class="text-end mt-2 fw-bold" style="color: var(--navy);">সর্বমোট: <span id="rGrand"></span> টাকা</h4>
         
         <div class="receipt-footer">
-            <p class="fw-bold mb-1">"আপনার সন্তুষ্টিই আমাদের কাম্য"</p>
-            <p>আমাদের পণ্য ব্যবহার করার জন্য ধন্যবাদ। <br> আবার আসবেন, আমরা আপনার অপেক্ষায় থাকব।</p>
-            <hr>
-            <p class="small m-0">Powered by SI ERP</p>
+            <p class="fw-bold mb-1">"আস্থা ও বিশ্বাসের মেলবন্ধন"</p>
+            <p>আমাদের থেকে কেনাকাটা করার জন্য ধন্যবাদ। <br> পণ্য ফেরতের জন্য মেমো সাথে রাখুন। আবার আসবেন।</p>
+            <hr style="border-top: 1px solid #ccc;">
+            <p class="small m-0">S.I. Family Mart ERP System</p>
         </div>
         
         <div class="no-print d-grid gap-2 mt-4">
-            <button class="btn btn-dark rounded-pill" onclick="window.print()">মেমো প্রিন্ট করুন</button>
-            <button class="btn btn-outline-secondary rounded-pill" onclick="location.reload()">নতুন মেমো</button>
+            <button class="btn btn-dark rounded-pill" onclick="window.print()">প্রিন্ট করুন</button>
+            <button class="btn btn-outline-secondary rounded-pill" onclick="location.reload()">নতুন কাস্টমার</button>
         </div>
     </div>
-</div>
-
-<div id="barcode-print-area" class="no-print">
-    <div id="bc-sticker">
-        <div style="font-size: 10px; font-weight: bold;">S.I. Family Mart</div>
-        <svg id="bc-svg"></svg>
-        <div style="font-size: 11px;">৳ <span id="bc-price"></span></div>
-    </div>
-    <button class="btn btn-sm btn-outline-primary mt-2" onclick="downloadBC()">বারকোড সেভ করুন</button>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, setDoc, doc, getDoc, updateDoc, increment, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, setDoc, doc, getDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
@@ -170,115 +152,112 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  let inv = {};
+  let inventory = {};
+  let cart = [];
 
-  // --- Stock Logic (Total Buy / Total Qty) ---
+  // --- Cart System ---
+  window.addToCart = () => {
+    const name = document.getElementById('sItem').value;
+    const qty = Number(document.getElementById('sQ').value);
+    if(!name || qty < 1) return alert("পণ্য ও পরিমাণ সঠিক দিন");
+    
+    const item = inventory[name];
+    const total = item.sell * qty;
+    
+    cart.push({ name, qty, price: item.sell, buyPrice: item.buy, total });
+    renderCart();
+  };
+
+  function renderCart() {
+    let html = "";
+    cart.forEach((item, index) => {
+        html += `<tr class="cart-item-row">
+            <td>${item.name}</td>
+            <td>${item.price}</td>
+            <td>${item.qty}</td>
+            <td>${item.total}</td>
+            <td><button class="btn btn-sm text-danger" onclick="removeItem(${index})">✖</button></td>
+        </tr>`;
+    });
+    document.getElementById('cartBody').innerHTML = html;
+  }
+
+  window.removeItem = (i) => { cart.splice(i, 1); renderCart(); };
+
+  // --- Stock Logic ---
   window.addStock = async () => {
-    const bCode = document.getElementById('bc').value;
+    const bc = document.getElementById('pID').value;
     const n = document.getElementById('pN').value;
-    const totalBuy = Number(document.getElementById('tBuy').value);
-    const totalQty = Number(document.getElementById('tQty').value);
-    const sellP = Number(document.getElementById('pS').value);
-
-    if(!n || !totalBuy || !totalQty) return alert("সব তথ্য দিন!");
+    const tB = Number(document.getElementById('tBuy').value);
+    const tQ = Number(document.getElementById('tQty').value);
+    const sP = Number(document.getElementById('pS').value);
     
-    const unitBuy = totalBuy / totalQty; // একটির কেনা দাম অটোমেটিক বের করা
-
-    await setDoc(doc(db, "inventory", n), { 
-        barcode: bCode, 
-        name: n, 
-        buy: unitBuy, 
-        sell: sellP, 
-        stock: increment(totalQty) 
-    }, { merge: true });
-    
-    alert("স্টক আপডেট হয়েছে!");
+    if(!n || !tB || !tQ) return alert("তথ্য অসম্পূর্ণ!");
+    await setDoc(doc(db, "inventory", n), { barcode: bc, name: n, buy: tB/tQ, sell: sP, stock: increment(tQ) }, { merge: true });
+    alert("স্টক সেভ হয়েছে!");
     location.reload();
   };
 
   onSnapshot(collection(db, "inventory"), snap => {
-    let list = "<table class='table table-sm'><thead><tr><th>বারকোড</th><th>নাম</th><th>স্টক</th><th>বেচা</th><th>অ্যাকশন</th></tr></thead><tbody>";
+    let list = "<table class='table table-sm'><thead><tr><th>বারকোড</th><th>নাম</th><th>স্টক</th><th>বেচা</th></tr></thead><tbody>";
     let ops = "<option value=''>পণ্য বাছুন</option>";
-    let iVal = 0;
     snap.forEach(d => {
         const data = d.data();
-        inv[data.name] = data;
-        list += `<tr>
-            <td>${data.barcode}</td>
-            <td>${data.name}</td>
-            <td>${data.stock}</td>
-            <td>${data.sell}</td>
-            <td><button class="btn btn-sm btn-info" onclick="genBC('${data.barcode}', ${data.sell})">🏷️</button></td>
-        </tr>`;
+        inventory[data.name] = data;
+        list += `<tr><td>${data.barcode}</td><td>${data.name}</td><td>${data.stock}</td><td>${data.sell}</td></tr>`;
         ops += `<option value="${data.name}">${data.name}</option>`;
-        iVal += (data.buy * data.stock);
     });
     document.getElementById('stockList').innerHTML = list + "</tbody></table>";
     document.getElementById('sItem').innerHTML = ops;
-    document.getElementById('iV').innerText = Math.round(iVal);
   });
 
-  // Barcode Generator
-  window.genBC = (code, price) => {
-    document.getElementById('barcode-print-area').style.display = 'block';
-    document.getElementById('bc-price').innerText = price;
-    JsBarcode("#bc-svg", code, { width: 1.5, height: 40, fontSize: 12 });
-  };
-
-  window.downloadBC = () => {
-    html2canvas(document.getElementById('bc-sticker')).then(c => {
-        let l = document.createElement('a'); l.download='barcode.png'; l.href=c.toDataURL(); l.click();
-    });
-  };
-
-  // --- Sale Logic ---
-  window.processSale = async () => {
-    const n = document.getElementById('sItem').value;
-    const q = Number(document.getElementById('sQ').value);
-    const disc = Number(document.getElementById('sDisc').value || 0);
-    const dType = document.getElementById('dType').value;
+  // --- Finalize Sale ---
+  window.finalizeSale = async () => {
+    if(cart.length === 0) return alert("কার্ট খালি!");
     const cName = document.getElementById('cust').value || "সম্মানিত ক্রেতা";
+    const discInput = Number(document.getElementById('totalDisc').value || 0);
+    const dType = document.getElementById('totalDType').value;
 
-    const pD = inv[n];
-    let sub = pD.sell * q;
-    let dAmt = (dType === 'percent') ? (sub * disc / 100) : disc;
-    let final = sub - dAmt;
-    let netP = ((pD.sell - pD.buy) * q) - dAmt;
+    let subTotal = cart.reduce((sum, item) => sum + item.total, 0);
+    let dAmt = (dType === 'percent') ? (subTotal * discInput / 100) : discInput;
+    let finalTotal = subTotal - dAmt;
+    
+    // Profit Calculation (Average)
+    let totalBuyCost = cart.reduce((sum, item) => sum + (item.buyPrice * item.qty), 0);
+    let totalProfit = (subTotal - totalBuyCost) - dAmt;
 
-    const today = new Date().toISOString().split('T')[0];
-    await updateDoc(doc(db, "inventory", n), { stock: increment(-q) });
-    const sDoc = await addDoc(collection(db, "sales"), { customer: cName, item: n, qty: q, total: final, profit: netP, date: today });
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString();
 
-    // Fill Receipt
-    document.getElementById('rDate').innerText = today;
-    document.getElementById('rID').innerText = sDoc.id.substring(0,6).toUpperCase();
+    // Update Firebase Stock & Save Sale
+    for(let item of cart) {
+        await updateDoc(doc(db, "inventory", item.name), { stock: increment(-item.qty) });
+    }
+    const sDoc = await addDoc(collection(db, "sales"), { customer: cName, items: cart, total: finalTotal, profit: totalProfit, date: dateStr });
+
+    // Build Receipt Table
+    let rHtml = "";
+    cart.forEach(item => {
+        rHtml += `<tr><td>${item.name}</td><td class="text-center">${item.qty}</td><td class="text-end">${item.total}</td></tr>`;
+    });
+
     document.getElementById('rCust').innerText = cName;
-    document.getElementById('rItem').innerText = n;
-    document.getElementById('rQty').innerText = q;
-    document.getElementById('rSub').innerText = sub;
-    document.getElementById('rGrand').innerText = final;
+    document.getElementById('rID').innerText = sDoc.id.substring(0,7).toUpperCase();
+    document.getElementById('rDate').innerText = dateStr;
+    document.getElementById('rTime').innerText = timeStr;
+    document.getElementById('rItemsBody').innerHTML = rHtml;
+    document.getElementById('rSub').innerText = subTotal;
+    document.getElementById('rGrand').innerText = finalTotal;
 
     if(dAmt > 0) {
-        document.getElementById('rDiscRow').style.display = 'block';
+        document.getElementById('rDiscRow').style.setProperty('display', 'flex', 'important');
         document.getElementById('rDisc').innerText = dAmt;
     }
 
     document.querySelector('.container').style.display = 'none';
     document.getElementById('receipt').style.display = 'block';
   };
-
-  onSnapshot(collection(db, "sales"), snap => {
-    let dS = 0, dP = 0, aS = 0;
-    const today = new Date().toISOString().split('T')[0];
-    snap.forEach(d => {
-        const data = d.data();
-        aS += data.total;
-        if(data.date === today) { dS += data.total; dP += data.profit; }
-    });
-    document.getElementById('dS').innerText = dS;
-    document.getElementById('dP').innerText = dP;
-    document.getElementById('aS').innerText = aS;
-  });
 </script>
 </body>
 </html>
