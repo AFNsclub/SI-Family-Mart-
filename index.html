@@ -3,75 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>এস আই ফ্যামিলি মার্ট | ডিজিটাল মেমো ও ডাটাবেস</title>
+    <title>S.I. Family Mart | All-in-One Admin Panel</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        :root { --primary-color: #1a2a6c; --secondary-color: #b21f1f; }
         body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .header { background: #1a2a6c; color: white; padding: 15px; text-align: center; }
-        .receipt-box { display: none; background: white; border: 2px solid #333; padding: 20px; margin-top: 20px; border-radius: 10px; font-family: 'Courier New', Courier, monospace; }
-        @media print { .no-print { display: none; } .receipt-box { display: block; border: none; box-shadow: none; } }
+        .header { background: linear-gradient(to right, #1a2a6c, #b21f1f, #fdbb2d); color: white; padding: 20px; text-align: center; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .card { border: none; border-radius: 15px; transition: 0.3s; margin-bottom: 20px; }
+        .scanner-box { background: #000; border-radius: 10px; overflow: hidden; display: none; margin: 10px auto; width: 100%; max-width: 300px; }
+        .receipt-box { display: none; background: #fff; padding: 30px; border: 1px solid #ddd; border-radius: 10px; font-family: 'Courier New', Courier, monospace; }
+        .nav-tabs .nav-link { color: #333; font-weight: 600; }
+        .nav-tabs .nav-link.active { background-color: var(--primary-color); color: white; border-radius: 10px 10px 0 0; }
+        @media print { .no-print { display: none !important; } .receipt-box { display: block !important; border: none; box-shadow: none; width: 100%; } }
     </style>
 </head>
 <body>
 
-<div class="header no-print shadow">
-    <h3>এস আই ফ্যামিলি মার্ট</h3>
-    <p>স্মার্ট মেমো ও অটো-হিসাব সিস্টেম</p>
+<div class="header no-print">
+    <h1>এস আই ফ্যামিলি মার্ট</h1>
+    <p>বংশীপুর গ্রাম | স্মার্ট ম্যানেজমেন্ট সিস্টেম</p>
 </div>
 
 <div class="container mt-4 no-print">
-    <div class="row">
-        <div class="col-md-6 mx-auto">
-            <div class="card p-4 shadow-sm border-0">
-                <h5 class="text-primary mb-3">🛒 নতুন বিক্রি ও মেমো</h5>
-                <input type="text" id="custName" class="form-control mb-2" placeholder="কাস্টমারের নাম">
-                <input type="text" id="itemName" class="form-control mb-2" placeholder="পণ্যের নাম (যেমন: থ্রি-পিস/গহনা)">
-                <input type="number" id="itemPrice" class="form-control mb-2" placeholder="একক মূল্য (টাকা)">
-                <input type="number" id="itemQty" class="form-control mb-2" placeholder="পরিমাণ (পিস)">
-                <button class="btn btn-primary w-100" onclick="generateAndSave()">মেমো তৈরি ও সেভ করুন</button>
+    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sales-tab">🛒 বিক্রি ও মেমো</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#stock-tab">📦 ইনভেন্টরি/স্টক</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#customer-tab">👥 কাস্টমার ডাটা</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="sales-tab">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card p-4 shadow-sm">
+                        <h5 class="text-primary mb-3">দ্রুত বিক্রি (বারকোড/সার্চ)</h5>
+                        <button class="btn btn-dark mb-3 w-100" onclick="toggleScanner('sale')">📸 স্ক্যান করুন</button>
+                        <div id="reader-sale" class="scanner-box"></div>
+                        
+                        <div class="input-group mb-3">
+                            <input type="text" id="saleSearchPhone" class="form-control" placeholder="কাস্টমার মোবাইল নম্বর">
+                            <button class="btn btn-outline-primary" onclick="searchCustomer()">খুঁজুন</button>
+                        </div>
+                        
+                        <input type="text" id="saleCustName" class="form-control mb-2" placeholder="কাস্টমারের নাম">
+                        <select id="itemSelect" class="form-select mb-2" onchange="updatePriceFromSelect()">
+                            <option value="">পণ্য নির্বাচন করুন</option>
+                        </select>
+                        <input type="number" id="saleQty" class="form-control mb-2" placeholder="পরিমাণ (পিস)">
+                        <input type="hidden" id="salePrice">
+                        <button class="btn btn-success w-100 py-2" onclick="processSale()">মেমো তৈরি ও সেভ</button>
+                    </div>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div class="card p-4 shadow-sm bg-white">
+                        <h4>আজকের মোট বিক্রি</h4>
+                        <h1 id="todayTotal" class="text-success">০ টাকা</h1>
+                        <hr>
+                        <div id="recentSales" class="text-start" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="stock-tab">
+            <div class="card p-4 shadow-sm">
+                <h5>📦 নতুন স্টক যোগ করুন</h5>
+                <div class="row">
+                    <div class="col-md-3 mb-2"><input type="text" id="invBarcode" class="form-control" placeholder="বারকোড (ঐচ্ছিক)"></div>
+                    <div class="col-md-3 mb-2"><input type="text" id="invName" class="form-control" placeholder="পণ্যের নাম"></div>
+                    <div class="col-md-3 mb-2"><input type="number" id="invPrice" class="form-control" placeholder="বিক্রয় মূল্য"></div>
+                    <div class="col-md-2 mb-2"><input type="number" id="invQty" class="form-control" placeholder="পরিমাণ"></div>
+                    <div class="col-md-1 mb-2"><button class="btn btn-primary w-100" onclick="addInventory()">+</button></div>
+                </div>
+                <hr>
+                <h5>📊 বর্তমান স্টক</h5>
+                <div id="stockList" class="table-responsive"></div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="customer-tab">
+            <div class="card p-4 shadow-sm">
+                <h5>👥 কাস্টমার রেজিস্ট্রি</h5>
+                <div class="row mb-3">
+                    <div class="col-md-4"><input type="text" id="cName" class="form-control mb-2" placeholder="নাম"></div>
+                    <div class="col-md-4"><input type="text" id="cPhone" class="form-control mb-2" placeholder="মোবাইল"></div>
+                    <div class="col-md-4"><button class="btn btn-success w-100" onclick="addCustomer()">কাস্টমার সেভ</button></div>
+                </div>
+                <div id="customerList"></div>
             </div>
         </div>
     </div>
 </div>
 
-<div id="receipt" class="container receipt-box shadow-lg">
+<div id="receipt" class="container receipt-box shadow">
     <div class="text-center">
-        <h4>এস আই ফ্যামিলি মার্ট</h4>
-        <p>বংশীপুর গ্রাম</p>
+        <h3>এস আই ফ্যামিলি মার্ট</h3>
+        <p>বংশীপুর গ্রাম, বাংলাদেশ</p>
         <hr>
     </div>
     <div class="row">
-        <div class="col-6"><p><b>তারিখ:</b> <span id="rDate"></span></p></div>
-        <div class="col-6 text-end"><p><b>মেমো নং:</b> <span id="rID"></span></p></div>
+        <div class="col-6">তারিখ: <span id="rDate"></span></div>
+        <div class="col-6 text-end">আইডি: <span id="rID"></span></div>
     </div>
-    <p><b>কাস্টমার:</b> <span id="rCust"></span></p>
-    <table class="table table-bordered">
-        <thead class="table-light">
-            <tr><th>বিবরণ</th><th>পরিমাণ</th><th>মোট দাম</th></tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td id="rItem"></td>
-                <td id="rQty"></td>
-                <td id="rTotal"></td>
-            </tr>
-        </tbody>
+    <p>কাস্টমার: <b id="rCust"></b> | মোবাইল: <span id="rPhone"></span></p>
+    <table class="table table-bordered mt-3">
+        <thead><tr><th>আইটেম</th><th>পরিমাণ</th><th>মোট</th></tr></thead>
+        <tbody><tr><td id="rItem"></td><td id="rQty"></td><td id="rTotal"></td></tr></tbody>
     </table>
-    <div class="text-end">
-        <h4>সর্বমোট: <span id="rGrandTotal"></span> টাকা</h4>
-    </div>
-    <hr>
-    <p class="text-center">আমাদের থেকে কেনাকাটা করার জন্য ধন্যবাদ!</p>
-    <div class="d-grid gap-2 no-print">
-        <button class="btn btn-success" onclick="window.print()">মেমো প্রিন্ট/সেভ করুন</button>
-        <button class="btn btn-outline-secondary" onclick="location.reload()">নতুন বিক্রি শুরু করুন</button>
-    </div>
+    <h4 class="text-end">সর্বমোট: <span id="rGrand"></span> টাকা</h4>
+    <hr><p class="text-center">ধন্যবাদ, আবার আসবেন!</p>
+    <div class="no-print d-grid gap-2"><button class="btn btn-success" onclick="window.print()">Print / Save PDF</button></div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, setDoc, doc, getDoc, updateDoc, increment, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
@@ -84,45 +132,107 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  let html5QrCode;
 
-  window.generateAndSave = async function() {
-    const name = document.getElementById('custName').value || "নগদ কাস্টমার";
-    const item = document.getElementById('itemName').value;
-    const price = Number(document.getElementById('itemPrice').value);
-    const qty = Number(document.getElementById('itemQty').value);
-    const total = price * qty;
-    const date = new Date().toISOString().split('T')[0];
+  // --- Inventory Logic ---
+  window.addInventory = async () => {
+    const name = document.getElementById('invName').value;
+    const price = Number(document.getElementById('invPrice').value);
+    const qty = Number(document.getElementById('invQty').value);
+    const barcode = document.getElementById('invBarcode').value || name;
+    if(!name || !price) return alert("তথ্য সঠিক দিন");
+    await setDoc(doc(db, "inventory", barcode), { name, price, stock: increment(qty), barcode }, { merge: true });
+    alert("স্টক আপডেট হয়েছে!");
+    document.getElementById('invName').value = ''; document.getElementById('invQty').value = '';
+  };
 
-    if(!item || !price || !qty) return alert("দয়া করে সব তথ্য পূরণ করুন।");
+  onSnapshot(collection(db, "inventory"), (snap) => {
+    let html = "<table class='table table-sm'><thead><tr><th>নাম</th><th>স্টক</th><th>দাম</th></tr></thead><tbody>";
+    let selectHtml = "<option value=''>পণ্য নির্বাচন করুন</option>";
+    snap.forEach(d => {
+      const data = d.data();
+      html += `<tr><td>${data.name}</td><td>${data.stock}</td><td>${data.price}</td></tr>`;
+      selectHtml += `<option value="${data.barcode}" data-price="${data.price}">${data.name} (স্টক: ${data.stock})</option>`;
+    });
+    document.getElementById('stockList').innerHTML = html + "</tbody></table>";
+    document.getElementById('itemSelect').innerHTML = selectHtml;
+  });
 
-    try {
-      // Firebase-এ ডাটা সেভ করা
-      const docRef = await addDoc(collection(db, "sales"), {
-        customer: name,
-        item: item,
-        price: price,
-        qty: qty,
-        total: total,
-        date: date,
-        time: new Date().toLocaleTimeString()
-      });
+  // --- Sales & Search Logic ---
+  window.updatePriceFromSelect = () => {
+    const select = document.getElementById('itemSelect');
+    const price = select.options[select.selectedIndex].getAttribute('data-price');
+    document.getElementById('salePrice').value = price;
+  };
 
-      // মেমোতে ডাটা দেখানো
-      document.getElementById('rDate').innerText = new Date().toLocaleDateString();
-      document.getElementById('rID').innerText = docRef.id.substring(0, 6).toUpperCase();
-      document.getElementById('rCust').innerText = name;
-      document.getElementById('rItem').innerText = item;
-      document.getElementById('rQty').innerText = qty;
-      document.getElementById('rTotal').innerText = total;
-      document.getElementById('rGrandTotal').innerText = total;
+  window.searchCustomer = async () => {
+    const phone = document.getElementById('saleSearchPhone').value;
+    const q = query(collection(db, "customers"), where("phone", "==", phone));
+    const snap = await getDocs(q);
+    if(!snap.empty) {
+        snap.forEach(d => { document.getElementById('saleCustName').value = d.data().name; });
+    } else { alert("পাওয়া যায়নি"); }
+  };
 
-      document.getElementById('receipt').style.display = 'block';
-      alert("হিসাব ডাটাবেসে সেভ হয়েছে এবং মেমো তৈরি হয়েছে!");
-    } catch (e) {
-      alert("ডাটা সেভ করতে সমস্যা হয়েছে। দয়া করে রুলস চেক করুন।");
-    }
-  }
+  window.processSale = async () => {
+    const barcode = document.getElementById('itemSelect').value;
+    const qty = Number(document.getElementById('saleQty').value);
+    const cust = document.getElementById('saleCustName').value || "নগদ কাস্টমার";
+    const price = Number(document.getElementById('salePrice').value);
+    
+    if(!barcode || qty <= 0) return alert("পণ্য এবং পরিমাণ দিন");
+
+    const pRef = doc(db, "inventory", barcode);
+    const pSnap = await getDoc(pRef);
+    if(pSnap.data().stock < qty) return alert("স্টক নেই!");
+
+    await updateDoc(pRef, { stock: increment(-qty) });
+    const saleDoc = await addDoc(collection(db, "sales"), {
+        customer: cust, item: pSnap.data().name, qty, total: price * qty,
+        date: new Date().toISOString().split('T')[0], time: new Date().toLocaleTimeString()
+    });
+
+    // Display Receipt
+    document.getElementById('rDate').innerText = new Date().toLocaleDateString();
+    document.getElementById('rID').innerText = saleDoc.id.substring(0,6).toUpperCase();
+    document.getElementById('rCust').innerText = cust;
+    document.getElementById('rItem').innerText = pSnap.data().name;
+    document.getElementById('rQty').innerText = qty;
+    document.getElementById('rTotal').innerText = price * qty;
+    document.getElementById('rGrand').innerText = price * qty;
+    document.getElementById('receipt').style.display = 'block';
+    window.scrollTo(0, document.body.scrollHeight);
+  };
+
+  // --- Real-time Sales Summary ---
+  const today = new Date().toISOString().split('T')[0];
+  onSnapshot(query(collection(db, "sales"), where("date", "==", today)), (snap) => {
+    let total = 0; let list = "";
+    snap.forEach(d => { total += d.data().total; list += `<p>• ${d.data().item} (${d.data().qty}) - ${d.data().total} tk</p>`; });
+    document.getElementById('todayTotal').innerText = total + " টাকা";
+    document.getElementById('recentSales').innerHTML = list;
+  });
+
+  // --- Customer Logic ---
+  window.addCustomer = async () => {
+    const name = document.getElementById('cName').value;
+    const phone = document.getElementById('cPhone').value;
+    await addDoc(collection(db, "customers"), { name, phone });
+    alert("কাস্টমার সেভ হয়েছে!");
+  };
+
+  // --- Scanner ---
+  window.toggleScanner = (type) => {
+    const box = document.getElementById('reader-sale');
+    box.style.display = 'block';
+    html5QrCode = new Html5Qrcode("reader-sale");
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+        document.getElementById('itemSelect').value = text;
+        updatePriceFromSelect();
+        html5QrCode.stop();
+        box.style.display = 'none';
+    });
+  };
 </script>
-
 </body>
 </html>
