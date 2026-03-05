@@ -3,123 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.I. Family Mart | All-in-One Admin Panel</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>S.I. Family Mart | Premium ERP</title>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --primary-color: #1a2a6c; --secondary-color: #b21f1f; }
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .header { background: linear-gradient(to right, #1a2a6c, #b21f1f, #fdbb2d); color: white; padding: 20px; text-align: center; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .card { border: none; border-radius: 15px; transition: 0.3s; margin-bottom: 20px; }
-        .scanner-box { background: #000; border-radius: 10px; overflow: hidden; display: none; margin: 10px auto; width: 100%; max-width: 300px; }
-        .receipt-box { display: none; background: #fff; padding: 30px; border: 1px solid #ddd; border-radius: 10px; font-family: 'Courier New', Courier, monospace; }
-        .nav-tabs .nav-link { color: #333; font-weight: 600; }
-        .nav-tabs .nav-link.active { background-color: var(--primary-color); color: white; border-radius: 10px 10px 0 0; }
-        @media print { .no-print { display: none !important; } .receipt-box { display: block !important; border: none; box-shadow: none; width: 100%; } }
+        :root { --p-blue: #1a2a6c; --p-red: #b21f1f; }
+        body { background: #f0f2f5; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .header { background: linear-gradient(45deg, var(--p-blue), var(--p-red)); color: white; padding: 20px; text-align: center; border-radius: 0 0 20px 20px; }
+        
+        /* Receipt Styling */
+        .receipt-container { display: none; background: #fff; width: 100%; max-width: 400px; margin: 20px auto; padding: 30px; border: 1px solid #eee; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
+        .receipt-header { text-align: center; border-bottom: 2px dashed #ddd; padding-bottom: 15px; margin-bottom: 15px; }
+        .receipt-header h2 { margin: 0; color: #1a2a6c; font-weight: 800; letter-spacing: 1px; }
+        .receipt-header p { margin: 2px 0; font-size: 14px; color: #555; }
+        .memo-info { display: flex; justify-content: space-between; font-size: 12px; color: #777; margin-bottom: 10px; }
+        .table-receipt { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .table-receipt th { border-bottom: 1px solid #333; text-align: left; padding: 5px; font-size: 14px; }
+        .table-receipt td { padding: 8px 5px; font-size: 15px; }
+        .total-section { border-top: 2px solid #333; padding-top: 10px; text-align: right; }
+        .thank-you-note { text-align: center; margin-top: 20px; font-style: italic; color: #b21f1f; font-weight: 600; font-size: 14px; }
+        
+        /* Auth & Layout */
+        #auth-box { position: fixed; top:0; left:0; width:100%; height:100%; background: #fff; z-index:9999; display: flex; align-items:center; justify-content:center; }
+        .no-print { display: block; }
+        @media print { 
+            .no-print, .header, .nav, .tab-content, #auth-box { display: none !important; } 
+            body { background: white; }
+            .receipt-container { display: block !important; border: none; box-shadow: none; margin: 0; max-width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-<div class="header no-print">
-    <h1>এস আই ফ্যামিলি মার্ট</h1>
-    <p>বংশীপুর গ্রাম | স্মার্ট ম্যানেজমেন্ট সিস্টেম</p>
-</div>
-
-<div class="container mt-4 no-print">
-    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sales-tab">🛒 বিক্রি ও মেমো</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#stock-tab">📦 ইনভেন্টরি/স্টক</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#customer-tab">👥 কাস্টমার ডাটা</button></li>
-    </ul>
-
-    <div class="tab-content">
-        <div class="tab-pane fade show active" id="sales-tab">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card p-4 shadow-sm">
-                        <h5 class="text-primary mb-3">দ্রুত বিক্রি (বারকোড/সার্চ)</h5>
-                        <button class="btn btn-dark mb-3 w-100" onclick="toggleScanner('sale')">📸 স্ক্যান করুন</button>
-                        <div id="reader-sale" class="scanner-box"></div>
-                        
-                        <div class="input-group mb-3">
-                            <input type="text" id="saleSearchPhone" class="form-control" placeholder="কাস্টমার মোবাইল নম্বর">
-                            <button class="btn btn-outline-primary" onclick="searchCustomer()">খুঁজুন</button>
-                        </div>
-                        
-                        <input type="text" id="saleCustName" class="form-control mb-2" placeholder="কাস্টমারের নাম">
-                        <select id="itemSelect" class="form-select mb-2" onchange="updatePriceFromSelect()">
-                            <option value="">পণ্য নির্বাচন করুন</option>
-                        </select>
-                        <input type="number" id="saleQty" class="form-control mb-2" placeholder="পরিমাণ (পিস)">
-                        <input type="hidden" id="salePrice">
-                        <button class="btn btn-success w-100 py-2" onclick="processSale()">মেমো তৈরি ও সেভ</button>
-                    </div>
-                </div>
-                <div class="col-md-6 text-center">
-                    <div class="card p-4 shadow-sm bg-white">
-                        <h4>আজকের মোট বিক্রি</h4>
-                        <h1 id="todayTotal" class="text-success">০ টাকা</h1>
-                        <hr>
-                        <div id="recentSales" class="text-start" style="max-height: 200px; overflow-y: auto;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="stock-tab">
-            <div class="card p-4 shadow-sm">
-                <h5>📦 নতুন স্টক যোগ করুন</h5>
-                <div class="row">
-                    <div class="col-md-3 mb-2"><input type="text" id="invBarcode" class="form-control" placeholder="বারকোড (ঐচ্ছিক)"></div>
-                    <div class="col-md-3 mb-2"><input type="text" id="invName" class="form-control" placeholder="পণ্যের নাম"></div>
-                    <div class="col-md-3 mb-2"><input type="number" id="invPrice" class="form-control" placeholder="বিক্রয় মূল্য"></div>
-                    <div class="col-md-2 mb-2"><input type="number" id="invQty" class="form-control" placeholder="পরিমাণ"></div>
-                    <div class="col-md-1 mb-2"><button class="btn btn-primary w-100" onclick="addInventory()">+</button></div>
-                </div>
-                <hr>
-                <h5>📊 বর্তমান স্টক</h5>
-                <div id="stockList" class="table-responsive"></div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="customer-tab">
-            <div class="card p-4 shadow-sm">
-                <h5>👥 কাস্টমার রেজিস্ট্রি</h5>
-                <div class="row mb-3">
-                    <div class="col-md-4"><input type="text" id="cName" class="form-control mb-2" placeholder="নাম"></div>
-                    <div class="col-md-4"><input type="text" id="cPhone" class="form-control mb-2" placeholder="মোবাইল"></div>
-                    <div class="col-md-4"><button class="btn btn-success w-100" onclick="addCustomer()">কাস্টমার সেভ</button></div>
-                </div>
-                <div id="customerList"></div>
-            </div>
-        </div>
+<div id="auth-box">
+    <div class="card p-4 shadow-lg text-center" style="width: 350px; border-radius: 20px;">
+        <h2 style="color: #1a2a6c;">S.I. Family Mart</h2>
+        <p class="text-muted">আপনার ব্যবসার ডিজিটাল অংশীদার</p>
+        <input type="email" id="email" class="form-control mb-2" placeholder="ইমেইল">
+        <input type="password" id="pass" class="form-control mb-3" placeholder="পাসওয়ার্ড (1234)">
+        <button class="btn btn-primary w-100 mb-2" onclick="handleAuth()">লগইন করুন</button>
+        <button class="btn btn-link btn-sm" onclick="forgotPass()">পাসওয়ার্ড রিকভারি</button>
     </div>
 </div>
 
-<div id="receipt" class="container receipt-box shadow">
-    <div class="text-center">
-        <h3>এস আই ফ্যামিলি মার্ট</h3>
-        <p>বংশীপুর গ্রাম, বাংলাদেশ</p>
-        <hr>
+<div id="app" style="display:none;">
+    <div class="header no-print">
+        <h2>এস আই ফ্যামিলি মার্ট</h2>
+        <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+        <button class="btn btn-sm btn-outline-light" onclick="logout()">লগ আউট</button>
     </div>
-    <div class="row">
-        <div class="col-6">তারিখ: <span id="rDate"></span></div>
-        <div class="col-6 text-end">আইডি: <span id="rID"></span></div>
+
+    <div class="container mt-3 no-print">
+        <ul class="nav nav-pills nav-justified mb-3 shadow-sm bg-white rounded p-1">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#sales">🛒 বিক্রি ও মেমো</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#stock">📦 ইনভেন্টরি</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#reports">📊 হিসাব-নিকাশ</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <div id="sales" class="tab-pane fade show active">
+                <div class="card p-4">
+                    <h5 class="text-primary mb-3">নতুন কাস্টমার ও মেমো</h5>
+                    <input type="text" id="custName" class="form-control mb-2" placeholder="কাস্টমারের নাম">
+                    <select id="saleItem" class="form-select mb-2"></select>
+                    <input type="number" id="sQty" class="form-control mb-3" placeholder="পরিমাণ">
+                    <button class="btn btn-success w-100 py-2" onclick="makeSale()">বিক্রি সম্পন্ন ও মেমো দেখুন</button>
+                </div>
+            </div>
+
+            <div id="stock" class="tab-pane fade">
+                <div class="card p-4">
+                    <h5>📦 মাল স্টক করুন</h5>
+                    <input type="text" id="pName" class="form-control mb-2" placeholder="পণ্যের নাম">
+                    <input type="number" id="pBuy" class="form-control mb-2" placeholder="ক্রয় মূল্য">
+                    <input type="number" id="pSell" class="form-control mb-2" placeholder="বিক্রয় মূল্য">
+                    <input type="number" id="pQty" class="form-control mb-3" placeholder="পরিমাণ">
+                    <button class="btn btn-primary w-100" onclick="addStock()">স্টক সেভ করুন</button>
+                </div>
+            </div>
+
+            <div id="reports" class="tab-pane fade">
+                <div class="card p-4 text-center">
+                    <h5 class="text-muted">আজকের নিট লাভ</h5>
+                    <h1 id="pToday" class="text-success">০</h1>
+                    <hr>
+                    <p>মাসিক লাভ: <span id="pMonth">০</span> টাকা</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <p>কাস্টমার: <b id="rCust"></b> | মোবাইল: <span id="rPhone"></span></p>
-    <table class="table table-bordered mt-3">
-        <thead><tr><th>আইটেম</th><th>পরিমাণ</th><th>মোট</th></tr></thead>
-        <tbody><tr><td id="rItem"></td><td id="rQty"></td><td id="rTotal"></td></tr></tbody>
-    </table>
-    <h4 class="text-end">সর্বমোট: <span id="rGrand"></span> টাকা</h4>
-    <hr><p class="text-center">ধন্যবাদ, আবার আসবেন!</p>
-    <div class="no-print d-grid gap-2"><button class="btn btn-success" onclick="window.print()">Print / Save PDF</button></div>
+
+    <div id="receipt" class="receipt-container">
+        <div class="receipt-header">
+            <h2>S.I. FAMILY MART</h2>
+            <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+            <p>মোবাইল: আপনার নম্বর এখানে</p>
+        </div>
+        <div class="memo-info">
+            <span>তারিখ: <b id="rDate"></b></span>
+            <span>মেমো: <b id="rID"></b></span>
+        </div>
+        <p><b>কাস্টমার:</b> <span id="rCust"></span></p>
+        
+        <table class="table-receipt">
+            <thead>
+                <tr>
+                    <th>বিবরণ</th>
+                    <th>পরিমাণ</th>
+                    <th style="text-align:right;">মূল্য</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="rItem"></td>
+                    <td id="rQty"></td>
+                    <td id="rTotal" style="text-align:right;"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <h4>সর্বমোট: <span id="rGrand"></span> টাকা</h4>
+        </div>
+
+        <div class="thank-you-note">
+            "আপনার সন্তুষ্টিই আমাদের পথচলার অনুপ্রেরণা। <br> বিশ্বাস ও আস্থার টানে, আবার আসবেন আমাদের দোকানে।"
+        </div>
+
+        <div class="no-print mt-4 d-grid gap-2">
+            <button class="btn btn-dark" onclick="window.print()">প্রিন্ট অথবা PDF সেভ করুন</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">নতুন মেমো তৈরি</button>
+        </div>
+    </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getFirestore, collection, addDoc, setDoc, doc, getDoc, updateDoc, increment, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
@@ -132,107 +153,94 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  let html5QrCode;
+  const auth = getAuth(app);
 
-  // --- Inventory Logic ---
-  window.addInventory = async () => {
-    const name = document.getElementById('invName').value;
-    const price = Number(document.getElementById('invPrice').value);
-    const qty = Number(document.getElementById('invQty').value);
-    const barcode = document.getElementById('invBarcode').value || name;
-    if(!name || !price) return alert("তথ্য সঠিক দিন");
-    await setDoc(doc(db, "inventory", barcode), { name, price, stock: increment(qty), barcode }, { merge: true });
-    alert("স্টক আপডেট হয়েছে!");
-    document.getElementById('invName').value = ''; document.getElementById('invQty').value = '';
+  // Auth Functions
+  window.handleAuth = () => {
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('pass').value;
+    signInWithEmailAndPassword(auth, email, pass).catch(e => alert("ভুল ইমেইল বা পাসওয়ার্ড!"));
   };
 
-  onSnapshot(collection(db, "inventory"), (snap) => {
-    let html = "<table class='table table-sm'><thead><tr><th>নাম</th><th>স্টক</th><th>দাম</th></tr></thead><tbody>";
-    let selectHtml = "<option value=''>পণ্য নির্বাচন করুন</option>";
-    snap.forEach(d => {
-      const data = d.data();
-      html += `<tr><td>${data.name}</td><td>${data.stock}</td><td>${data.price}</td></tr>`;
-      selectHtml += `<option value="${data.barcode}" data-price="${data.price}">${data.name} (স্টক: ${data.stock})</option>`;
-    });
-    document.getElementById('stockList').innerHTML = html + "</tbody></table>";
-    document.getElementById('itemSelect').innerHTML = selectHtml;
+  window.forgotPass = () => {
+    const email = document.getElementById('email').value;
+    if(!email) return alert("ইমেইল দিন");
+    sendPasswordResetEmail(auth, email).then(() => alert("ইমেইলে পাসওয়ার্ড রিসেট লিঙ্ক পাঠানো হয়েছে!"));
+  };
+
+  onAuthStateChanged(auth, user => {
+    if(user) {
+        document.getElementById('auth-box').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+    }
   });
 
-  // --- Sales & Search Logic ---
-  window.updatePriceFromSelect = () => {
-    const select = document.getElementById('itemSelect');
-    const price = select.options[select.selectedIndex].getAttribute('data-price');
-    document.getElementById('salePrice').value = price;
+  window.logout = () => signOut(auth);
+
+  // Business Logic
+  window.addStock = async () => {
+    const name = document.getElementById('pName').value;
+    const buy = Number(document.getElementById('pBuy').value);
+    const sell = Number(document.getElementById('pSell').value);
+    const qty = Number(document.getElementById('pQty').value);
+    await setDoc(doc(db, "inventory", name), { name, buy, sell, stock: increment(qty) }, { merge: true });
+    alert("স্টক আপডেট হয়েছে!");
   };
 
-  window.searchCustomer = async () => {
-    const phone = document.getElementById('saleSearchPhone').value;
-    const q = query(collection(db, "customers"), where("phone", "==", phone));
-    const snap = await getDocs(q);
-    if(!snap.empty) {
-        snap.forEach(d => { document.getElementById('saleCustName').value = d.data().name; });
-    } else { alert("পাওয়া যায়নি"); }
-  };
+  onSnapshot(collection(db, "inventory"), snap => {
+    let options = "<option value=''>পণ্য নির্বাচন করুন</option>";
+    snap.forEach(d => { options += `<option value="${d.id}">${d.id}</option>`; });
+    document.getElementById('saleItem').innerHTML = options;
+  });
 
-  window.processSale = async () => {
-    const barcode = document.getElementById('itemSelect').value;
-    const qty = Number(document.getElementById('saleQty').value);
-    const cust = document.getElementById('saleCustName').value || "নগদ কাস্টমার";
-    const price = Number(document.getElementById('salePrice').value);
+  window.makeSale = async () => {
+    const name = document.getElementById('saleItem').value;
+    const qty = Number(document.getElementById('sQty').value);
+    const cust = document.getElementById('custName').value || "সম্মানিত কাস্টমার";
     
-    if(!barcode || qty <= 0) return alert("পণ্য এবং পরিমাণ দিন");
-
-    const pRef = doc(db, "inventory", barcode);
+    const pRef = doc(db, "inventory", name);
     const pSnap = await getDoc(pRef);
-    if(pSnap.data().stock < qty) return alert("স্টক নেই!");
+    const pData = pSnap.data();
+
+    if(pData.stock < qty) return alert("স্টক নেই!");
+
+    const total = pData.sell * qty;
+    const profit = (pData.sell - pData.buy) * qty;
 
     await updateDoc(pRef, { stock: increment(-qty) });
     const saleDoc = await addDoc(collection(db, "sales"), {
-        customer: cust, item: pSnap.data().name, qty, total: price * qty,
-        date: new Date().toISOString().split('T')[0], time: new Date().toLocaleTimeString()
+        customer: cust, item: name, qty, total, profit,
+        date: new Date().toISOString().split('T')[0],
+        month: new Date().getMonth() + 1
     });
 
-    // Display Receipt
+    // Show Receipt
     document.getElementById('rDate').innerText = new Date().toLocaleDateString();
     document.getElementById('rID').innerText = saleDoc.id.substring(0,6).toUpperCase();
     document.getElementById('rCust').innerText = cust;
-    document.getElementById('rItem').innerText = pSnap.data().name;
+    document.getElementById('rItem').innerText = name;
     document.getElementById('rQty').innerText = qty;
-    document.getElementById('rTotal').innerText = price * qty;
-    document.getElementById('rGrand').innerText = price * qty;
+    document.getElementById('rTotal').innerText = total;
+    document.getElementById('rGrand').innerText = total;
+
+    document.querySelector('.container').style.display = 'none';
     document.getElementById('receipt').style.display = 'block';
-    window.scrollTo(0, document.body.scrollHeight);
   };
 
-  // --- Real-time Sales Summary ---
-  const today = new Date().toISOString().split('T')[0];
-  onSnapshot(query(collection(db, "sales"), where("date", "==", today)), (snap) => {
-    let total = 0; let list = "";
-    snap.forEach(d => { total += d.data().total; list += `<p>• ${d.data().item} (${d.data().qty}) - ${d.data().total} tk</p>`; });
-    document.getElementById('todayTotal').innerText = total + " টাকা";
-    document.getElementById('recentSales').innerHTML = list;
+  // Reports
+  onSnapshot(collection(db, "sales"), snap => {
+    let dayP = 0, monP = 0;
+    const today = new Date().toISOString().split('T')[0];
+    const thisMonth = new Date().getMonth() + 1;
+    snap.forEach(d => {
+        const data = d.data();
+        if(data.date === today) dayP += data.profit;
+        if(data.month === thisMonth) monP += data.profit;
+    });
+    document.getElementById('pToday').innerText = dayP + " টাকা";
+    document.getElementById('pMonth').innerText = monP;
   });
 
-  // --- Customer Logic ---
-  window.addCustomer = async () => {
-    const name = document.getElementById('cName').value;
-    const phone = document.getElementById('cPhone').value;
-    await addDoc(collection(db, "customers"), { name, phone });
-    alert("কাস্টমার সেভ হয়েছে!");
-  };
-
-  // --- Scanner ---
-  window.toggleScanner = (type) => {
-    const box = document.getElementById('reader-sale');
-    box.style.display = 'block';
-    html5QrCode = new Html5Qrcode("reader-sale");
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
-        document.getElementById('itemSelect').value = text;
-        updatePriceFromSelect();
-        html5QrCode.stop();
-        box.style.display = 'none';
-    });
-  };
 </script>
 </body>
 </html>
