@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S I Family Mart | Admin Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; margin-bottom: 30px; }
+        .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-primary { background-color: #3498db; border: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>এস আই ফ্যামিলি মার্ট</h1>
+    <p>দোকানের হিসাব ও ইনভেন্টরি ম্যানেজমেন্ট</p>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card p-4">
+                <h4 class="mb-3">নতুন বিক্রি যোগ করুন</h4>
+                <div class="mb-3">
+                    <label>পণ্যের নাম (কাপড়/কসমেটিকস)</label>
+                    <input type="text" id="itemName" class="form-control" placeholder="যেমন: থ্রি-পিস বা বডি স্প্রে">
+                </div>
+                <div class="mb-3">
+                    <label>বিক্রয় মূল্য (টাকা)</label>
+                    <input type="number" id="salePrice" class="form-control" placeholder="দাম লিখুন">
+                </div>
+                <button class="btn btn-success w-100" onclick="addSale()">বিক্রি সেভ করুন</button>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card p-4 text-center bg-white">
+                <h4>আজকের মোট বিক্রি</h4>
+                <h2 id="totalSales" class="text-primary mt-3">০ টাকা</h2>
+                <hr>
+                <div id="salesList" class="text-start" style="max-height: 200px; overflow-y: auto;">
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  // আপনার দেওয়া কনফিগ
+  const firebaseConfig = {
+    apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
+    authDomain: "fir-i-family-mart.firebaseapp.com",
+    projectId: "fir-i-family-mart",
+    databaseURL: "https://fir-i-family-mart-default-rtdb.firebaseio.com", // আপনার প্রোজেক্ট আইডি অনুযায়ী
+    storageBucket: "fir-i-family-mart.firebasestorage.app",
+    messagingSenderId: "73889024539",
+    appId: "1:73889024539:web:271561c9dba17b5a6b06be"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // বিক্রি যোগ করার ফাংশন
+  window.addSale = function() {
+    const name = document.getElementById('itemName').value;
+    const price = document.getElementById('salePrice').value;
+
+    if(name && price) {
+      const salesRef = ref(db, 'sales/' + new Date().toISOString().slice(0, 10));
+      const newSaleRef = push(salesRef);
+      set(newSaleRef, {
+        item: name,
+        amount: Number(price),
+        time: new Date().toLocaleTimeString()
+      }).then(() => {
+        alert("হিসাব সফলভাবে সেভ হয়েছে!");
+        document.getElementById('itemName').value = '';
+        document.getElementById('salePrice').value = '';
+      });
+    } else {
+      alert("দয়া করে নাম এবং দাম দুটিই লিখুন।");
+    }
+  }
+
+  // ডাটা রিয়েল-টাইম আপডেট করা
+  const today = new Date().toISOString().slice(0, 10);
+  const displayRef = ref(db, 'sales/' + today);
+  onValue(displayRef, (snapshot) => {
+    const data = snapshot.val();
+    let total = 0;
+    let listHtml = "<ul>";
+    for (let id in data) {
+      total += data[id].amount;
+      listHtml += `<li>${data[id].item}: ${data[id].amount} টাকা (${data[id].time})</li>`;
+    }
+    listHtml += "</ul>";
+    document.getElementById('totalSales').innerText = total + " টাকা";
+    document.getElementById('salesList').innerHTML = listHtml;
+  });
+</script>
+
+</body>
+</html>
