@@ -3,118 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.I. Family Mart | Ultimate ERP</title>
+    <title>S.I. Family Mart | Premium ERP v3.0</title>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --p-navy: #0f172a; --p-blue: #2563eb; --p-green: #10b981; --p-red: #ef4444; }
-        body { background: #f1f5f9; font-family: 'Segoe UI', Tahoma, sans-serif; color: #1e293b; }
+        :root { --navy: #0f172a; --blue: #2563eb; --green: #10b981; }
+        body { background: #f8fafc; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .glass-header { background: linear-gradient(135deg, var(--navy), #1e293b); color: white; padding: 25px; border-radius: 0 0 30px 30px; text-align: center; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .nav-pills .nav-link { border-radius: 50px; font-weight: 600; color: #64748b; }
+        .nav-pills .nav-link.active { background: var(--blue) !important; }
         
-        /* Premium Header */
-        .glass-header { 
-            background: linear-gradient(135deg, var(--p-navy), #1e293b); 
-            color: white; padding: 30px 15px; border-radius: 0 0 35px 35px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); text-align: center;
-        }
-
-        /* Modern Cards */
-        .card { border: none; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .stats-box { padding: 20px; border-radius: 20px; color: white; transition: 0.3s; }
-        .stats-box:hover { transform: translateY(-5px); }
-        .bg-gradient-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-        .bg-gradient-green { background: linear-gradient(135deg, #34d399, #10b981); }
-        .bg-gradient-purple { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
-
-        /* Navigation */
-        .nav-pills .nav-link { border-radius: 50px; color: #64748b; font-weight: 600; padding: 10px 20px; }
-        .nav-pills .nav-link.active { background: var(--p-blue) !important; color: white; }
-
-        /* Scanner */
-        #reader { width: 100%; border-radius: 15px; overflow: hidden; margin-bottom: 15px; }
-
-        /* Receipt */
-        .receipt-box { display: none; background: #fff; padding: 30px; border: 1px solid #ddd; max-width: 400px; margin: 20px auto; border-radius: 15px; }
-        @media print { .no-print { display: none !important; } .receipt-box { display: block !important; border: none; box-shadow: none; width: 100%; } }
+        /* Receipt Style */
+        .receipt-box { display: none; background: #fff; padding: 25px; max-width: 450px; margin: 20px auto; border-radius: 15px; border: 1px solid #e2e8f0; }
+        .receipt-header h2 { font-weight: 800; color: var(--navy); margin-bottom: 0; }
+        .receipt-info { display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed #ccc; padding-bottom: 10px; margin-bottom: 15px; }
+        .receipt-footer { text-align: center; margin-top: 20px; font-size: 12px; color: #64748b; border-top: 1px dashed #ccc; padding-top: 15px; }
+        
+        #barcode-print-area { text-align: center; display: none; background: white; padding: 20px; border-radius: 10px; }
+        @media print { .no-print { display: none !important; } #receipt { display: block !important; border: none; } }
     </style>
 </head>
 <body>
 
 <div id="app">
     <header class="glass-header no-print">
-        <h1 class="fw-bold m-0">S.I. Family Mart</h1>
-        <p class="opacity-75 mb-2">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
-        <div class="badge bg-primary rounded-pill px-4">📞 01568683171</div>
+        <h2 class="fw-bold m-0">S.I. Family Mart</h2>
+        <p class="small opacity-75">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+        <div class="badge bg-primary rounded-pill px-4 py-2">📞 01568683171</div>
     </header>
 
     <div class="container mt-4 no-print">
         <div class="row g-3 mb-4">
-            <div class="col-6 col-md-4"><div class="stats-box bg-gradient-blue"><span>আজকের বিক্রি</span><h3 id="dS">০</h3></div></div>
-            <div class="col-6 col-md-4"><div class="stats-box bg-gradient-green"><span>আজকের লাভ</span><h3 id="dP">০</h3></div></div>
-            <div class="col-12 col-md-4"><div class="stats-box bg-gradient-purple"><span>ইনভেন্টরি ভ্যালু</span><h3 id="iV">০</h3></div></div>
+            <div class="col-6 col-md-4"><div class="card p-3 bg-white text-center"><h6>আজকের বিক্রি</h6><h4 id="dS" class="text-primary">০</h4></div></div>
+            <div class="col-6 col-md-4"><div class="card p-3 bg-white text-center"><h6>আজকের লাভ</h6><h4 id="dP" class="text-success">০</h4></div></div>
+            <div class="col-12 col-md-4"><div class="card p-3 bg-white text-center"><h6>ইনভেন্টরি ভ্যালু</h6><h4 id="iV" class="text-info">০</h4></div></div>
         </div>
 
-        <ul class="nav nav-pills nav-justified bg-white shadow-sm p-2 rounded-pill mb-4">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#sale-tab">🛒 বিক্রি</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#stock-tab">📦 স্টক</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#report-tab">📊 রিপোর্ট</a></li>
+        <ul class="nav nav-pills nav-justified bg-white p-2 shadow-sm rounded-pill mb-4">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#sale">🛒 বিক্রি</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#stock">📦 ইনভেন্টরি</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#report">📊 রিপোর্ট</a></li>
         </ul>
 
         <div class="tab-content">
-            <div id="sale-tab" class="tab-pane fade show active">
+            <div id="sale" class="tab-pane fade show active">
                 <div class="card p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold m-0 text-primary">নতুন মেমো তৈরি</h5>
-                        <button class="btn btn-sm btn-outline-dark rounded-pill" onclick="startScanner()">📷 স্ক্যানার খুলুন</button>
-                    </div>
-                    
-                    <div id="reader" style="display:none;"></div>
-
+                    <h5 class="fw-bold text-primary mb-3">নতুন কাস্টমার মেমো</h5>
                     <div class="row g-3">
                         <div class="col-12"><input type="text" id="cust" class="form-control" placeholder="ক্রেতার নাম"></div>
-                        <div class="col-md-7"><select id="sItem" class="form-select" onchange="updatePrice()"></select></div>
-                        <div class="col-md-2 col-6"><input type="number" id="sQ" class="form-control" value="1" placeholder="QTY"></div>
-                        <div class="col-md-3 col-6"><input type="number" id="unitP" class="form-control" placeholder="ইউনিট দাম"></div>
-                        <div class="col-md-6">
+                        <div class="col-8">
+                            <select id="sItem" class="form-select" onchange="updatePrice()"></select>
+                        </div>
+                        <div class="col-4"><input type="number" id="sQ" class="form-control" value="1" placeholder="পরিমাণ"></div>
+                        <div class="col-12">
                             <div class="input-group">
-                                <span class="input-group-text bg-light text-muted">অফার/ছাড়</span>
+                                <span class="input-group-text">ডিসকাউন্ট</span>
                                 <input type="number" id="sDisc" class="form-control" placeholder="0">
                                 <select id="dType" class="form-select" style="max-width: 80px;">
-                                    <option value="percent">%</option>
                                     <option value="cash">৳</option>
+                                    <option value="percent">%</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6"><button class="btn btn-primary w-100 py-2 rounded-pill shadow" onclick="processSale()">বিক্রি সম্পন্ন করুন</button></div>
+                        <button class="btn btn-primary w-100 py-2 rounded-pill shadow" onclick="processSale()">বিক্রি সম্পন্ন ও মেমো দেখুন</button>
                     </div>
                 </div>
             </div>
 
-            <div id="stock-tab" class="tab-pane fade">
+            <div id="stock" class="tab-pane fade">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-3 text-primary">ইনভেন্টরি ম্যানেজার</h5>
+                    <h5 class="fw-bold text-primary mb-3">মাল ক্রয় ও বারকোড</h5>
                     <div class="row g-2 mb-3">
-                        <div class="col-md-3"><input type="text" id="pID" class="form-control" placeholder="বারকোড/কোড"></div>
+                        <div class="col-md-3"><input type="text" id="bc" class="form-control" placeholder="বারকোড/কোড"></div>
                         <div class="col-md-3"><input type="text" id="pN" class="form-control" placeholder="পণ্যের নাম"></div>
-                        <div class="col-md-2"><input type="number" id="pB" class="form-control" placeholder="ক্রয়"></div>
-                        <div class="col-md-2"><input type="number" id="pT" class="form-control" placeholder="ভাড়া"></div>
-                        <div class="col-md-2"><input type="number" id="pS" class="form-control" placeholder="বেচা"></div>
+                        <div class="col-md-2"><input type="number" id="tBuy" class="form-control" placeholder="মোট ক্রয় মূল্য"></div>
+                        <div class="col-md-2"><input type="number" id="tQty" class="form-control" placeholder="মোট পিস"></div>
+                        <div class="col-md-2"><input type="number" id="pS" class="form-control" placeholder="একটির বেচা দাম"></div>
                     </div>
                     <button class="btn btn-dark w-100 rounded-pill mb-4" onclick="addStock()">স্টক আপডেট করুন</button>
+                    
                     <div id="stockList" class="table-responsive"></div>
                 </div>
             </div>
 
-            <div id="report-tab" class="tab-pane fade">
+            <div id="report" class="tab-pane fade">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-3 text-primary">ব্যবসায়িক রিপোর্ট</h5>
-                    <div class="row g-3 mb-4 text-center">
-                        <div class="col-6"><div class="p-3 bg-light rounded-4"><span>এই মাসের লাভ</span><h3 id="mP" class="text-success">০</h3></div></div>
-                        <div class="col-6"><div class="p-3 bg-light rounded-4"><span>মোট বিক্রি</span><h3 id="aS">০</h3></div></div>
-                    </div>
-                    <hr>
-                    <p class="small text-muted mb-2">নির্দিষ্ট তারিখ অনুযায়ী সার্চ করুন:</p>
+                    <h5 class="fw-bold text-primary mb-3">হিসাব-নিকাশ</h5>
                     <div class="row g-2">
                         <div class="col-5"><input type="date" id="dF" class="form-control"></div>
                         <div class="col-5"><input type="date" id="dT" class="form-control"></div>
@@ -127,34 +105,53 @@
     </div>
 
     <div id="receipt" class="receipt-box">
-        <div class="text-center">
-            <h3 class="fw-bold mb-0">S.I. FAMILY MART</h3>
-            <p class="small mb-1">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
-            <p class="small fw-bold">📞 01568683171</p>
-            <hr style="border-top: 2px dashed #000;">
+        <div class="receipt-header text-center">
+            <h2>S.I. FAMILY MART</h2>
+            <p class="small">বংশীপুর, শ্যামনগর, সাতক্ষীরা | 📞 01568683171</p>
+            <hr>
         </div>
-        <div style="font-size: 13px;">
-            <p class="mb-1">ক্রেতা: <b id="rCust"></b></p>
-            <p class="mb-1">তারিখ: <span id="rDate"></span> | মেমো: <span id="rID"></span></p>
+        
+        <div class="receipt-info">
+            <div>
+                <span>ক্রেতা: <b id="rCust"></b></span><br>
+                <span>মেমো: <b id="rID"></b></span>
+            </div>
+            <div class="text-end">
+                <span>তারিখ: <b id="rDate"></b></span>
+            </div>
         </div>
-        <table class="table table-sm mt-3" style="font-size: 14px;">
-            <thead><tr class="border-bottom"><th>বিবরণ</th><th class="text-center">QTY</th><th class="text-end">মোট</th></tr></thead>
-            <tbody><tr><td id="rItem"></td><td id="rQty" class="text-center"></td><td id="rTotal" class="text-end"></td></tr></tbody>
+
+        <table class="table table-sm mt-3">
+            <thead><tr class="border-bottom"><th>বিবরণ</th><th class="text-center">পরিমাণ</th><th class="text-end">মোট</th></tr></thead>
+            <tbody><tr><td id="rItem"></td><td id="rQty" class="text-center"></td><td id="rSub" class="text-end"></td></tr></tbody>
         </table>
         
-        <div id="rDiscRow" class="text-end text-danger small" style="display:none;">
+        <div id="rDiscRow" class="text-end text-danger small" style="display:none; border-top: 1px solid #eee; padding-top: 5px;">
             ডিসকাউন্ট: -<span id="rDisc"></span>৳
         </div>
-        <h4 class="text-end mt-2 fw-bold">সর্বমোট: <span id="rGrand"></span> টাকা</h4>
+        <h4 class="text-end mt-2 fw-bold" style="color: var(--navy);">সর্বমোট: <span id="rGrand"></span> টাকা</h4>
         
-        <div class="text-center mt-4" style="font-size: 12px; font-style: italic;">
-            "আস্থা ও বিশ্বাসের মেলবন্ধন। আবার আসবেন।"
+        <div class="receipt-footer">
+            <p class="fw-bold mb-1">"আপনার সন্তুষ্টিই আমাদের কাম্য"</p>
+            <p>আমাদের পণ্য ব্যবহার করার জন্য ধন্যবাদ। <br> আবার আসবেন, আমরা আপনার অপেক্ষায় থাকব।</p>
+            <hr>
+            <p class="small m-0">Powered by SI ERP</p>
         </div>
+        
         <div class="no-print d-grid gap-2 mt-4">
-            <button class="btn btn-dark" onclick="window.print()">মেমো প্রিন্ট করুন</button>
-            <button class="btn btn-outline-secondary" onclick="location.reload()">নতুন মেমো</button>
+            <button class="btn btn-dark rounded-pill" onclick="window.print()">মেমো প্রিন্ট করুন</button>
+            <button class="btn btn-outline-secondary rounded-pill" onclick="location.reload()">নতুন মেমো</button>
         </div>
     </div>
+</div>
+
+<div id="barcode-print-area" class="no-print">
+    <div id="bc-sticker">
+        <div style="font-size: 10px; font-weight: bold;">S.I. Family Mart</div>
+        <svg id="bc-svg"></svg>
+        <div style="font-size: 11px;">৳ <span id="bc-price"></span></div>
+    </div>
+    <button class="btn btn-sm btn-outline-primary mt-2" onclick="downloadBC()">বারকোড সেভ করুন</button>
 </div>
 
 <script type="module">
@@ -173,49 +170,46 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  let inventoryData = {};
+  let inv = {};
 
-  // --- Scanner Logic ---
-  let html5QrCode;
-  window.startScanner = () => {
-    document.getElementById('reader').style.display = 'block';
-    html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
-        const item = Object.values(inventoryData).find(i => i.barcode === decodedText);
-        if(item) {
-            document.getElementById('sItem').value = item.name;
-            updatePrice();
-            html5QrCode.stop();
-            document.getElementById('reader').style.display = 'none';
-        }
-    });
-  };
-
-  // --- Price Logic ---
-  window.updatePrice = () => {
-    const name = document.getElementById('sItem').value;
-    if(inventoryData[name]) document.getElementById('unitP').value = inventoryData[name].sell;
-  };
-
-  // --- Stock Logic ---
+  // --- Stock Logic (Total Buy / Total Qty) ---
   window.addStock = async () => {
-    const bc = document.getElementById('pID').value;
+    const bCode = document.getElementById('bc').value;
     const n = document.getElementById('pN').value;
-    const b = Number(document.getElementById('pB').value);
-    const t = Number(document.getElementById('pT').value || 0);
-    const s = Number(document.getElementById('pS').value);
-    await setDoc(doc(db, "inventory", n), { barcode: bc, name: n, buy: b + (t/1), sell: s, stock: increment(1) }, { merge: true });
+    const totalBuy = Number(document.getElementById('tBuy').value);
+    const totalQty = Number(document.getElementById('tQty').value);
+    const sellP = Number(document.getElementById('pS').value);
+
+    if(!n || !totalBuy || !totalQty) return alert("সব তথ্য দিন!");
+    
+    const unitBuy = totalBuy / totalQty; // একটির কেনা দাম অটোমেটিক বের করা
+
+    await setDoc(doc(db, "inventory", n), { 
+        barcode: bCode, 
+        name: n, 
+        buy: unitBuy, 
+        sell: sellP, 
+        stock: increment(totalQty) 
+    }, { merge: true });
+    
     alert("স্টক আপডেট হয়েছে!");
+    location.reload();
   };
 
   onSnapshot(collection(db, "inventory"), snap => {
-    let list = "<table class='table table-sm'><thead><tr><th>নাম</th><th>স্টক</th><th>মূল্য</th></tr></thead><tbody>";
-    let ops = "<option value=''>পণ্য নির্বাচন করুন</option>";
+    let list = "<table class='table table-sm'><thead><tr><th>বারকোড</th><th>নাম</th><th>স্টক</th><th>বেচা</th><th>অ্যাকশন</th></tr></thead><tbody>";
+    let ops = "<option value=''>পণ্য বাছুন</option>";
     let iVal = 0;
     snap.forEach(d => {
         const data = d.data();
-        inventoryData[data.name] = data;
-        list += `<tr><td>${data.name}</td><td>${data.stock}</td><td>${data.sell}</td></tr>`;
+        inv[data.name] = data;
+        list += `<tr>
+            <td>${data.barcode}</td>
+            <td>${data.name}</td>
+            <td>${data.stock}</td>
+            <td>${data.sell}</td>
+            <td><button class="btn btn-sm btn-info" onclick="genBC('${data.barcode}', ${data.sell})">🏷️</button></td>
+        </tr>`;
         ops += `<option value="${data.name}">${data.name}</option>`;
         iVal += (data.buy * data.stock);
     });
@@ -224,36 +218,45 @@
     document.getElementById('iV').innerText = Math.round(iVal);
   });
 
-  // --- Sale & Discount Logic ---
+  // Barcode Generator
+  window.genBC = (code, price) => {
+    document.getElementById('barcode-print-area').style.display = 'block';
+    document.getElementById('bc-price').innerText = price;
+    JsBarcode("#bc-svg", code, { width: 1.5, height: 40, fontSize: 12 });
+  };
+
+  window.downloadBC = () => {
+    html2canvas(document.getElementById('bc-sticker')).then(c => {
+        let l = document.createElement('a'); l.download='barcode.png'; l.href=c.toDataURL(); l.click();
+    });
+  };
+
+  // --- Sale Logic ---
   window.processSale = async () => {
-    const name = document.getElementById('sItem').value;
-    const qty = Number(document.getElementById('sQ').value || 1);
-    const discInput = Number(document.getElementById('sDisc').value || 0);
+    const n = document.getElementById('sItem').value;
+    const q = Number(document.getElementById('sQ').value);
+    const disc = Number(document.getElementById('sDisc').value || 0);
     const dType = document.getElementById('dType').value;
-    const cust = document.getElementById('cust').value || "সম্মানিত ক্রেতা";
+    const cName = document.getElementById('cust').value || "সম্মানিত ক্রেতা";
 
-    const pD = inventoryData[name];
-    if(!pD) return alert("পণ্য বাছাই করুন!");
-
-    let subTotal = pD.sell * qty;
-    let dAmt = (dType === 'percent') ? (subTotal * discInput / 100) : discInput;
-    let finalTotal = subTotal - dAmt;
-    let netProfit = ((pD.sell - pD.buy) * qty) - dAmt;
+    const pD = inv[n];
+    let sub = pD.sell * q;
+    let dAmt = (dType === 'percent') ? (sub * disc / 100) : disc;
+    let final = sub - dAmt;
+    let netP = ((pD.sell - pD.buy) * q) - dAmt;
 
     const today = new Date().toISOString().split('T')[0];
-    const month = today.substring(0, 7);
+    await updateDoc(doc(db, "inventory", n), { stock: increment(-q) });
+    const sDoc = await addDoc(collection(db, "sales"), { customer: cName, item: n, qty: q, total: final, profit: netP, date: today });
 
-    await updateDoc(doc(db, "inventory", name), { stock: increment(-qty) });
-    const sDoc = await addDoc(collection(db, "sales"), { customer: cust, item: name, qty, total: finalTotal, profit: netProfit, date: today, month: month, discount: dAmt });
-
-    // Receipt Show
+    // Fill Receipt
     document.getElementById('rDate').innerText = today;
     document.getElementById('rID').innerText = sDoc.id.substring(0,6).toUpperCase();
-    document.getElementById('rCust').innerText = cust;
-    document.getElementById('rItem').innerText = name;
-    document.getElementById('rQty').innerText = qty;
-    document.getElementById('rTotal').innerText = subTotal;
-    document.getElementById('rGrand').innerText = finalTotal;
+    document.getElementById('rCust').innerText = cName;
+    document.getElementById('rItem').innerText = n;
+    document.getElementById('rQty').innerText = q;
+    document.getElementById('rSub').innerText = sub;
+    document.getElementById('rGrand').innerText = final;
 
     if(dAmt > 0) {
         document.getElementById('rDiscRow').style.display = 'block';
@@ -264,30 +267,18 @@
     document.getElementById('receipt').style.display = 'block';
   };
 
-  // --- Real-time Stats ---
   onSnapshot(collection(db, "sales"), snap => {
-    let dS = 0, dP = 0, mP = 0, aS = 0;
-    const today = new Date().toISOString().split('T')[0], month = today.substring(0,7);
+    let dS = 0, dP = 0, aS = 0;
+    const today = new Date().toISOString().split('T')[0];
     snap.forEach(d => {
         const data = d.data();
         aS += data.total;
         if(data.date === today) { dS += data.total; dP += data.profit; }
-        if(data.month === month) mP += data.profit;
     });
     document.getElementById('dS').innerText = dS;
     document.getElementById('dP').innerText = dP;
-    document.getElementById('mP').innerText = mP;
     document.getElementById('aS').innerText = aS;
   });
-
-  window.search = async () => {
-    const f = document.getElementById('dF').value, t = document.getElementById('dT').value;
-    const q = query(collection(db, "sales"), where("date", ">=", f), where("date", "<=", t));
-    const snap = await getDocs(q);
-    let s = 0, p = 0;
-    snap.forEach(d => { s += d.data().total; p += d.data().profit; });
-    document.getElementById('searchRes').innerHTML = `<div class='alert alert-primary py-2'>মোট বিক্রি: <b>${s}</b> | মোট লাভ: <b>${p}</b></div>`;
-  };
 </script>
 </body>
 </html>
