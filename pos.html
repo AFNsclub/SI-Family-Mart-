@@ -12,23 +12,16 @@
 :root {--primary:#2563eb;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg:#f1f5f9;--card-bg:#fff;}
 body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif;}
 .header {background: linear-gradient(135deg, var(--primary), #1e3a8a); color:#fff; text-align:center; padding:25px; border-radius:0 0 30px 30px; box-shadow:0 10px 20px rgba(0,0,0,0.1);}
-.header h2{margin:0; font-weight:700;}
 .card{border-radius:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05); padding:20px; margin-bottom:15px; background:var(--card-bg);}
-input, select{border-radius:10px;}
-table th, table td{font-size:14px;}
-#receipt{display:none;background:#fff;padding:25px;border-radius:15px;max-width:480px;margin:30px auto;box-shadow:0 10px 30px rgba(0,0,0,0.15);color:#333; border: 1px solid #ddd;}
-#receipt-header{text-align:center;border-bottom:2px dashed #333;padding-bottom:15px;margin-bottom:15px;}
-#rItemsBody td, #rItemsBody th{padding:6px 8px; border-bottom: 1px solid #eee;}
-#receipt-footer{text-align:center;margin-top:20px;font-size:12px;color:#555; border-top: 1px solid #eee; padding-top: 10px;}
-.table-hover tbody tr:hover{background:#f8f9fa; cursor:pointer;}
-@media print{ body * {visibility: hidden;} #receipt, #receipt * {visibility: visible;} #receipt {position: absolute; left: 0; top: 0; width: 100%; border:none; box-shadow:none;} .no-print {display:none;} }
+#receipt{display:none;background:#fff;padding:25px;border-radius:15px;max-width:480px;margin:30px auto;box-shadow:0 10px 30px rgba(0,0,0,0.15); border: 1px solid #ddd;}
+@media print{ body * {visibility: hidden;} #receipt, #receipt * {visibility: visible;} #receipt {position: absolute; left: 0; top: 0; width: 100%; border:none;} .no-print {display:none;} }
 </style>
 </head>
 <body>
 <div class="container mt-4 no-print">
   <header class="header">
-    <h2>S.I. Family Mart | POS</h2>
-    <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+    <h2 class="fw-bold m-0">S.I. Family Mart | POS</h2>
+    <p class="m-0 opacity-75">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
   </header>
 
   <div class="row mt-4">
@@ -36,23 +29,23 @@ table th, table td{font-size:14px;}
       <div class="card border-0">
         <h5 class="fw-bold mb-3 text-primary">🛒 পণ্য নির্বাচন</h5>
         <div class="mb-2">
-            <input type="text" id="cust" class="form-control mb-2" placeholder="ক্রেতার নাম">
+            <input type="text" id="cust" class="form-control mb-2" placeholder="ক্রেতার নাম (আবশ্যক)">
             <input type="text" id="custMobile" class="form-control mb-2" placeholder="ক্রেতার মোবাইল নাম্বার">
         </div>
         <hr>
         <div class="mb-3">
-            <label class="small fw-bold">বারকোড স্ক্যান</label>
-            <input type="text" id="barcodeInput" class="form-control" placeholder="Scan Barcode here..." oninput="scanToAdd()">
+            <label class="small fw-bold">ম্যানুয়াল সার্চ</label>
+            <select id="sItem" class="form-select" onchange="autoFillBarcode(this.value)"><option value="">পণ্য বাছুন</option></select>
         </div>
         <div class="mb-3">
-            <label class="small fw-bold">ম্যানুয়াল সার্চ</label>
-            <select id="sItem" class="form-select"><option value="">পণ্য বাছুন</option></select>
+            <label class="small fw-bold">বারকোড (অটো/স্ক্যান)</label>
+            <input type="text" id="barcodeInput" class="form-control" placeholder="পণ্য বাছলে এখানে চলে আসবে" oninput="scanToAdd()">
         </div>
         <div class="row g-2 mb-3">
           <div class="col-6"><input type="number" id="sQ" class="form-control" value="1" min="1"></div>
-          <div class="col-6"><button class="btn btn-success w-100 fw-bold" onclick="addToCart()">+ কার্টে দিন</button></div>
+          <div class="col-6"><button class="btn btn-success w-100 fw-bold shadow-sm" onclick="addToCart()">+ কার্টে দিন</button></div>
         </div>
-        <button class="btn btn-dark w-100" onclick="startScanner()">📷 ক্যামেরা স্ক্যান শুরু</button>
+        <button class="btn btn-dark w-100 shadow-sm" onclick="startScanner()">📷 ক্যামেরা স্ক্যান শুরু</button>
         <video id="scannerPreview" style="width:100%;display:none;margin-top:10px; border-radius: 10px;"></video>
       </div>
     </div>
@@ -77,12 +70,12 @@ table th, table td{font-size:14px;}
             </div>
             <div class="col-md-6">
                 <div class="input-group">
-                    <span class="input-group-text">পেমেন্ট</span>
-                    <input type="number" id="paidAmount" class="form-control" placeholder="0.00">
+                    <span class="input-group-text bg-warning text-dark fw-bold">পেমেন্ট</span>
+                    <input type="number" id="paidAmount" class="form-control border-warning" placeholder="0.00">
                 </div>
             </div>
           </div>
-          <button class="btn btn-primary w-100 py-2 fw-bold" id="finalBtn" onclick="finalizeSale()">🎉 মেমো ও বিক্রি সম্পন্ন</button>
+          <button class="btn btn-primary w-100 py-2 fw-bold shadow" id="finalBtn" onclick="finalizeSale()">🎉 মেমো ও বিক্রি সম্পন্ন</button>
         </div>
       </div>
     </div>
@@ -90,66 +83,66 @@ table th, table td{font-size:14px;}
 </div>
 
 <div id="receipt">
-  <div id="receipt-header">
+  <div class="text-center mb-3">
     <h3 class="fw-bold m-0">S.I. FAMILY MART</h3>
     <p class="small m-0">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
-    <p class="small m-0">মোবাইল: ০১XXX-XXXXXX</p>
-    <div class="my-2">
-        <svg id="rBarcode"></svg>
-    </div>
-    <p class="small m-0" id="memoNum">মেমো #: </p>
+    <div class="my-2"><svg id="rBarcode"></svg></div>
+    <p class="small m-0" id="memoNum"></p>
     <p class="small m-0" id="saleDate"></p>
   </div>
+  <hr>
   <div class="small">
     <p class="mb-1"><strong>ক্রেতা:</strong> <span id="custName"></span></p>
     <p class="mb-3"><strong>মোবাইল:</strong> <span id="custMobileDisplay"></span></p>
-    <table class="table table-sm">
-      <thead class="table-dark"><tr><th>পণ্য</th><th>Qty</th><th>মূল্য</th><th>মোট</th></tr></thead>
+    <table class="table table-sm border">
+      <thead><tr><th>পণ্য</th><th>Qty</th><th>মূল্য</th><th>মোট</th></tr></thead>
       <tbody id="rItemsBody"></tbody>
     </table>
   </div>
-  <div style="text-align:right;" class="small">
+  <div style="text-align:right;" class="small mt-3">
     <p class="mb-1">মোট মূল্য: <span id="rSub">0</span>৳</p>
     <p class="mb-1">ছাড়: <span id="rDiscount">0</span>৳</p>
-    <p class="mb-1 fw-bold">Grand Total: <span id="rGrand">0</span>৳</p>
+    <p class="mb-1 fw-bold fs-6">Grand Total: <span id="rGrand">0</span>৳</p>
     <hr>
     <p class="mb-1 text-success">Paid: <span id="rPaid">0</span>৳</p>
-    <p class="mb-1 text-danger">Due: <span id="rDue">0</span>৳</p>
+    <p class="mb-1 text-danger fw-bold">Due: <span id="rDue">0</span>৳</p>
   </div>
-  <div id="receipt-footer">
-    <p>পণ্য বিক্রয় করা ফেরত নেওয়া হয় না।</p>
-    <p class="fw-bold">ধন্যবাদ! আবার আসবেন।</p>
+  <div class="text-center mt-4 small border-top pt-2">
+    <p>পণ্য ফেরত নেওয়া হয় না। ধন্যবাদ!</p>
   </div>
   <div class="mt-4 no-print text-center">
-      <button class="btn btn-success me-2" onclick="window.print()">🖨️ Print Receipt</button>
-      <button class="btn btn-outline-dark" onclick="location.reload()">🔄 New Sale</button>
+      <button class="btn btn-success me-2 px-4" onclick="window.print()">🖨️ Print Receipt</button>
+      <button class="btn btn-outline-dark px-4" onclick="location.reload()">🔄 New Sale</button>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-// Firebase Initialization
 const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomain:"fir-i-family-mart.firebaseapp.com",projectId:"fir-i-family-mart",storageBucket:"fir-i-family-mart.firebasestorage.app",messagingSenderId:"73889024539",appId:"1:73889024539:web:271561c9dba17b5a6b06be"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
 let inv={}, cart=[];
 
-// Load Inventory
+// ১. ইনভেন্টরি লোড
 db.collection('inventory').onSnapshot(snap=>{
   let ops="<option value=''>পণ্য বাছুন</option>";
-  snap.forEach(d=>{
-    const data=d.data();
-    inv[data.name]=data;
-    ops+=`<option value="${data.name}">${data.name} (Stock: ${data.stock})</option>`;
-  });
+  snap.forEach(d=>{ const data=d.data(); inv[data.name]=data; ops+=`<option value="${data.name}">${data.name} (Stock: ${data.stock})</option>`; });
   document.getElementById('sItem').innerHTML=ops;
 });
 
-// Barcode Scan to Cart
+// ২. অটোমেটিক বারকোড বসানো (পণ্য বাছলে)
+function autoFillBarcode(name) {
+    if(name && inv[name]) {
+        document.getElementById('barcodeInput').value = inv[name].barcode || "N/A";
+    } else {
+        document.getElementById('barcodeInput').value = "";
+    }
+}
+
+// ৩. বারকোড স্ক্যান লজিক
 function scanToAdd(){
   const val = document.getElementById('barcodeInput').value.trim();
   if(!val) return;
@@ -157,7 +150,7 @@ function scanToAdd(){
     if(inv[name].barcode === val){
       document.getElementById('sItem').value = name;
       addToCart();
-      document.getElementById('barcodeInput').value = ""; // Clear for next scan
+      document.getElementById('barcodeInput').value = ""; 
       break;
     }
   }
@@ -176,21 +169,21 @@ function addToCart(){
 }
 
 function renderCart(){
-  let h=""; 
-  cart.forEach((it,i)=>{
-      h+=`<tr><td>${it.name}</td><td>${it.price}</td><td>${it.qty}</td><td>${it.total}</td><td><button class="btn btn-sm text-danger" onclick="removeItem(${i})">✖</button></td></tr>`;
-  });
+  let h=""; cart.forEach((it,i)=>{ h+=`<tr><td>${it.name}</td><td>${it.price}</td><td>${it.qty}</td><td>${it.total}</td><td><button class="btn btn-sm text-danger" onclick="removeItem(${i})">✖</button></td></tr>`; });
   document.getElementById('cartBody').innerHTML=h;
 }
 
 function removeItem(i){cart.splice(i,1);renderCart();}
 
+// ৪. ফাইনাল বিক্রি সম্পন্ন করা (ট্র্যাকিং লজিক সহ)
 async function finalizeSale(){
+  const cust=document.getElementById('cust').value.trim();
   if(cart.length===0) return alert("কার্ট খালি!");
+  if(!cust) return alert("ক্রেতার নাম অবশ্যই দিতে হবে!");
+
   const finalBtn = document.getElementById('finalBtn');
   finalBtn.disabled=true;
 
-  const cust=document.getElementById('cust').value || "সম্মানিত ক্রেতা";
   const custMobile=document.getElementById('custMobile').value || "-";
   const paidAmt=Number(document.getElementById('paidAmount').value) || 0;
   const dVal=Number(document.getElementById('totalDisc').value) || 0;
@@ -200,29 +193,33 @@ async function finalizeSale(){
   let dAmt = (dType==='percent') ? (subTotal*dVal/100) : dVal;
   let grand = subTotal - dAmt;
   let due = grand - paidAmt;
-  
-  // Profit calculation (Price - BuyCost - Discount)
   let totalProfit = cart.reduce((s,it)=>s+(it.total - (it.buyPrice * it.qty)), 0) - dAmt;
-
   const memoNum = "MEMO-" + Math.floor(1000 + Math.random() * 9000);
   const today = new Date().toISOString().split('T')[0];
 
   try {
-      // 1. Update Inventory and Save Sale
+      // স্টক আপডেট
       for(let it of cart){
-        await db.collection('inventory').doc(it.name).update({
-            stock: firebase.firestore.FieldValue.increment(-it.qty)
-        });
+        await db.collection('inventory').doc(it.name).update({ stock: firebase.firestore.FieldValue.increment(-it.qty) });
       }
 
+      // সেলস রিপোর্ট সেভ
       await db.collection('sales').add({
         customer: cust, mobile: custMobile, items: cart,
-        subTotal: subTotal, total: grand, discount: dAmt,
-        paid: paidAmt, due: due, profit: totalProfit,
+        total: grand, due: due, profit: totalProfit,
         date: today, memo: memoNum, time: new Date().toLocaleTimeString()
       });
 
-      // 2. Receipt Display
+      // ৫. কাস্টমার ট্র্যাকিং (বাকি ও মোট কেনাকাটা)
+      const custRef = db.collection('customers').doc(cust);
+      await custRef.set({
+          mobile: custMobile,
+          due: firebase.firestore.FieldValue.increment(due),
+          totalSpent: firebase.firestore.FieldValue.increment(grand),
+          lastUpdate: today
+      }, { merge: true });
+
+      // রশিদ প্রিন্ট ডাটা
       let rHtml=""; cart.forEach(it=>{rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}৳</td><td>${it.total}৳</td></tr>`;});
       document.getElementById('rItemsBody').innerHTML=rHtml;
       document.getElementById('rSub').innerText=Math.round(subTotal);
@@ -242,13 +239,11 @@ async function finalizeSale(){
       window.scrollTo(0,0);
 
   } catch (error) {
-      console.error(error);
-      alert("বিক্রি সম্পন্ন করতে সমস্যা হয়েছে!");
+      alert("বিক্রি সম্পন্ন করতে সমস্যা হয়েছে!");
       finalBtn.disabled=false;
   }
 }
 
-// Camera Scanner Logic
 const codeReader = new ZXing.BrowserMultiFormatReader();
 function startScanner(){
   const video = document.getElementById('scannerPreview');
