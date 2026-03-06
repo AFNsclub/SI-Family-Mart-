@@ -19,6 +19,8 @@ header { background: var(--dark); color:white; padding:20px; text-align:center; 
 h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
 button { padding:10px 18px; border:none; background: var(--primary); color:white; border-radius:8px; cursor:pointer; font-weight: 600; transition: 0.3s; }
 .btn-payment { background: var(--success); margin-top: 10px; }
+.btn-whatsapp { background: #25d366; color: white; padding: 5px 10px; font-size: 14px; margin-left: 5px; }
+.btn-call { background: #3b82f6; color: white; padding: 5px 10px; font-size: 14px; }
 input { padding:10px; border: 1px solid #cbd5e1; border-radius: 8px; margin: 5px 0; }
 table { width:100%; border-collapse:collapse; margin-top:15px; background: white; }
 th,td { padding:12px; border:1px solid #e2e8f0; text-align:left; }
@@ -35,12 +37,13 @@ th { background: #f1f5f9; color: var(--dark); }
 
 <header>
     <h2 style="margin:0;">S.I. Family Mart | লেজার ড্যাশবোর্ড</h2>
+    <p style="margin:5px 0 0 0; opacity: 0.8;">প্রয়োজনে: 01568683171</p>
 </header>
 
 <div class="container">
 
   <div class="card">
-    <h3>📊 হিসাবের সারাংশ (বকেয়া ভিত্তিক)</h3>
+    <h3>📊 হিসাবের সারাংশ (বকেয়া ভিত্তিক)</h3>
     <div class="summary-box">
         <div class="summary-item" style="border-left-color: var(--danger);"><h4>মোট বাকি</h4><p id="totalDue" style="color: var(--danger); font-size: 1.5rem; font-weight:bold;">০৳</p></div>
         <div class="summary-item" style="border-left-color: var(--success);"><h4>আজকের কালেকশন</h4><p id="todayCollection" style="color: var(--success); font-size: 1.5rem; font-weight:bold;">০৳</p></div>
@@ -48,9 +51,9 @@ th { background: #f1f5f9; color: var(--dark); }
   </div>
 
   <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-        <h3>👥 বকেয়া কাস্টমার তালিকা</h3>
-        <input type="text" id="searchCustomer" placeholder="নাম বা মোবাইল দিয়ে খুঁজুন..." onkeyup="searchCustomer()">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <h3>👥 কাস্টমার তালিকা ও যোগাযোগ</h3>
+        <input type="text" id="searchCustomer" placeholder="নাম বা মোবাইল দিয়ে খুঁজুন..." onkeyup="searchCustomer()" style="min-width: 250px;">
     </div>
     <div style="overflow-x: auto;">
         <table id="customerTable">
@@ -60,7 +63,7 @@ th { background: #f1f5f9; color: var(--dark); }
               <th>মোবাইল</th>
               <th>বর্তমান বাকি</th>
               <th>অবস্থা</th>
-              <th>অ্যাকশন</th>
+              <th>যোগাযোগ / অ্যাকশন</th>
             </tr>
           </thead>
           <tbody id="custBody"></tbody>
@@ -77,7 +80,7 @@ th { background: #f1f5f9; color: var(--dark); }
         <div style="background: #f1f5f9; padding: 15px; border-radius: 10px; min-width: 280px;">
             <label class="fw-bold">বাকি টাকা জমা নিন:</label><br>
             <input type="number" id="payAmount" placeholder="টাকার পরিমাণ" style="width: 100%;">
-            <button class="btn-payment" onclick="processPayment()" style="width: 100%;">💸 কনফার্ম জমা</button>
+            <button class="btn-payment" onclick="processPayment()" style="width: 100%;">💸 কনফার্ম জমা ও মেসেজ</button>
         </div>
     </div>
     
@@ -114,8 +117,10 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let currentCustomer = "";
+let currentMobile = "";
+let currentDueValue = 0;
 
-// ১. রিয়েল-টাইম ডাটা লোড
+// ১. রিয়েল-টাইম ডাটা লোড
 db.collection('sales').onSnapshot(snap => {
     let totalDue = 0, todayColl = 0;
     let customerMap = {};
@@ -125,7 +130,6 @@ db.collection('sales').onSnapshot(snap => {
         const d = doc.data();
         const dueVal = Number(d.due || 0);
         
-        // আজকের কালেকশন হিসাব (যখন due মাইনাস হয় তখন সেটা কালেকশন)
         if(d.date === today && d.type === 'DUE_COLLECTION') {
             todayColl += Math.abs(dueVal);
         }
@@ -139,7 +143,6 @@ db.collection('sales').onSnapshot(snap => {
         }
     });
 
-    // ২. ফিল্টারিং লজিক: শুধু বাকি থাকা কাস্টমার অথবা ১০ দিনের মধ্যে পরিশোধ করা কাস্টমার
     const filteredCustomers = {};
     const tenDaysAgo = new Date();
     tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
@@ -148,7 +151,6 @@ db.collection('sales').onSnapshot(snap => {
         const c = customerMap[name];
         const lastDate = new Date(c.lastUpdate);
         
-        // শর্ত: বাকি আছে অথবা (বাকি নেই কিন্তু ১০ দিন পার হয়নি)
         if (c.due > 1 || (c.due <= 1 && lastDate >= tenDaysAgo)) {
             filteredCustomers[name] = c;
             if(c.due > 0) totalDue += c.due;
@@ -160,6 +162,7 @@ db.collection('sales').onSnapshot(snap => {
     renderCustomerTable(filteredCustomers);
 });
 
+// ২. কাস্টমার টেবিল রেন্ডার এবং যোগাযোগ বাটন
 function renderCustomerTable(data) {
     const tbody = document.getElementById('custBody');
     tbody.innerHTML = "";
@@ -168,20 +171,30 @@ function renderCustomerTable(data) {
     names.forEach(name => {
         const c = data[name];
         const isPaid = c.due <= 1;
+        const phone = c.mobile.replace(/[^0-9]/g, "");
+        
+        // হোয়াটসঅ্যাপ রিমাইন্ডার মেসেজ
+        const reminderMsg = encodeURIComponent(`প্রিয় ${name}, S.I. Family Mart-এ আপনার বর্তমান বকেয়া ${Math.round(c.due)} টাকা। দ্রুত পরিশোধের অনুরোধ রইল। ধন্যবাদ।`);
+
         tbody.innerHTML += `
             <tr>
-                <td class="customer-link" onclick="showCustomerDetails('${name}')">${name}</td>
+                <td class="customer-link" onclick="showCustomerDetails('${name}', '${c.mobile}')">${name}</td>
                 <td>${c.mobile}</td>
                 <td style="color: ${isPaid ? 'var(--success)' : 'var(--danger)'}; font-weight:bold;">${Math.round(c.due)}৳</td>
-                <td><span class="${isPaid ? 'badge-pay' : 'badge-buy'}">${isPaid ? 'পরিশোধিত' : 'বকেয়া'}</span></td>
-                <td><button onclick="showCustomerDetails('${name}')" style="padding:5px 10px; font-size:12px;">ইতিহাস</button></td>
+                <td><span class="${isPaid ? 'badge-pay' : 'badge-buy'}">${isPaid ? 'পরিশোধিত' : 'বকেয়া'}</span></td>
+                <td>
+                    ${c.mobile !== '-' ? `<a href="tel:${c.mobile}" class="button btn-call" style="text-decoration:none;">📞 কল</a>` : ''}
+                    ${!isPaid && c.mobile !== '-' ? `<a href="https://wa.me/88${phone}?text=${reminderMsg}" target="_blank" class="button btn-whatsapp" style="text-decoration:none;">💬 রিমাইন্ডার</a>` : ''}
+                    <button onclick="showCustomerDetails('${name}', '${c.mobile}')" style="padding:5px 10px; font-size:12px; margin-left:5px;">ইতিহাস</button>
+                </td>
             </tr>
         `;
     });
 }
 
-async function showCustomerDetails(name) {
+async function showCustomerDetails(name, mobile) {
     currentCustomer = name;
+    currentMobile = mobile;
     document.getElementById('detailsSection').style.display = "block";
     document.getElementById('detailTitle').innerText = "লেনদেন ইতিহাস: " + name;
     const transBody = document.getElementById('transBody');
@@ -198,7 +211,7 @@ async function showCustomerDetails(name) {
         
         const typeBadge = amt < 0 ? 
             `<span class="badge-pay">টাকা জমা</span>` : 
-            `<span class="badge-buy">পণ্য ক্রয়</span>`;
+            `<span class="badge-buy">পণ্য ক্রয়</span>`;
 
         html = `
             <tr>
@@ -207,12 +220,14 @@ async function showCustomerDetails(name) {
                 <td>${Math.abs(amt)}৳</td>
                 <td style="font-weight:bold;">${Math.round(runningDue)}৳</td>
             </tr>
-        ` + html; // নতুনগুলো উপরে দেখাবে
+        ` + html;
     });
+    currentDueValue = runningDue;
     transBody.innerHTML = html;
     window.scrollTo({ top: document.getElementById('detailsSection').offsetTop - 20, behavior: 'smooth' });
 }
 
+// ৩. টাকা জমা নেওয়ার পর হোয়াটসঅ্যাপ কনফার্মেশন
 async function processPayment() {
     const amount = Number(document.getElementById('payAmount').value);
     if(!amount || amount <= 0) return alert("সঠিক পরিমাণ লিখুন");
@@ -221,16 +236,27 @@ async function processPayment() {
         try {
             await db.collection('sales').add({
                 customer: currentCustomer,
+                mobile: currentMobile,
                 total: amount,
                 due: -amount,
                 profit: 0,
                 date: new Date().toISOString().split('T')[0],
                 type: 'DUE_COLLECTION'
             });
+
+            const newDue = Math.round(currentDueValue - amount);
+            alert("জমা সফল হয়েছে!");
+            
+            // টাকা জমার কনফার্মেশন মেসেজ পাঠানো
+            if(currentMobile !== "-" && confirm("কাস্টমারকে WhatsApp-এ জমার মেসেজ পাঠাতে চান?")) {
+                const phone = currentMobile.replace(/[^0-9]/g, "");
+                const msg = encodeURIComponent(`প্রিয় ${currentCustomer},\nআপনার *${amount}৳* জমা নেওয়া হয়েছে।\n✅ বর্তমান মোট বকেয়া: *${newDue}৳*।\nধন্যবাদ - *S.I. Family Mart*`);
+                window.open(`https://wa.me/88${phone}?text=${msg}`, '_blank');
+            }
+
             document.getElementById('payAmount').value = "";
-            alert("জমা সফল হয়েছে!");
-            showCustomerDetails(currentCustomer);
-        } catch (e) { alert("ভুল হয়েছে!"); }
+            showCustomerDetails(currentCustomer, currentMobile);
+        } catch (e) { alert("ভুল হয়েছে!"); }
     }
 }
 
@@ -246,7 +272,7 @@ function downloadStatement() {
     doc.setFontSize(18);
     doc.text("S.I. Family Mart - Customer Ledger", 14, 20);
     doc.setFontSize(12);
-    doc.text(`Customer Name: ${currentCustomer}`, 14, 30);
+    doc.text(`Customer: ${currentCustomer} | Mobile: ${currentMobile}`, 14, 30);
     doc.text(`Report Date: ${new Date().toLocaleDateString()}`, 14, 37);
     
     doc.autoTable({ html: '#transTable', startY: 45, theme: 'striped', headStyles: {fillColor: [37, 99, 235]} });
