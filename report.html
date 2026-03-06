@@ -10,14 +10,55 @@
 </head>
 <body>
 <div class="container mt-4">
-    <h2>Business Reports</h2>
-    <div class="row g-2 mb-3">
-        <div class="col-md-5"><input type="date" id="dF" class="form-control"></div>
-        <div class="col-md-5"><input type="date" id="dT" class="form-control"></div>
-        <div class="col-md-2"><button class="btn btn-primary w-100" onclick="search()">Search</button></div>
-    </div>
-    <div id="searchRes"></div>
+<header class="d-flex justify-content-between align-items-center mb-3">
+<h2>Reports & Analytics</h2>
+<button id="logoutBtn" class="btn btn-danger">Logout</button>
+</header>
+
+<div class="card p-4">
+<h5>Filter Sales</h5>
+<div class="row g-2 mb-3">
+    <div class="col-5"><input type="date" id="dF" class="form-control"></div>
+    <div class="col-5"><input type="date" id="dT" class="form-control"></div>
+    <div class="col-2"><button class="btn btn-primary w-100" onclick="search()">Search</button></div>
 </div>
-<script type="module" src="app.js"></script>
+
+<div id="searchRes" class="mt-3"></div>
+<canvas id="salesChart" height="150"></canvas>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
+authDomain: "fir-i-family-mart.firebaseapp.com",
+projectId: "fir-i-family-mart",
+storageBucket: "fir-i-family-mart.firebasestorage.app",
+messagingSenderId: "73889024539",
+appId: "1:73889024539:web:271561c9dba17b5a6b06be"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth,user=>{if(!user)window.location="login.html";});
+document.getElementById('logoutBtn').addEventListener('click',async()=>{await signOut(auth); window.location="login.html";});
+
+window.search=async()=>{
+    const f=document.getElementById('dF').value;
+    const t=document.getElementById('dT').value;
+    if(!f||!t){alert("Select Dates!"); return;}
+    const q=query(collection(db,"sales"),where("date",">=",f),where("date","<=",t));
+    const snap=await getDocs(q);
+    let s=0, p=0, count=0;
+    snap.forEach(d=>{const dt=d.data(); s+=dt.total||0; p+=dt.profit||0; count++;});
+    document.getElementById('searchRes').innerHTML=`<p>Total Sales: ${s}</p><p>Total Profit: ${p}</p><p>Invoices: ${count}</p>`;
+};
+</script>
 </body>
 </html>
