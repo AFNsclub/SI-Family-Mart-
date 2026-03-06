@@ -3,49 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reports</title>
-<link rel="stylesheet" href="style.css">
+<title>Reports | S.I. Family Mart</title>
+<link href="style.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<h2>Reports & Analytics</h2>
-
-<label>From: <input type="date" id="fromDate"></label>
-<label>To: <input type="date" id="toDate"></label>
-<button onclick="genReport()">Generate Report</button>
-
-<h3>Summary</h3>
-<div>Total Sales: <span id="totSales">0</span></div>
-<div>Total Profit: <span id="totProfit">0</span></div>
-<div>Total Expenses: <span id="totExp">0</span></div>
-
-<h3>Sales Chart</h3>
-<canvas id="salesChart" width="400" height="200"></canvas>
-
-<script type="module">
-import { db } from './app.js';
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-async function genReport(){
-  const f=document.getElementById('fromDate').value;
-  const t=document.getElementById('toDate').value;
-  if(!f||!t)return alert("Select dates!");
-  const salesQ=query(collection(db,'sales'),where('date','>=',f),where('date','<=',t));
-  const salesSnap=await getDocs(salesQ);
-  let total=0, profit=0;
-  salesSnap.forEach(d=>{total+=d.data().total; profit+=d.data().profit;});
-  document.getElementById('totSales').innerText=total;
-  document.getElementById('totProfit').innerText=profit;
-
-  const expSnap=await getDocs(collection(db,'expenses'));
-  let expTot=0;
-  expSnap.forEach(d=>{expTot+=d.data().amt;});
-  document.getElementById('totExp').innerText=expTot;
-
-  const ctx=document.getElementById('salesChart').getContext('2d');
-  new Chart(ctx,{type:'bar',data:{labels:['Sales','Profit','Expenses'],datasets:[{label:'৳',data:[total,profit,expTot],backgroundColor:['#2563eb','#10b981','#f59e0b']}]},options:{responsive:true}});
-}
-window.genReport=genReport;
-</script>
+<div class="container mt-4">
+    <h2>Business Reports</h2>
+    <div class="row g-2 mb-3">
+        <div class="col-md-5"><input type="date" id="dF" class="form-control"></div>
+        <div class="col-md-5"><input type="date" id="dT" class="form-control"></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100" onclick="search()">Search</button></div>
+    </div>
+    <div id="searchRes"></div>
+</div>
+<script type="module" src="app.js"></script>
 </body>
 </html>
