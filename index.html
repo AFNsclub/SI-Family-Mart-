@@ -8,85 +8,118 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-:root{--primary:#2563eb;--secondary:#f59e0b;--success:#10b981;--danger:#ef4444;--bg:#f1f5f9;--card-bg:#fff;}
-body{background-color: var(--bg); font-family:'Segoe UI',sans-serif;}
-.header{text-align:center; padding:25px; background:linear-gradient(135deg,var(--primary),#1e3a8a); color:#fff; border-radius:0 0 30px 30px; box-shadow:0 10px 20px rgba(0,0,0,0.1);}
-.header h1{font-weight:700;} .header p{opacity:.8;}
-.header .btn{margin:5px 5px; border-radius:50px; font-weight:600;}
-.stats .card{border-radius:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05); text-align:center; padding:20px; color:white;}
-.bg-sale{background:linear-gradient(135deg,#84cc16,#10b981);}
-.bg-profit{background:linear-gradient(135deg,#2563eb,#3b82f6);}
-.bg-inventory{background:linear-gradient(135deg,#f59e0b,#f97316);}
-.customer-ledger{margin-top:30px;}
-.table-hover tbody tr:hover{background:#f0f0f0; cursor:pointer;}
-.modal-body table td,.modal-body table th{padding:5px;}
+:root {
+    --primary: #2563eb;
+    --secondary: #f59e0b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --bg: #f1f5f9;
+    --card-bg: #ffffff;
+}
+body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; }
+.header {
+    text-align: center;
+    padding: 25px;
+    background: linear-gradient(135deg, var(--primary), #1e3a8a);
+    color: white;
+    border-radius: 0 0 30px 30px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.header h1 { font-weight: 700; }
+.header p { opacity: 0.8; }
+.header .btn { margin: 5px 5px; border-radius: 50px; font-weight: 600; }
+
+.stats .card {
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    text-align: center;
+    padding: 20px;
+    color: white;
+}
+.bg-sale { background: linear-gradient(135deg, #84cc16, #10b981); }
+.bg-profit { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+.bg-inventory { background: linear-gradient(135deg, #f59e0b, #f97316); }
+
+.customer-ledger{
+    margin-top:30px;
+}
+.table-hover tbody tr:hover { background:#f0f0f0; cursor:pointer; }
+
+.modal-body table td, .modal-body table th { padding:5px; }
 </style>
 </head>
 <body>
 <div class="container mt-4">
-  <header class="header">
-    <h1>S.I. Family Mart Dashboard</h1>
-    <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
-    <div>
-      <a href="pos.html" class="btn btn-primary">POS / Billing</a>
-      <a href="stock.html" class="btn btn-success">Stock Management</a>
-      <a href="report.html" class="btn btn-warning">Reports</a>
-      <button class="btn btn-danger" id="logoutBtn">Logout</button>
-    </div>
-  </header>
+    <header class="header">
+        <h1>S.I. Family Mart Dashboard</h1>
+        <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+        <div>
+            <a href="pos.html" class="btn btn-primary">POS / Billing</a> 
+            <a href="stock.html" class="btn btn-success">Stock Management</a>
+            <a href="report.html" class="btn btn-warning">Reports</a>
+            <button class="btn btn-danger" id="logoutBtn">Logout</button>
+        </div>
+    </header>
 
-  <!-- Stats -->
-  <section class="stats mt-4">
-    <div class="row g-3">
-      <div class="col-md-4 card bg-sale">
-        <h5>আজকের বিক্রি</h5>
-        <h3 id="dS">0</h3>
-      </div>
-      <div class="col-md-4 card bg-profit">
-        <h5>আজকের লাভ</h5>
-        <h3 id="dP">0</h3>
-      </div>
-      <div class="col-md-4 card bg-inventory">
-        <h5>স্টক মান</h5>
-        <h3 id="iV">0</h3>
-      </div>
-    </div>
-  </section>
+    <!-- Stats -->
+    <section class="stats mt-4">
+        <div class="row g-3">
+            <div class="col-md-4 card bg-sale">
+                <h5>আজকের বিক্রি</h5>
+                <h3 id="dS">0</h3>
+            </div>
+            <div class="col-md-4 card bg-profit">
+                <h5>আজকের লাভ</h5>
+                <h3 id="dP">0</h3>
+            </div>
+            <div class="col-md-4 card bg-inventory">
+                <h5>স্টক মান</h5>
+                <h3 id="iV">0</h3>
+            </div>
+        </div>
+    </section>
 
-  <!-- Weekly Sales Chart -->
-  <section class="charts mt-5">
-    <canvas id="salesChart" height="150"></canvas>
-  </section>
+    <!-- Weekly Sales Chart -->
+    <section class="charts mt-5">
+        <canvas id="salesChart" height="150"></canvas>
+    </section>
 
-  <!-- Customer Ledger -->
-  <section class="customer-ledger">
-    <h3 class="mt-4">Customer Ledger / বাকি টাকা</h3>
-    <input type="text" id="searchCust" class="form-control mb-2" placeholder="Search Customer Name">
-    <table class="table table-bordered table-striped table-hover">
-      <thead>
-        <tr><th>ক্রেতার নাম</th><th>Total Due</th><th>Last Transaction</th></tr>
-      </thead>
-      <tbody id="customerLedger"></tbody>
-    </table>
-  </section>
+    <!-- Customer Ledger -->
+    <section class="customer-ledger">
+        <h3 class="mt-4">Customer Ledger / বাকি টাকা</h3>
+        <p><strong>Overall Baki:</strong> <span id="overallDue">0</span>৳</p>
+        <input type="text" id="searchCust" class="form-control mb-2" placeholder="Customer Name দিয়ে Search করুন">
+        <table class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr><th>ক্রেতার নাম</th><th>মোট বাকি</th><th>শেষ লেনদেনের তারিখ</th></tr>
+            </thead>
+            <tbody id="customerLedger"></tbody>
+        </table>
+    </section>
 </div>
 
-<!-- Customer Details Modal -->
+<!-- Customer Details & Payment Modal -->
 <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Customer Details</h5>
+        <h5 class="modal-title">Customer Details & Payment</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <p><strong>Name:</strong> <span id="modalName"></span></p>
         <p><strong>Total Due:</strong> <span id="modalDue"></span>৳</p>
-        <table class="table table-bordered">
-          <thead>
-            <tr><th>Memo</th><th>Date</th><th>Total</th><th>Paid</th><th>Due</th><th>Discount</th></tr>
-          </thead>
-          <tbody id="modalHistory"></tbody>
+        <div class="mb-3">
+          <label for="modalPaid" class="form-label">Amount Paid</label>
+          <input type="number" id="modalPaid" class="form-control" placeholder="Enter Paid Amount">
+        </div>
+        <button class="btn btn-success w-100" id="submitModalPayment">Submit Payment</button>
+        <hr>
+        <table class="table table-bordered mt-2">
+            <thead>
+                <tr><th>Memo</th><th>Date</th><th>Total</th><th>Paid</th><th>Due</th><th>Discount</th></tr>
+            </thead>
+            <tbody id="modalHistory"></tbody>
         </table>
       </div>
     </div>
@@ -97,79 +130,124 @@ body{background-color: var(--bg); font-family:'Segoe UI',sans-serif;}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 // Firebase Config
-const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomain:"fir-i-family-mart.firebaseapp.com",projectId:"fir-i-family-mart",storageBucket:"fir-i-family-mart.firebasestorage.app",messagingSenderId:"73889024539",appId:"1:73889024539:web:271561c9dba17b5a6b06be"};
+const firebaseConfig={
+    apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
+    authDomain:"fir-i-family-mart.firebaseapp.com",
+    projectId:"fir-i-family-mart",
+    storageBucket:"fir-i-family-mart.firebasestorage.app",
+    messagingSenderId:"73889024539",
+    appId:"1:73889024539:web:271561c9dba17b5a6b06be"
+};
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
 
-// Auth
+// Auth Check
 auth.onAuthStateChanged(user=>{if(!user) location.href='login.html';});
 document.getElementById('logoutBtn').addEventListener('click',()=>{auth.signOut().then(()=>{location.href='login.html';});});
 
-// Stats
+// --- Stats ---
 const dS=document.getElementById('dS');
 const dP=document.getElementById('dP');
 const iV=document.getElementById('iV');
 
 db.collection('sales').onSnapshot(snap=>{
-  let totalSale=0,totalProfit=0;
-  const today=new Date().toISOString().split('T')[0];
-  snap.forEach(doc=>{
-    const data=doc.data();
-    if(data.date===today){totalSale+=data.total||0; totalProfit+=data.profit||0;}
-  });
-  dS.innerText=Math.round(totalSale);
-  dP.innerText=Math.round(totalProfit);
+    let totalSale=0, totalProfit=0;
+    const today=new Date().toISOString().split('T')[0];
+    snap.forEach(doc=>{
+        const data=doc.data();
+        if(data.date===today){
+            totalSale += data.total || 0;
+            totalProfit += data.profit || 0;
+        }
+    });
+    dS.innerText = Math.round(totalSale);
+    dP.innerText = Math.round(totalProfit);
 });
 
 db.collection('inventory').onSnapshot(snap=>{
-  let invValue=0;
-  snap.forEach(doc=>{const data=doc.data(); invValue+=(data.stock||0)*(data.buy||0);});
-  iV.innerText=Math.round(invValue);
+    let invValue=0;
+    snap.forEach(doc=>{
+        const data=doc.data();
+        invValue += (data.stock || 0)*(data.buy || 0);
+    });
+    iV.innerText = Math.round(invValue);
 });
 
-// Weekly Sales Chart
+// --- Weekly Sales Chart ---
 const ctx=document.getElementById('salesChart').getContext('2d');
-const salesChart=new Chart(ctx,{type:'line', data:{labels:[],datasets:[{label:'মোট বিক্রি', data:[], borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.2)', fill:true,tension:0.4}]},
-options:{responsive:true,plugins:{legend:{display:true}, title:{display:true,text:'সাপ্তাহিক বিক্রি চার্ট'}}, scales:{x:{title:{display:true,text:'তারিখ'}},y:{title:{display:true,text:'টাকা'},beginAtZero:true}}}});
+const salesChart=new Chart(ctx,{
+    type:'line',
+    data:{labels:[], datasets:[{label:'মোট বিক্রি', data:[], borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.2)', fill:true, tension:0.4}]},
+    options:{responsive:true, plugins:{legend:{display:true}, title:{display:true,text:'সাপ্তাহিক বিক্রি চার্ট'}}, scales:{x:{title:{display:true,text:'তারিখ'}}, y:{title:{display:true,text:'টাকা'}, beginAtZero:true}}}
+});
 
-// Customer Ledger
-const ledgerTbody=document.getElementById('customerLedger');
-const searchInput=document.getElementById('searchCust');
+// --- Customer Ledger ---
+const ledgerTbody = document.getElementById('customerLedger');
+const overallDueSpan = document.getElementById('overallDue');
+const searchInput = document.getElementById('searchCust');
+
 function renderLedger(search=""){
-  db.collection('customers').get().then(snap=>{
-    let html=""; snap.forEach(doc=>{
-      const data=doc.data();
-      if(doc.id.toLowerCase().includes(search.toLowerCase())){
-        html+=`<tr data-name="${doc.id}"><td>${doc.id}</td><td>${data.due||0}৳</td><td>${data.lastDate||'-'}</td></tr>`;
-      }
+    db.collection('customers').get().then(snap=>{
+        let html="", overall=0;
+        snap.forEach(doc=>{
+            const data = doc.data();
+            overall += data.due || 0;
+            if(doc.id.toLowerCase().includes(search.toLowerCase())){
+                html+=`<tr data-name="${doc.id}"><td>${doc.id}</td><td>${data.due||0}৳</td><td>${data.lastDate||'-'}</td></tr>`;
+            }
+        });
+        ledgerTbody.innerHTML = html;
+        overallDueSpan.innerText = overall;
+        document.querySelectorAll('#customerLedger tr').forEach(row=>{
+            row.addEventListener('click', ()=>{ showCustomerDetails(row.dataset.name); });
+        });
     });
-    ledgerTbody.innerHTML=html;
-    document.querySelectorAll('#customerLedger tr').forEach(row=>{row.addEventListener('click',()=>{showCustomerDetails(row.dataset.name);});});
-  });
 }
 renderLedger();
-searchInput.addEventListener('input',e=>{renderLedger(e.target.value);});
+searchInput.addEventListener('input', e=>{ renderLedger(e.target.value); });
 
-// Show customer modal
 function showCustomerDetails(name){
-  const modal=new bootstrap.Modal(document.getElementById('detailsModal'));
-  document.getElementById('modalName').innerText=name;
-  db.collection('customers').doc(name).get().then(doc=>{
-    document.getElementById('modalDue').innerText=doc.data().due||0;
-  });
-  db.collection('sales').where('customer','==',name).orderBy('date','desc').get().then(snap=>{
-    let html="";
-    snap.forEach(doc=>{
-      const d=doc.data();
-      html+=`<tr><td>${d.memo}</td><td>${d.date}</td><td>${d.total}</td><td>${d.paid||0}</td><td>${d.due||0}</td><td>${d.discount||0}</td></tr>`;
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    document.getElementById('modalName').innerText = name;
+    db.collection('customers').doc(name).get().then(doc=>{
+        const data = doc.data();
+        document.getElementById('modalDue').innerText = data.due||0;
     });
-    document.getElementById('modalHistory').innerHTML=html;
+    db.collection('sales').where('customer','==',name).orderBy('date','desc').get().then(snap=>{
+        let html="";
+        snap.forEach(doc=>{
+            const d=doc.data();
+            html+=`<tr><td>${d.memo}</td><td>${d.date}</td><td>${d.total}</td><td>${d.paid||0}</td><td>${d.due||0}</td><td>${d.discount||0}</td></tr>`;
+        });
+        document.getElementById('modalHistory').innerHTML = html;
+    });
     modal.show();
-  });
 }
+
+// --- Payment Submission ---
+document.getElementById('submitModalPayment').addEventListener('click', ()=>{
+    const custName = document.getElementById('modalName').innerText;
+    const paidAmt = Number(document.getElementById('modalPaid').value)||0;
+    if(paidAmt<=0){ alert("সঠিক পরিমাণ দিন"); return; }
+
+    const custRef = db.collection('customers').doc(custName);
+    custRef.get().then(doc=>{
+        if(doc.exists){
+            const prevDue = doc.data().due || 0;
+            let newDue = prevDue - paidAmt;
+            if(newDue<0) newDue = 0;
+            custRef.update({due:newDue});
+            alert(`Payment recorded! Remaining Due: ${newDue}৳`);
+            document.getElementById('modalPaid').value="";
+            renderLedger(); // Refresh ledger
+            bootstrap.Modal.getInstance(document.getElementById('detailsModal')).hide();
+        }
+    });
+});
 </script>
 </body>
 </html>
