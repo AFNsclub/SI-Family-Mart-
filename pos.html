@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S.I. Family Mart | POS + Ledger</title>
+<title>S.I. Family Mart | POS /Billings</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -22,7 +22,6 @@ table th, table td{font-size:14px;}
 #rItemsBody th{background:#e0e0e0;}
 #receipt-footer{text-align:center;margin-top:15px;font-size:12px;color:#555;}
 #receipt-footer p{margin:2px 0;}
-.modal-body table td,.modal-body table th{padding:5px;}
 .table-hover tbody tr:hover{background:#f0f0f0; cursor:pointer;}
 @media print{body *{visibility:hidden;} #receipt, #receipt *{visibility:visible;} #receipt{position:absolute; left:0; top:0; width:100%;}}
 </style>
@@ -30,7 +29,7 @@ table th, table td{font-size:14px;}
 <body>
 <div class="container mt-4">
   <header class="header">
-    <h2>S.I. Family Mart | POS + Ledger</h2>
+    <h2>S.I. Family Mart | POS</h2>
     <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
   </header>
 
@@ -40,6 +39,7 @@ table th, table td{font-size:14px;}
       <div class="card">
         <h5>পণ্য নির্বাচন</h5>
         <input type="text" id="cust" class="form-control mb-3" placeholder="ক্রেতার নাম">
+        <input type="text" id="custMobile" class="form-control mb-3" placeholder="ক্রেতার মোবাইল নাম্বার">
         <input type="text" id="barcodeInput" class="form-control mb-3" placeholder="Barcode Scan / Manual Input">
         <select id="sItem" class="form-select mb-3"><option value="">পণ্য বাছুন</option></select>
         <div class="row g-2 mb-2">
@@ -78,14 +78,11 @@ table th, table td{font-size:14px;}
     </div>
   </div>
 
-  <!-- Customer Ledger -->
-  <div class="card mt-4">
+  <!-- Customer Ledger Button -->
+  <div class="card mt-4 text-center">
     <h5>Customer Ledger / বাকি টাকা</h5>
-    <input type="text" id="searchCust" class="form-control mb-2" placeholder="Search Customer Name">
-    <table class="table table-bordered table-striped table-hover">
-      <thead><tr><th>ক্রেতার নাম</th><th>Total Due</th><th>Last Transaction</th></tr></thead>
-      <tbody id="customerLedger"></tbody>
-    </table>
+    <p>বাকি লেনদেন দেখতে নিচের বাটনে ক্লিক করুন</p>
+    <a href="ledger.html" class="btn btn-primary btn-lg">Open Ledger</a>
   </div>
 </div>
 
@@ -100,6 +97,7 @@ table th, table td{font-size:14px;}
   </div>
   <div>
     <p><strong>ক্রেতার নাম:</strong> <span id="custName"></span></p>
+    <p><strong>মোবাইল:</strong> <span id="custMobileDisplay"></span></p>
     <table class="table table-sm table-bordered">
       <thead><tr><th>পণ্য</th><th>Qty</th><th>মূল্য</th><th>মোট</th></tr></thead>
       <tbody id="rItemsBody"></tbody>
@@ -116,17 +114,6 @@ table th, table td{font-size:14px;}
   </div>
   <button class="btn btn-dark w-100 mt-2" onclick="window.print()">Print</button>
 </div>
-
-<!-- Customer Details Modal -->
-<div class="modal fade" id="detailsModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
-<div class="modal-header"><h5 class="modal-title">Customer Details</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-<div class="modal-body">
-<p><strong>Name:</strong> <span id="modalName"></span></p>
-<p><strong>Total Due:</strong> <span id="modalDue"></span>৳</p>
-<table class="table table-bordered">
-<thead><tr><th>Memo</th><th>Date</th><th>Total</th><th>Paid</th><th>Due</th><th>Discount</th></tr></thead>
-<tbody id="modalHistory"></tbody>
-</table></div></div></div></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -179,6 +166,7 @@ function finalizeSale(){
   if(cart.length===0) return alert("কার্ট খালি!");
   document.getElementById('finalBtn').disabled=true;
   const cust=document.getElementById('cust').value||"সম্মানিত ক্রেতা";
+  const custMobile=document.getElementById('custMobile').value||"-";
   const paidAmt=Number(document.getElementById('paidAmount').value)||0;
   const dVal=Number(document.getElementById('totalDisc').value);
   const dType=document.getElementById('totalDType').value;
@@ -188,10 +176,16 @@ function finalizeSale(){
   let due=grand-paidAmt;
   cart.forEach(it=>{db.collection('inventory').doc(it.name).update({stock:firebase.firestore.FieldValue.increment(-it.qty)});});
   const memoNum=Math.floor(Math.random()*10000);
-  db.collection('sales').add({customer:cust, items:cart, total:grand, discount:dAmt, paid:paidAmt, due:due, profit:cart.reduce((s,it)=>s+(it.total-it.buyPrice*it.qty),0)-dAmt, date:new Date().toISOString().split('T')[0], memo:memoNum});
+  db.collection('sales').add({customer:cust, mobile:custMobile, items:cart, total:grand, discount:dAmt, paid:paidAmt, due:due, profit:cart.reduce((s,it)=>s+(it.total-it.buyPrice*it.qty),0)-dAmt, date:new Date().toISOString().split('T')[0], memo:memoNum});
   const custRef=db.collection('customers').doc(cust);
-  custRef.get().then(doc=>{if(doc.exists){custRef.update({due:(doc.data().due||0)+due, lastDate:new Date().toISOString().split('T')[0]});}else{custRef.set({due:due,lastDate:new Date().toISOString().split('T')[0]});}});
-  
+  custRef.get().then(doc=>{
+    if(doc.exists){
+      custRef.update({due:(doc.data().due||0)+due, mobile:custMobile, lastDate:new Date().toISOString().split('T')[0]});
+    }else{
+      custRef.set({due:due, mobile:custMobile, lastDate:new Date().toISOString().split('T')[0]});
+    }
+  });
+
   // Receipt
   let rHtml=""; cart.forEach(it=>{rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}৳</td><td>${it.total}৳</td></tr>`;});
   document.getElementById('rItemsBody').innerHTML=rHtml;
@@ -200,6 +194,7 @@ function finalizeSale(){
   document.getElementById('rPaid').innerText=paidAmt;
   document.getElementById('rDue').innerText=due;
   document.getElementById('custName').innerText=cust;
+  document.getElementById('custMobileDisplay').innerText=custMobile;
   document.getElementById('memoNum').innerText="মেমো #: "+memoNum;
   document.getElementById('saleDate').innerText="তারিখ: "+new Date().toLocaleDateString();
   JsBarcode("#rBarcode", memoNum, {format:"CODE128", width:2, height:40, displayValue:true});
@@ -222,37 +217,6 @@ function startScanner(){
 function scanToAdd(){
   const val=document.getElementById('barcodeInput').value;
   for(let name in inv){if(inv[name].barcode===val){document.getElementById('sItem').value=name; addToCart(); break;}}
-}
-
-// Customer Ledger
-const ledgerTbody=document.getElementById('customerLedger');
-const searchInput=document.getElementById('searchCust');
-function renderLedger(search=""){
-  db.collection('customers').get().then(snap=>{
-    let html="";
-    snap.forEach(doc=>{
-      const data=doc.data();
-      if(doc.id.toLowerCase().includes(search.toLowerCase())){
-        html+=`<tr data-name="${doc.id}"><td>${doc.id}</td><td>${data.due||0}৳</td><td>${data.lastDate||'-'}</td></tr>`;
-      }
-    });
-    ledgerTbody.innerHTML=html;
-    document.querySelectorAll('#customerLedger tr').forEach(row=>{row.addEventListener('click',()=>{showCustomerDetails(row.dataset.name);});});
-  });
-}
-renderLedger();
-searchInput.addEventListener('input',e=>{renderLedger(e.target.value);});
-
-function showCustomerDetails(name){
-  const modal=new bootstrap.Modal(document.getElementById('detailsModal'));
-  document.getElementById('modalName').innerText=name;
-  db.collection('customers').doc(name).get().then(doc=>{document.getElementById('modalDue').innerText=doc.data().due||0;});
-  db.collection('sales').where('customer','==',name).orderBy('date','desc').get().then(snap=>{
-    let html="";
-    snap.forEach(doc=>{const d=doc.data(); html+=`<tr><td>${d.memo}</td><td>${d.date}</td><td>${d.total}</td><td>${d.paid||0}</td><td>${d.due||0}</td><td>${d.discount||0}</td></tr>`;});
-    document.getElementById('modalHistory').innerHTML=html;
-    modal.show();
-  });
 }
 </script>
 </body>
