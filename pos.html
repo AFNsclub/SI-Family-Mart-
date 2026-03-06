@@ -4,56 +4,190 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>S.I. Family Mart | POS</title>
-<link rel="stylesheet" href="style.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<style>
+:root {
+    --primary: #2563eb;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --bg: #f1f5f9;
+    --card-bg: #fff;
+}
+body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; }
+.header { background: linear-gradient(135deg, var(--primary), #1e3a8a); color: #fff; text-align: center; padding: 25px; border-radius: 0 0 30px 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
+.header h2 { font-weight: 700; }
+.card { border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 15px; }
+#receipt { display:none; background:#fff; padding:20px; border-radius:15px; max-width:450px; margin:auto; }
+</style>
 </head>
 <body>
-<div id="posApp" class="container mt-4">
-    <header class="header mb-4">
+<div class="container mt-4">
+    <header class="header">
         <h2>S.I. Family Mart | POS</h2>
-        <a href="index.html" class="btn btn-secondary">Dashboard</a>
+        <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
     </header>
 
-    <div class="row g-3">
+    <div class="row mt-4">
+        <!-- Scanner + Manual -->
         <div class="col-md-5">
-            <div class="card p-4">
-                <h5>ক্রেতার তথ্য</h5>
+            <div class="card">
+                <h5>পণ্য নির্বাচন</h5>
                 <input type="text" id="cust" class="form-control mb-3" placeholder="ক্রেতার নাম">
-                <select id="sItem" class="form-select mb-3"></select>
+                <input type="text" id="barcodeInput" class="form-control mb-3" placeholder="Barcode Scan / Manual Input">
+                <select id="sItem" class="form-select mb-3"><option value="">পণ্য বাছুন</option></select>
                 <div class="row g-2">
                     <div class="col-6"><input type="number" id="sQ" class="form-control" value="1"></div>
-                    <div class="col-6"><button class="btn btn-warning w-100" onclick="addToCart()">+ কার্টে দিন</button></div>
+                    <div class="col-6"><button class="btn btn-success w-100" onclick="addToCart()">+ কার্টে দিন</button></div>
                 </div>
+                <button class="btn btn-primary mt-3 w-100" onclick="startScanner()">📷 ক্যামেরা স্ক্যান শুরু করুন</button>
+                <video id="scannerPreview" style="width:100%;display:none;margin-top:10px;"></video>
             </div>
         </div>
 
+        <!-- Cart -->
         <div class="col-md-7">
-            <div class="card p-4">
+            <div class="card">
                 <h5>কার্ট লিস্ট</h5>
                 <table class="table table-sm">
-                    <thead><tr><th>পণ্য</th><th>দাম</th><th>Qty</th><th>মোট</th><th>-</th></tr></thead>
+                    <thead><tr><th>পণ্য</th><th>মূল্য</th><th>Qty</th><th>মোট</th><th>-</th></tr></thead>
                     <tbody id="cartBody"></tbody>
                 </table>
-                <div class="mt-3 border-top pt-3">
+                <div class="mt-3">
                     <div class="input-group mb-3">
                         <span class="input-group-text">ছাড়</span>
                         <input type="number" id="totalDisc" class="form-control" placeholder="0">
-                        <select id="totalDType" class="form-select" style="max-width: 70px;">
+                        <select id="totalDType" class="form-select" style="max-width:70px">
                             <option value="cash">৳</option>
                             <option value="percent">%</option>
                         </select>
                     </div>
-                    <button class="btn btn-success w-100" onclick="finalizeSale()">মেমো ও বিক্রি সম্পন্ন</button>
+                    <button class="btn btn-warning w-100" onclick="finalizeSale()">মেমো ও বিক্রি সম্পন্ন</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <div id="receipt" class="receipt-box mt-4"></div>
 </div>
 
-<script type="module" src="app.js"></script>
+<!-- Receipt -->
+<div id="receipt">
+    <h3 class="text-center">S.I. FAMILY MART</h3>
+    <p class="text-center small mb-2">বংশীপুর, সাতক্ষীরা | 📞 01568683171</p>
+    <div id="rItemsBody"></div>
+    <div class="mt-2"><strong>মোটঃ </strong><span id="rGrand">0</span>৳</div>
+    <button class="btn btn-dark mt-3 w-100" onclick="window.print()">প্রিন্ট করুন</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.6/umd/index.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+// Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
+    authDomain: "fir-i-family-mart.firebaseapp.com",
+    projectId: "fir-i-family-mart",
+    storageBucket: "fir-i-family-mart.firebasestorage.app",
+    messagingSenderId: "73889024539",
+    appId: "1:73889024539:web:271561c9dba17b5a6b06be"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Auth check
+auth.onAuthStateChanged(user=>{
+    if(!user) location.href='login.html';
+});
+
+let inv = {}, cart = [];
+
+// Fetch inventory
+db.collection('inventory').onSnapshot(snap=>{
+    let ops="<option value=''>পণ্য বাছুন</option>";
+    snap.forEach(d=>{
+        const data=d.data();
+        inv[data.name]=data;
+        ops+=`<option value="${data.name}">${data.name}</option>`;
+    });
+    document.getElementById('sItem').innerHTML=ops;
+});
+
+// Add to cart
+function addToCart(){
+    const name = document.getElementById('sItem').value;
+    const qty = Number(document.getElementById('sQ').value);
+    if(!name||qty<1) return alert("সঠিক পণ্য ও পরিমাণ দিন");
+    const item = inv[name];
+    cart.push({name:name, qty:qty, price:item.sell, buyPrice:item.buy, total:item.sell*qty});
+    renderCart();
+}
+function renderCart(){
+    let h="";
+    cart.forEach((it,i)=>{ h+=`<tr><td>${it.name}</td><td>${it.price}</td><td>${it.qty}</td><td>${it.total}</td><td><button class="btn btn-sm btn-danger" onclick="removeItem(${i})">✖</button></td></tr>`; });
+    document.getElementById('cartBody').innerHTML=h;
+}
+function removeItem(i){ cart.splice(i,1); renderCart(); }
+
+// Finalize Sale
+function finalizeSale(){
+    if(cart.length===0) return alert("কার্ট খালি!");
+    const cust=document.getElementById('cust').value||"সম্মানিত ক্রেতা";
+    const dVal=Number(document.getElementById('totalDisc').value);
+    const dType=document.getElementById('totalDType').value;
+
+    let sub=cart.reduce((s,it)=>s+it.total,0);
+    let dAmt=(dType==='percent')? (sub*dVal/100):dVal;
+    let grand=sub-dAmt;
+
+    cart.forEach(it=>{
+        db.collection('inventory').doc(it.name).update({stock: firebase.firestore.FieldValue.increment(-it.qty)});
+    });
+
+    db.collection('sales').add({customer:cust,items:cart,total:grand,profit:cart.reduce((s,it)=>s+(it.total-it.buyPrice*it.qty),0)-dAmt,date:new Date().toISOString().split('T')[0]});
+
+    // Render receipt
+    let rHtml="<table class='table table-sm'><tr><th>পণ্য</th><th>QTY</th><th>টাকা</th></tr>";
+    cart.forEach(it=>{rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.total}</td></tr>`;});
+    rHtml+="</table>";
+    document.getElementById('rItemsBody').innerHTML=rHtml;
+    document.getElementById('rGrand').innerText=Math.round(grand);
+
+    document.querySelector('.container').style.display='none';
+    document.getElementById('receipt').style.display='block';
+}
+
+// Barcode Scanner
+let selectedDeviceId;
+const codeReader = new ZXing.BrowserMultiFormatReader();
+function startScanner(){
+    codeReader.listVideoInputDevices().then(videoInputDevices=>{
+        selectedDeviceId=videoInputDevices[0].deviceId;
+        document.getElementById('scannerPreview').style.display='block';
+        codeReader.decodeFromVideoDevice(selectedDeviceId,'scannerPreview',(result,err)=>{
+            if(result) {
+                document.getElementById('barcodeInput').value=result.text;
+                codeReader.reset();
+                scanToSelect();
+            }
+        });
+    });
+}
+
+// Scan input to select product
+function scanToSelect(){
+    const val=document.getElementById('barcodeInput').value;
+    for(let name in inv){
+        if(inv[name].barcode===val){
+            document.getElementById('sItem').value=name;
+            break;
+        }
+    }
+}
+</script>
 </body>
 </html>
