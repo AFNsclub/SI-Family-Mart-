@@ -28,7 +28,8 @@ th { background: #f1f5f9; color: var(--dark); font-weight: bold; }
 .badge-pay { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-weight: bold; }
 .badge-buy { background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-weight: bold; }
 
-.btn-call { background: var(--primary); color: white; text-decoration: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
+/* Buttons */
+.btn-call { background: var(--primary); color: white; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
 .btn-payment { background: var(--success); color: white; width: 100%; font-weight: bold; border: none; margin-top: 10px; cursor: pointer; border-radius: 8px; padding: 10px; }
 .btn-pdf { background: #64748b; color: white; border: none; cursor: pointer; margin-top: 10px; padding: 10px 20px; border-radius: 8px; }
 
@@ -62,7 +63,7 @@ th { background: #f1f5f9; color: var(--dark); font-weight: bold; }
     <div style="overflow-x: auto;">
         <table>
           <thead>
-            <tr><th>কাস্টমার</th><th>মোবাইল</th><th>বাকি</th><th>অ্যাকশন</th></tr>
+            <tr><th>কাস্টমার</th><th>মোবাইল</th><th>বাকি</th><th>অবস্থা</th><th>অ্যাকশন</th></tr>
           </thead>
           <tbody id="custBody"></tbody>
         </table>
@@ -70,30 +71,32 @@ th { background: #f1f5f9; color: var(--dark); font-weight: bold; }
   </div>
 
   <div class="card" id="detailsSection" style="display:none;">
-    <div id="printArea" style="padding: 20px; background: white;">
-        <h2 style="text-align: center; color: #2563eb; margin: 0;">S.I. Family Mart</h2>
-        <h3 id="detailTitle" style="text-align: center; border: none;">ইতিহাস</h3>
-        <p id="custPhoneDisplay" style="text-align: center; margin-top: -10px;"></p>
-        <hr>
-        <table id="transTable">
-            <thead>
-                <tr><th>তারিখ</th><th>ধরণ</th><th>পরিমাণ</th><th>ব্যালেন্স</th></tr>
-            </thead>
-            <tbody id="transBody"></tbody>
-            <tfoot>
-                <tr style="background: #f8fafc; font-weight: bold;">
-                    <td colspan="3" style="text-align: right; padding: 12px;">মোট বকেয়া:</td>
-                    <td id="finalDueDisplay">০৳</td>
-                </tr>
-            </tfoot>
-        </table>
+    <div id="printArea" style="padding: 15px; background: white;">
+        <h2 style="text-align: center; color: var(--primary); margin: 0;">S.I. Family Mart</h2>
+        <h4 id="detailTitle" style="text-align: center; margin: 10px 0;"></h4>
+        <p id="phoneDisplay" style="text-align: center; font-size: 13px; margin-top: -5px;"></p>
+        
+        <div style="overflow-x: auto;">
+            <table id="transTable">
+                <thead>
+                    <tr><th>তারিখ</th><th>ধরণ</th><th>পরিমাণ</th><th>ব্যালেন্স</th></tr>
+                </thead>
+                <tbody id="transBody"></tbody>
+                <tfoot>
+                    <tr style="background: #f8fafc; font-weight: bold;">
+                        <td colspan="3" style="text-align: right; padding: 12px;">বর্তমান মোট বকেয়া:</td>
+                        <td id="finalDueDisplay" style="padding: 12px;">০৳</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
     
     <div style="background: #f1f5f9; padding: 15px; border-radius: 10px; margin-top: 20px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px;">টাকা জমা নিন:</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">বাকি টাকা জমা নিন:</label>
         <div style="display: flex; gap: 10px;">
             <input type="number" id="payAmount" placeholder="টাকার পরিমাণ" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-            <button class="btn-payment" style="margin:0; width: auto;" onclick="processPayment()">💸 জমা ও মেসেজ</button>
+            <button class="btn-payment" style="margin:0; width: auto;" onclick="processPayment()">💸 জমা নিন</button>
         </div>
     </div>
     
@@ -146,21 +149,22 @@ db.collection('sales').onSnapshot((snap) => {
     
     for(let n in customerMap) {
         const c = customerMap[n];
-        const lastD = new Date(c.lastDate);
-        
-        // ১০ দিন বকেয়া ০ থাকলে রিমুভ শর্ত
-        if(c.due <= 1 && lastD < tenDaysAgo) continue;
+        const lastDate = new Date(c.lastDate);
+        // ১০ দিন বকেয়া ০ থাকলে লিস্ট থেকে বাদ
+        if(c.due <= 1 && lastDate < tenDaysAgo) continue;
 
         if(c.due > 0.5) totalDue += c.due;
+        const isPaid = c.due <= 1;
 
         tbody.innerHTML += `
             <tr>
-                <td style="font-weight:bold; cursor:pointer; color:#2563eb;" onclick="showCustomerDetails('${n}', '${c.mobile}')">${n}</td>
+                <td style="font-weight:bold; color:var(--primary); cursor:pointer;" onclick="showCustomerDetails('${n}', '${c.mobile}')">${n}</td>
                 <td>${c.mobile}</td>
-                <td style="color: ${c.due <= 1 ? 'green' : 'red'}; font-weight:bold;">${Math.round(c.due)}৳</td>
+                <td style="color: ${isPaid ? 'green' : 'red'}; font-weight:bold;">${Math.round(c.due)}৳</td>
+                <td><span class="${isPaid ? 'badge-pay' : 'badge-buy'}">${isPaid ? 'Paid' : 'Due'}</span></td>
                 <td>
                     <a href="tel:${c.mobile}" class="btn-call">📞 Call</a>
-                    <button onclick="showCustomerDetails('${n}', '${c.mobile}')" style="font-size:12px; cursor:pointer;">View</button>
+                    <button onclick="showCustomerDetails('${n}', '${c.mobile}')" style="font-size:11px; cursor:pointer;">View</button>
                 </td>
             </tr>`;
     }
@@ -173,7 +177,7 @@ async function showCustomerDetails(name, mobile) {
     currentCustomer = name; currentMobile = mobile;
     document.getElementById('detailsSection').style.display = "block";
     document.getElementById('detailTitle').innerText = "ইতিহাস: " + name;
-    document.getElementById('custPhoneDisplay').innerText = "মোবাইল: " + mobile;
+    document.getElementById('phoneDisplay').innerText = "মোবাইল: " + mobile;
     
     const transBody = document.getElementById('transBody');
     transBody.innerHTML = "<tr><td colspan='4'>লোডিং...</td></tr>";
@@ -187,7 +191,7 @@ async function showCustomerDetails(name, mobile) {
     transactions.forEach(d => {
         const amt = Number(d.due || 0);
         runningDue += amt;
-        const typeBadge = amt < 0 ? `<span class="badge-pay">জমা</span>` : `<span class="badge-buy">ক্রয়</span>`;
+        const typeBadge = amt < 0 ? `<span class="badge-pay">জমা</span>` : `<span class="badge-buy">ক্রয়</span>`;
         html += `<tr><td>${d.date || '-'}</td><td>${typeBadge}</td><td>${Math.abs(amt)}৳</td><td style="font-weight:bold;">${Math.round(runningDue)}৳</td></tr>`;
     });
     
@@ -197,16 +201,23 @@ async function showCustomerDetails(name, mobile) {
     window.scrollTo({ top: document.getElementById('detailsSection').offsetTop - 80, behavior: 'smooth' });
 }
 
+// PDF ফাংশন (সাদা পেজ সমাধান)
 function downloadStatement() {
     const element = document.getElementById('printArea');
     const options = {
         margin: 10,
         filename: `Statement_${currentCustomer}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            logging: false, 
+            letterRendering: true 
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    // লোডিং চেক করে প্রিন্ট শুরু করবে
+    
+    // রেন্ডারিং শুরু হওয়ার আগে ১ সেকেন্ড সময় দেওয়া হয়েছে যাতে সাদা না আসে
     html2pdf().set(options).from(element).save();
 }
 
@@ -218,7 +229,7 @@ async function processPayment() {
     await db.collection('sales').add({
         customer: currentCustomer, mobile: currentMobile, due: -amount, date: todayStr, type: 'DUE_COLLECTION'
     });
-    alert("জমা হয়েছে!");
+    alert("সফলভাবে জমা হয়েছে!");
     document.getElementById('payAmount').value = "";
     showCustomerDetails(currentCustomer, currentMobile);
 }
