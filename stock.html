@@ -3,95 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stock Management | S.I. Family Mart</title>
+<title>Stock & Bulk Barcode | S.I. Family Mart</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-
 <style>
 :root { --primary: #2563eb; --success: #10b981; --bg: #f1f5f9; }
 body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-top: 60px; }
 
-/* Navigation Index */
+/* Navigation */
 .nav-index { background: #fff; position: fixed; top: 0; width: 100%; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; padding: 10px; }
 .nav-index a { text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; color: #1e293b; background: #f1f5f9; }
 .nav-index a.active { background: var(--primary); color: #fff; }
 
 .header { background: linear-gradient(135deg, var(--primary), #1e3a8a); color: #fff; text-align: center; padding: 25px; border-radius: 0 0 25px 25px; }
 .card { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; background: #fff; }
-.btn-add { background: var(--success); color: white; font-weight: bold; border-radius: 10px; padding: 12px; width: 100%; border: none; }
-.badge-stock { padding: 5px 10px; border-radius: 8px; }
 
-/* প্রিন্টিং এর জন্য বিশেষ স্টাইল */
-#printArea { display: none; text-align: center; padding: 20px; background: white; }
+/* স্টিকার ডিজাইন */
+.barcode-sticker {
+    display: inline-block;
+    width: 180px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+    margin: 5px;
+    background: #fff;
+    border-radius: 5px;
+}
+.sticker-shop { font-size: 10px; font-weight: bold; margin: 0; }
+.sticker-name { font-size: 12px; margin: 2px 0; white-space: nowrap; overflow: hidden; }
+.sticker-price { font-size: 14px; font-weight: bold; margin: 0; color: #000; }
+
+#printArea { display: none; }
+
 @media print {
     body * { visibility: hidden; }
     #printArea, #printArea * { visibility: visible; }
     #printArea { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+    .no-print { display: none !important; }
 }
 </style>
 </head>
 <body>
 
-<nav class="nav-index">
+<nav class="nav-index no-print">
     <a href="index.html">📊 Admin</a>
     <a href="pos.html">🛒 POS</a>
     <a href="stock.html" class="active">📦 Stock</a>
     <a href="ledger.html">📔 Ledger</a>
 </nav>
 
-<div class="container mt-4">
+<div class="container mt-4 no-print">
     <header class="header">
-        <h2>Stock Management</h2>
-        <p class="mb-0">নতুন মাল ইনপুট দিন এবং বারকোড তৈরি করুন</p>
+        <h2>Stock & Bulk Barcode</h2>
+        <p class="mb-0">স্টক আপডেট করুন এবং স্টিকার প্রিন্ট করুন</p>
     </header>
 
     <div class="card mt-4">
-        <h5 class="fw-bold border-bottom pb-2 mb-3 text-primary">📦 নতুন স্টক এন্ট্রি</h5>
+        <h5 class="fw-bold border-bottom pb-2 mb-3 text-primary">📦 নতুন স্টক ও বারকোড</h5>
         <div class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label small fw-bold">পণ্যের নাম</label>
-                <input type="text" id="pName" class="form-control" placeholder="যেমন: লাক্স সাবান">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-bold">কেনা দাম (লট)</label>
-                <input type="number" id="pTotalBuy" class="form-control">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-bold">পরিমাণ (পিস)</label>
-                <input type="number" id="pStock" class="form-control">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-bold">বিক্রয় মূল্য (পিস)</label>
-                <input type="number" id="pSell" class="form-control">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label small fw-bold">বারকোড নাম্বার (ID)</label>
-                <input type="text" id="pBarcode" class="form-control" placeholder="যেমন: 1001" oninput="previewBarcode(this.value)">
-                <div class="mt-2 text-center"><svg id="barcodePreview" style="display:none; max-width: 100%; height: 40px;"></svg></div>
-            </div>
-            <div class="col-12">
-                <button class="btn-add shadow" id="submitBtn" onclick="addOrUpdateItem()">✅ স্টক ও বারকোড সেভ করুন</button>
-            </div>
+            <div class="col-md-3"><label class="small fw-bold">পণ্যের নাম</label><input type="text" id="pName" class="form-control" placeholder="যেমন: Lux Soap"></div>
+            <div class="col-md-2"><label class="small fw-bold">কেনা দাম (লট)</label><input type="number" id="pTotalBuy" class="form-control"></div>
+            <div class="col-md-2"><label class="small fw-bold">পরিমাণ (পিস)</label><input type="number" id="pStock" class="form-control"></div>
+            <div class="col-md-2"><label class="small fw-bold">বিক্রয় মূল্য</label><input type="number" id="pSell" class="form-control"></div>
+            <div class="col-md-3"><label class="small fw-bold">বারকোড (ID)</label><input type="text" id="pBarcode" class="form-control" placeholder="যেমন: 1001"></div>
+            <div class="col-12"><button class="btn btn-success w-100 fw-bold py-2 shadow" id="submitBtn" onclick="addOrUpdateItem()">✅ সেভ করুন</button></div>
         </div>
     </div>
 
     <div class="card">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">📊 বর্তমান স্টক ও বারকোড লিস্ট</h5>
-            <input type="text" id="searchItem" class="form-control w-50" placeholder="নাম লিখে খুঁজুন...">
+            <h5 class="fw-bold mb-0">📊 স্টক তালিকা</h5>
+            <input type="text" id="searchItem" class="form-control w-50" placeholder="পণ্য খুঁজুন...">
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
-                    <tr>
-                        <th>পণ্যের নাম</th>
-                        <th>কেনা (পিস)</th>
-                        <th>বিক্রয় (পিস)</th>
-                        <th>স্টক</th>
-                        <th>বারকোড</th>
-                        <th class="text-center">অ্যাকশন</th>
-                    </tr>
+                    <tr><th>পণ্যের নাম</th><th>বিক্রয় মূল্য</th><th>স্টক</th><th>বারকোড</th><th class="text-center">প্রিন্ট কপি</th><th class="text-center">অ্যাকশন</th></tr>
                 </thead>
                 <tbody id="stockBody"></tbody>
             </table>
@@ -99,11 +86,7 @@ body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding
     </div>
 </div>
 
-<div id="printArea">
-    <h4 id="printName" style="margin-bottom: 5px;"></h4>
-    <svg id="barcodeImg"></svg>
-    <p style="font-size: 14px; font-weight: bold; margin-top: 5px;">S.I. Family Mart</p>
-</div>
+<div id="printArea"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -122,37 +105,28 @@ const db = firebase.firestore();
 
 let inv = {};
 
-// লাইভ ইনভেন্টরি
+// লাইভ ডাটা লোড
 db.collection('inventory').onSnapshot(snap=>{
     inv={};
     snap.forEach(d=>{ const data=d.data(); inv[data.name]=data; });
     renderStock(document.getElementById('searchItem').value);
 });
 
-function previewBarcode(val) {
-    if(val) {
-        document.getElementById('barcodePreview').style.display = "inline-block";
-        JsBarcode("#barcodePreview", val, { format: "CODE128", height: 30, displayValue: true });
-    } else {
-        document.getElementById('barcodePreview').style.display = "none";
-    }
-}
-
 function renderStock(filter=""){
     let html="";
     for(let name in inv){
         if(filter && !name.toLowerCase().includes(filter.toLowerCase())) continue;
         const item = inv[name];
-        const stockClass = item.stock < 5 ? 'bg-danger' : 'bg-success';
-        
         html += `<tr>
             <td class="fw-bold">${item.name}</td>
-            <td>${item.buy}৳</td>
-            <td class="text-primary fw-bold">${item.sell}৳</td>
-            <td><span class="badge ${stockClass} badge-stock">${item.stock}</span></td>
-            <td>${item.barcode ? `<small>${item.barcode}</small>` : '-'}</td>
+            <td>${item.sell}৳</td>
+            <td><span class="badge ${item.stock < 5 ? 'bg-danger' : 'bg-success'}">${item.stock}</span></td>
+            <td><small>${item.barcode || '-'}</small></td>
+            <td class="text-center" style="width: 150px;">
+                <input type="number" id="qty_${item.barcode}" class="form-control form-control-sm d-inline-block w-50" value="1" min="1">
+            </td>
             <td class="text-center">
-                ${item.barcode ? `<button class="btn btn-sm btn-dark me-2" onclick="printBarcode('${item.name}', '${item.barcode}')">🖨️ প্রিন্ট</button>` : ''}
+                <button class="btn btn-sm btn-dark" onclick="bulkPrint('${item.name}', '${item.barcode}', ${item.sell})">🖨️ প্রিন্ট</button>
                 <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${item.name}')">✖</button>
             </td>
         </tr>`;
@@ -160,29 +134,48 @@ function renderStock(filter=""){
     document.getElementById('stockBody').innerHTML = html;
 }
 
-// বারকোড প্রিন্ট ফাংশন
-function printBarcode(name, code) {
-    document.getElementById('printName').innerText = name;
-    JsBarcode("#barcodeImg", code, {
-        format: "CODE128",
-        width: 2,
-        height: 60,
-        displayValue: true
-    });
-    window.print();
+// Bulk Print Function
+function bulkPrint(name, code, price) {
+    const qty = document.getElementById('qty_' + code).value;
+    const printArea = document.getElementById('printArea');
+    printArea.innerHTML = ""; // Clear old data
+
+    for (let i = 0; i < qty; i++) {
+        const stickerId = `sticker_${i}`;
+        printArea.innerHTML += `
+            <div class="barcode-sticker">
+                <p class="sticker-shop">S.I. FAMILY MART</p>
+                <p class="sticker-name">${name}</p>
+                <svg id="${stickerId}"></svg>
+                <p class="sticker-price">৳ ${price}</p>
+            </div>
+        `;
+    }
+
+    // Generate barcodes for all stickers
+    setTimeout(() => {
+        for (let i = 0; i < qty; i++) {
+            JsBarcode(`#sticker_${i}`, code, {
+                format: "CODE128",
+                width: 1.5,
+                height: 40,
+                displayValue: true,
+                fontSize: 10
+            });
+        }
+        window.print();
+    }, 500);
 }
 
 async function addOrUpdateItem(){
-    const btn = document.getElementById('submitBtn');
     const name = document.getElementById('pName').value.trim();
     const totalBuy = Number(document.getElementById('pTotalBuy').value);
     const qty = Number(document.getElementById('pStock').value);
     const sell = Number(document.getElementById('pSell').value);
     const barcode = document.getElementById('pBarcode').value.trim();
 
-    if(!name || !totalBuy || !qty || !sell) return alert("সবগুলো ঘর পূরণ করুন!");
+    if(!name || !totalBuy || !qty || !sell || !barcode) return alert("সবগুলো তথ্য দিন!");
 
-    btn.disabled = true;
     const buyPerPiece = parseFloat((totalBuy / qty).toFixed(2));
 
     try {
@@ -192,11 +185,9 @@ async function addOrUpdateItem(){
             barcode: barcode
         }, { merge: true });
         
-        alert("স্টক আপডেট হয়েছে!");
+        alert("সফলভাবে সেভ হয়েছে!");
         ['pName', 'pTotalBuy', 'pStock', 'pSell', 'pBarcode'].forEach(id => document.getElementById(id).value = "");
-        document.getElementById('barcodePreview').style.display = "none";
     } catch (e) { alert("ভুল হয়েছে!"); }
-    finally { btn.disabled = false; }
 }
 
 function deleteItem(name){
