@@ -3,56 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S.I. Family Mart</title>
+<title>S.I. Family Mart | Dashboard</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  :root {
+:root {
     --primary: #2563eb;
     --secondary: #f59e0b;
     --success: #10b981;
     --danger: #ef4444;
     --bg: #f1f5f9;
     --card-bg: #ffffff;
-  }
-
-  body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; }
-
-  .header {
+}
+body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; }
+.header {
     text-align: center;
     padding: 25px;
     background: linear-gradient(135deg, var(--primary), #1e3a8a);
     color: white;
     border-radius: 0 0 30px 30px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-  }
-
-  .header h1 { font-weight: 700; }
-  .header p { opacity: 0.8; }
-  .header .btn { margin: 5px 5px; border-radius: 50px; font-weight: 600; }
-
-  .stats .card {
+}
+.header h1 { font-weight: 700; }
+.header p { opacity: 0.8; }
+.header .btn { margin: 5px 5px; border-radius: 50px; font-weight: 600; }
+.stats .card {
     border-radius: 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     text-align: center;
     padding: 20px;
     color: white;
-  }
-
-  .bg-sale { background: linear-gradient(135deg, #84cc16, #10b981); }
-  .bg-profit { background: linear-gradient(135deg, #2563eb, #3b82f6); }
-  .bg-inventory { background: linear-gradient(135deg, #f59e0b, #f97316); }
-
-  .charts {
+}
+.bg-sale { background: linear-gradient(135deg, #84cc16, #10b981); }
+.bg-profit { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+.bg-inventory { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.charts {
     background: var(--card-bg);
     padding: 20px;
     border-radius: 20px;
     margin-top: 30px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  }
-
-  canvas { max-width: 100%; }
+}
+canvas { max-width: 100%; }
 </style>
 </head>
 <body>
@@ -64,7 +57,7 @@
             <a href="pos.html" class="btn btn-primary">POS / Billing</a> 
             <a href="stock.html" class="btn btn-success">Stock Management</a>
             <a href="report.html" class="btn btn-warning">Reports</a>
-            <a href="login.html" class="btn btn-danger" id="logoutBtn">Logout</a>
+            <button class="btn btn-danger" id="logoutBtn">Logout</button>
         </div>
     </header>
 
@@ -90,15 +83,92 @@
     </section>
 </div>
 
-<script src="app.js"></script>
-<script src="graph.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <script>
-  // Logout functionality
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-      firebase.auth().signOut().then(() => {
-          location.href='login.html';
-      });
-  });
+// Firebase Config
+const firebaseConfig = {
+    apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
+    authDomain: "fir-i-family-mart.firebaseapp.com",
+    projectId: "fir-i-family-mart",
+    storageBucket: "fir-i-family-mart.firebasestorage.app",
+    messagingSenderId: "73889024539",
+    appId: "1:73889024539:web:271561c9dba17b5a6b06be"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// --- Auth check ---
+auth.onAuthStateChanged(user => {
+    if (!user) {
+        location.href = 'login.html';
+    }
+});
+
+// --- Logout ---
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    auth.signOut().then(() => { location.href='login.html'; });
+});
+
+// --- Placeholder for Dashboard Stats ---
+const dS = document.getElementById('dS');
+const dP = document.getElementById('dP');
+const iV = document.getElementById('iV');
+
+// Example: Fetch today's sales, profit, inventory value
+db.collection('sales').onSnapshot(snap => {
+    let totalSale = 0, totalProfit = 0;
+    const today = new Date().toISOString().split('T')[0];
+    snap.forEach(doc => {
+        const data = doc.data();
+        if (data.date === today) {
+            totalSale += data.total || 0;
+            totalProfit += data.profit || 0;
+        }
+    });
+    dS.innerText = Math.round(totalSale);
+    dP.innerText = Math.round(totalProfit);
+});
+
+db.collection('inventory').onSnapshot(snap => {
+    let invValue = 0;
+    snap.forEach(doc => {
+        const data = doc.data();
+        invValue += (data.stock || 0) * (data.buy || 0);
+    });
+    iV.innerText = Math.round(invValue);
+});
+
+// --- Placeholder Chart ---
+const ctx = document.getElementById('salesChart').getContext('2d');
+const salesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [], // dates
+        datasets: [{
+            label: 'মোট বিক্রি',
+            data: [],
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,0.2)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: true },
+            title: { display: true, text: 'সাপ্তাহিক বিক্রি চার্ট' }
+        },
+        scales: {
+            x: { title: { display: true, text: 'তারিখ' } },
+            y: { title: { display: true, text: 'টাকা' }, beginAtZero: true }
+        }
+    }
+});
 </script>
 </body>
 </html>
