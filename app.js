@@ -1,9 +1,4 @@
-// Firebase Imports
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, setDoc, updateDoc, increment, onSnapshot, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-// Firebase Config
+// Firebase Initialization
 const firebaseConfig = {
   apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
   authDomain: "fir-i-family-mart.firebaseapp.com",
@@ -12,155 +7,192 @@ const firebaseConfig = {
   messagingSenderId: "73889024539",
   appId: "1:73889024539:web:271561c9dba17b5a6b06be"
 };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// ================== Login System ==================
-if(document.getElementById('loginBtn')){
-  document.getElementById('loginBtn').addEventListener('click', async ()=>{
-    const email = document.getElementById('email').value;
-    const pass = document.getElementById('password').value;
-    if(!email || !pass) return alert("Email & Password দিতে হবে!");
-    try{
-      await signInWithEmailAndPassword(auth, email, pass);
-      alert("Login Success!");
-      window.location.href="index.html";
-    }catch(err){ alert("Login Failed: "+err.message); }
-  });
-}
-
-if(document.getElementById('logoutBtn')){
-  document.getElementById('logoutBtn').addEventListener('click', async ()=>{
-    await signOut(auth);
-    window.location.href="login.html";
-  });
-}
-
-// ================== Inventory & POS Logic ==================
-let inv = {}; let cart = [];
-
-const fixNum = n => (isNaN(n) || n==null)?0:Number(n);
-
-window.addToCart = ()=>{
-  const n = document.getElementById('sItem').value;
-  const q = fixNum(document.getElementById('sQ').value);
-  if(!n||q<1)return alert("সঠিক পণ্য ও পরিমাণ দিন!");
-  const item = inv[n];
-  cart.push({name:n, qty:q, price:item.sell, buyPrice:item.buy, total:item.sell*q});
-  renderCart();
-}
-
-function renderCart(){
-  let h=""; cart.forEach((it,i)=>h+=`<tr><td>${it.name}</td><td>${it.price}</td><td>${it.qty}</td><td>${it.total}</td><td><button class="btn btn-sm text-danger" onclick="removeItem(${i})">✖</button></td></tr>`);
-  document.getElementById('cartBody')?document.getElementById('cartBody').innerHTML=h:null;
-}
-
-window.removeItem=i=>{ cart.splice(i,1); renderCart(); }
-
-onSnapshot(collection(db,"inventory"),snap=>{
-  let ops="<option value=''>পণ্য বাছুন</option>";
-  let iVal=0;
-  snap.forEach(d=>{
-    const data=d.data();
-    inv[data.name]=data;
-    ops+=`<option value="${data.name}">${data.name}</option>`;
-    iVal+=fixNum(data.buy)*fixNum(data.stock);
-  });
-  document.getElementById('sItem')?document.getElementById('sItem').innerHTML=ops:null;
-  document.getElementById('iV')?document.getElementById('iV').innerText=Math.round(iVal):null;
+// Auth check
+auth.onAuthStateChanged(user => {
+    if(!user) location.href='login.html';
 });
 
-window.addStock=async ()=>{
-  const bc=document.getElementById('pBC').value;
-  const n=document.getElementById('pN').value;
-  const tB=fixNum(document.getElementById('tBuy').value);
-  const tQ=fixNum(document.getElementById('tQty').value);
-  const sP=fixNum(document.getElementById('pS').value);
-  if(!n||tQ<1)return alert("সঠিক তথ্য দিন!");
-  await setDoc(doc(db,"inventory",n),{barcode:bc,name:n,buy:tB/tQ,sell:sP,stock:increment(tQ)},{merge:true});
-  alert("স্টক আপডেট হয়েছে!");
-  location.reload();
+// =========================
+// STOCK MANAGEMENT
+// =========================
+let inventory = {};
+if(document.getElementById('stockBody')){
+    db.collection('inventory').onSnapshot(snap => {
+        inventory = {};
+        let html = '';
+        snap.forEach(doc=>{
+            const data = doc.data();
+            inventory[data.name] = data;
+            html += `<tr>
+                <td>${data.name}</td>
+                <td>${data.buy}৳</td>
+                <td>${data.sell}৳</td>
+                <td>${data.stock}</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="editStock('${doc.id}')">Edit</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteStock('${doc.id}')">Delete</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('stockBody').innerHTML = html;
+    });
 }
 
-// ================== Sales Finalize ==================
-window.finalizeSale=async ()=>{
-  if(cart.length===0)return alert("কার্ট খালি!");
-  const cust=document.getElementById('cust')?document.getElementById('cust').value||"সম্মানিত ক্রেতা":"Customer";
-  const dVal=fixNum(document.getElementById('totalDisc')?document.getElementById('totalDisc').value:0);
-  const dType=document.getElementById('totalDType')?document.getElementById('totalDType').value:'cash';
-  let sub=cart.reduce((s,it)=>s+it.total,0);
-  let dAmt=(dType==='percent')?sub*dVal/100:dVal;
-  let grand=sub-dAmt;
-  let profit=(sub-cart.reduce((s,it)=>s+fixNum(it.buyPrice)*it.qty,0))-dAmt;
-  const now=new Date();
-  const dateStr=now.toISOString().split('T')[0];
-
-  for(let it of cart){ await updateDoc(doc(db,"inventory",it.name),{stock:increment(-it.qty)}); }
-  const sDoc=await addDoc(collection(db,"sales"),{customer:cust,items:cart,total:fixNum(grand),profit:fixNum(profit),date:dateStr,time:now.toLocaleTimeString()});
-
-  if(document.getElementById('rItemsBody')){
-    let rHtml=""; cart.forEach(it=>rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.total}</td></tr>`);
-    document.getElementById('rItemsBody').innerHTML=rHtml;
-    document.getElementById('rCust').innerText=cust;
-    document.getElementById('rID').innerText=sDoc.id.substring(0,7).toUpperCase();
-    document.getElementById('rDate').innerText=dateStr;
-    document.getElementById('rTime').innerText=now.toLocaleTimeString();
-    document.getElementById('rSub').innerText=Math.round(sub);
-    document.getElementById('rGrand').innerText=Math.round(grand);
-    if(dAmt>0){ document.getElementById('rDiscRow').style.setProperty('display','flex','important'); document.getElementById('rDisc').innerText=Math.round(dAmt);}
-    document.querySelector('.container')?document.querySelector('.container').style.display='none':null;
-    document.getElementById('receipt')?document.getElementById('receipt').style.display='block':null;
-  }
+// Add Stock
+function addStock(){
+    const name = document.getElementById('iName').value.trim();
+    const buy = Number(document.getElementById('iBuy').value);
+    const sell = Number(document.getElementById('iSell').value);
+    const stock = Number(document.getElementById('iStock').value);
+    if(!name||!buy||!sell||!stock) return alert("সব ফিল্ড পূরণ করুন");
+    db.collection('inventory').add({name,buy,sell,stock,barcode: ''});
+    document.getElementById('iName').value='';
+    document.getElementById('iBuy').value='';
+    document.getElementById('iSell').value='';
+    document.getElementById('iStock').value='';
 }
 
-// ================== Real-time Stats ==================
-onSnapshot(collection(db,"sales"),snap=>{
-  let dS=0,dP=0;
-  const today=new Date().toISOString().split('T')[0];
-  snap.forEach(d=>{
-    const data=d.data();
-    const total=fixNum(data.total);
-    const profit=fixNum(data.profit);
-    if(data.date===today){ dS+=total; dP+=profit; }
-  });
-  document.getElementById('dS')?document.getElementById('dS').innerText=Math.round(dS):null;
-  document.getElementById('dP')?document.getElementById('dP').innerText=Math.round(dP):null;
+function editStock(id){
+    const data = inventory[id] || {};
+    const name = prompt("নতুন নাম", data.name); 
+    const buy = prompt("নতুন Buy Price", data.buy);
+    const sell = prompt("নতুন Sell Price", data.sell);
+    const stock = prompt("নতুন Stock", data.stock);
+    if(name && buy && sell && stock){
+        db.collection('inventory').doc(id).update({name,buy:Number(buy),sell:Number(sell),stock:Number(stock)});
+    }
 }
 
-// ================== Supplier ==================
-window.addSupplier=async ()=>{
-  const n=document.getElementById('sName').value;
-  const p=document.getElementById('sPhone').value;
-  const a=document.getElementById('sAddress').value;
-  if(!n)return alert("Supplier Name দিন!");
-  await addDoc(collection(db,"suppliers"),{name:n,phone:p,address:a});
-  alert("Supplier Added!");
-  location.reload();
+function deleteStock(id){
+    if(confirm("আপনি কি সত্যিই মুছে ফেলতে চান?")) db.collection('inventory').doc(id).delete();
 }
 
-// ================== Expense ==================
-window.addExpense=async ()=>{
-  const n=document.getElementById('expName').value;
-  const a=fixNum(document.getElementById('expAmt').value);
-  const d=document.getElementById('expDate').value;
-  if(!n||a<=0)return alert("সঠিক তথ্য দিন!");
-  await addDoc(collection(db,"expenses"),{name:n,amount:a,date:d});
-  alert("Expense Added!");
-  location.reload();
+// =========================
+// SUPPLIER MANAGEMENT
+// =========================
+let suppliers = {};
+if(document.getElementById('supplierBody')){
+    db.collection('suppliers').onSnapshot(snap => {
+        suppliers = {};
+        let html = '';
+        snap.forEach(doc=>{
+            const data = doc.data();
+            suppliers[doc.id] = data;
+            html += `<tr>
+                <td>${data.name}</td>
+                <td>${data.phone}</td>
+                <td>${data.address}</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick="editSupplier('${doc.id}')">Edit</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteSupplier('${doc.id}')">Delete</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('supplierBody').innerHTML = html;
+    });
 }
 
-// ================== Report Search ==================
-window.search=async ()=>{
-  const f=document.getElementById('dF').value;
-  const t=document.getElementById('dT').value;
-  if(!f||!t)return alert("তারিখ সিলেক্ট করুন!");
-  const q=query(collection(db,"sales"),where("date",">=",f),where("date","<=",t));
-  const snap=await getDocs(q);
-  let s=0,p=0,count=0;
-  snap.forEach(d=>{ s+=fixNum(d.data().total); p+=fixNum(d.data().profit); count++; });
-  document.getElementById('repSale')?document.getElementById('repSale').innerText="৳ "+Math.round(s):null;
-  document.getElementById('repProfit')?document.getElementById('repProfit').innerText="৳ "+Math.round(p):null;
-  document.getElementById('repDetails')?document.getElementById('repDetails').innerHTML=`মোট <b>${count}</b> টি মেমো তৈরি হয়েছে। নিট লাভের হার: <b>${s>0?((p/s)*100).toFixed(1):0}%</b>`:null;
+function addSupplier(){
+    const name = document.getElementById('sName').value.trim();
+    const phone = document.getElementById('sPhone').value.trim();
+    const address = document.getElementById('sAddress').value.trim();
+    if(!name||!phone||!address) return alert("সব ফিল্ড পূরণ করুন");
+    db.collection('suppliers').add({name,phone,address});
+    document.getElementById('sName').value='';
+    document.getElementById('sPhone').value='';
+    document.getElementById('sAddress').value='';
+}
+
+function editSupplier(id){
+    const data = suppliers[id];
+    const name = prompt("নতুন নাম", data.name);
+    const phone = prompt("নতুন ফোন", data.phone);
+    const address = prompt("নতুন ঠিকানা", data.address);
+    if(name && phone && address){
+        db.collection('suppliers').doc(id).update({name,phone,address});
+    }
+}
+
+function deleteSupplier(id){
+    if(confirm("আপনি কি সত্যিই মুছে ফেলতে চান?")) db.collection('suppliers').doc(id).delete();
+}
+
+// =========================
+// EXPENSES
+// =========================
+let expenses = {};
+if(document.getElementById('expenseBody')){
+    db.collection('expenses').orderBy('date','desc').onSnapshot(snap=>{
+        expenses={};
+        snap.forEach(d=>{expenses[d.id]=d.data();});
+        renderExpenses();
+    });
+}
+
+function renderExpenses(filter=""){
+    if(!document.getElementById('expenseBody')) return;
+    let html='';
+    for(let id in expenses){
+        const e = expenses[id];
+        if(filter && !e.title.toLowerCase().includes(filter.toLowerCase())) continue;
+        html+=`<tr>
+            <td>${e.title}</td>
+            <td>${e.amount}৳</td>
+            <td>${e.date}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteExpense('${id}')">Delete</button></td>
+        </tr>`;
+    }
+    document.getElementById('expenseBody').innerHTML = html;
+}
+
+function addExpense(){
+    const title=document.getElementById('eTitle').value.trim();
+    const amount=Number(document.getElementById('eAmount').value);
+    const date=document.getElementById('eDate').value;
+    if(!title||!amount||!date) return alert("সব ফিল্ড পূরণ করুন");
+    db.collection('expenses').add({title,amount,date});
+    document.getElementById('eTitle').value='';
+    document.getElementById('eAmount').value='';
+    document.getElementById('eDate').value='';
+}
+
+function deleteExpense(id){
+    if(confirm("আপনি কি সত্যিই মুছে ফেলতে চান?")) db.collection('expenses').doc(id).delete();
+}
+
+// =========================
+// SALES REPORTS
+// =========================
+if(document.getElementById('salesChart')){
+    db.collection('sales').onSnapshot(snap=>{
+        const dates = {}, labels=[], salesData=[], profitData=[];
+        snap.forEach(doc=>{
+            const s = doc.data();
+            labels.push(s.date);
+            salesData.push(s.total);
+            profitData.push(s.profit);
+        });
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        new Chart(ctx,{
+            type:'bar',
+            data:{labels:labels,datasets:[
+                {label:'Sales',data:salesData,backgroundColor:'#2563eb'},
+                {label:'Profit',data:profitData,backgroundColor:'#10b981'}
+            ]},
+            options:{responsive:true,plugins:{legend:{position:'top'}}}
+        });
+    });
+}
+
+// =========================
+// LOGOUT
+// =========================
+if(document.getElementById('logoutBtn')){
+    document.getElementById('logoutBtn').addEventListener('click',()=>{
+        auth.signOut().then(()=>{location.href='login.html';});
+    });
 }
