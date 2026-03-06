@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS / Billing</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h2>POS / Billing</h2>
+
+<select id="product"></select>
+<input type="number" id="qty" value="1">
+<button onclick="addCart()">Add to Cart</button>
+
+<table>
+<thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th><th>Action</th></tr></thead>
+<tbody id="cartBody"></tbody>
+</table>
+
+Discount: <input id="disc" type="number" value="0">
+<select id="discType"><option value="cash">৳</option><option value="percent">%</option></select>
+<button onclick="finishSale()">Complete Sale</button>
+
+<script type="module">
+import { addToCart, finalizeSale, removeCartItem } from './app.js';
+
+window.addCart = ()=>{
+  const name=document.getElementById('product').value;
+  const qty=parseInt(document.getElementById('qty').value);
+  addToCart(name,qty);
+};
+
+window.removeCartItem = removeCartItem;
+
+window.finishSale = ()=>{
+  const disc=parseFloat(document.getElementById('disc').value);
+  const discType=document.getElementById('discType').value;
+  finalizeSale("Guest",disc,discType);
+};
+</script>
+</body>
+</html>
