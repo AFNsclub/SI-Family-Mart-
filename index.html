@@ -8,26 +8,16 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-:root {
-    --primary:#2563eb; --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --bg:#f8fafc;
-}
+:root { --primary:#2563eb; --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --bg:#f8fafc; }
 body { background:var(--bg); font-family:'Segoe UI', Tahoma, sans-serif; padding-bottom: 50px; }
-.header {
-    text-align:center; padding:40px 20px; background:linear-gradient(135deg,var(--primary),#1e3a8a);
-    color:#fff; border-radius:0 0 40px 40px; box-shadow:0 10px 30px rgba(0,0,0,0.15);
-}
+.header { text-align:center; padding:40px 20px; background:linear-gradient(135deg,var(--primary),#1e3a8a); color:#fff; border-radius:0 0 40px 40px; box-shadow:0 10px 30px rgba(0,0,0,0.15); }
 .header .btn { margin:5px; border-radius:12px; font-weight:600; padding: 10px 22px; transition: 0.3s; border:none; }
 .header .btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-
-.stats .card {
-    border-radius:20px; text-align:center; padding:25px; color:white; border:none;
-    transition:0.3s; box-shadow:0 8px 20px rgba(0,0,0,0.08);
-}
+.stats .card { border-radius:20px; text-align:center; padding:25px; color:white; border:none; transition:0.3s; box-shadow:0 8px 20px rgba(0,0,0,0.08); }
 .bg-sale { background: linear-gradient(135deg,#84cc16,#10b981); }
 .bg-profit { background: linear-gradient(135deg,#2563eb,#3b82f6); }
 .bg-inventory { background: linear-gradient(135deg,#f59e0b,#f97316); }
 .bg-due { background: linear-gradient(135deg,#ef4444,#f87171); }
-
 .alert-card { background: #fff; border-radius: 20px; padding: 20px; border-left: 8px solid var(--danger); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 .chart-container { background:white; padding:25px; border-radius:20px; box-shadow:0 5px 20px rgba(0,0,0,0.05); margin-top:20px; }
 </style>
@@ -39,24 +29,22 @@ body { background:var(--bg); font-family:'Segoe UI', Tahoma, sans-serif; padding
         <h1 class="fw-bold">S.I. Family Mart Admin Panel</h1>
         <p class="opacity-75">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
         <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
-            <a href="pos.html" class="btn btn-light text-primary">🛒 POS / Billing</a>
-            <a href="stock.html" class="btn btn-info text-white">📦 Stock Management</a>
-            <a href="supplier.html" class="btn btn-secondary">🚛 Suppliers</a>
-            <a href="ledger.html" class="btn btn-warning text-dark">📔 Ledger</a>
-            <a href="report.html" class="btn btn-success">📊 Complete Reports</a>
-            <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#dueModal">💰 বাকি জমা</button>
-            <button class="btn btn-danger" id="logoutBtn">🚪 Logout</button>
+            <a href="pos.html" class="btn btn-light text-primary shadow">🛒 POS / Billing</a>
+            <a href="stock.html" class="btn btn-info text-white shadow">📦 Stock Management</a>
+            <a href="supplier.html" class="btn btn-secondary shadow">🚛 Suppliers</a>
+            <a href="ledger.html" class="btn btn-warning text-dark shadow">📔 Ledger</a>
+            <a href="report.html" class="btn btn-success shadow">📊 Complete Reports</a>
+            <button class="btn btn-dark shadow" data-bs-toggle="modal" data-bs-target="#dueModal">💰 বাকি জমা</button>
+            <button class="btn btn-danger shadow" id="logoutBtn">🚪 Logout</button>
         </div>
     </header>
 
     <div id="lowStockSection" class="mt-4" style="display:none;">
         <div class="alert-card">
-            <h6 class="text-danger fw-bold"><span class="spinner-grow spinner-grow-sm text-danger"></span> স্টক ফুরিয়ে যাচ্ছে! (Low Stock Alert)</h6>
+            <h6 class="text-danger fw-bold"><span class="spinner-grow spinner-grow-sm text-danger"></span> স্টক ফুরিয়ে যাচ্ছে! (Low Stock Alert)</h6>
             <div id="lowStockList" class="small text-muted mt-2"></div>
         </div>
     </div>
-
-    
 
     <section class="stats mt-4">
         <div class="row g-3">
@@ -69,15 +57,21 @@ body { background:var(--bg); font-family:'Segoe UI', Tahoma, sans-serif; padding
 
     <section class="charts mt-2">
         <div class="row g-3">
-            <div class="col-md-7">
+            <div class="col-md-12">
                 <div class="chart-container">
-                    <h6 class="fw-bold mb-3 text-primary">📈 বিক্রয় প্রবণতা (Sales Trend)</h6>
+                    <h6 class="fw-bold mb-3 text-primary text-center">📈 বিক্রয় প্রবণতা (Sales Trend)</h6>
                     <canvas id="weeklySalesChart"></canvas>
                 </div>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h6 class="fw-bold mb-3 text-info text-center">👑 সেরা ৫ ক্রেতা (মোট কেনাকাটা)</h6>
+                    <canvas id="topBuyersChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
                 <div class="chart-container text-center">
-                    <h6 class="fw-bold mb-3 text-success">🏆 টপ ৫ কাস্টমার (বাকি)</h6>
+                    <h6 class="fw-bold mb-3 text-danger text-center">⚠️ টপ ৫ কাস্টমার (বাকি)</h6>
                     <canvas id="topDueChart"></canvas>
                 </div>
             </div>
@@ -85,21 +79,28 @@ body { background:var(--bg); font-family:'Segoe UI', Tahoma, sans-serif; padding
     </section>
 </div>
 
+<datalist id="customerSuggestions"></datalist>
+
 <div class="modal fade" id="dueModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content shadow-lg">
-      <div class="modal-header bg-primary text-white border-0">
+    <div class="modal-content shadow-lg border-0" style="border-radius: 25px;">
+      <div class="modal-header bg-primary text-white border-0 py-3">
         <h5 class="modal-title">💰 কাস্টমার বাকি পরিশোধ</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
         <div class="mb-3">
-            <label class="small fw-bold">কাস্টমারের নাম</label>
-            <input type="text" id="dueCustName" class="form-control rounded-pill" placeholder="নাম লিখুন">
+            <label class="small fw-bold">কাস্টমারের নাম বা মোবাইল</label>
+            <input type="text" id="dueCustName" class="form-control rounded-pill" placeholder="নাম বা মোবাইল টাইপ করুন" list="customerSuggestions" oninput="checkDueAmount(this.value)">
         </div>
+        
+        <div id="dueAmountNotice" class="alert alert-warning py-2 rounded-4 d-none text-center">
+            বর্তমান মোট বাকি: <span id="currentDueVal" class="fw-bold text-danger">০</span>৳
+        </div>
+
         <div class="mb-3">
             <label class="small fw-bold">পরিশোধের পরিমাণ (টাকা)</label>
-            <input type="number" id="payAmount" class="form-control rounded-pill" placeholder="0.00">
+            <input type="number" id="payAmount" class="form-control rounded-pill" placeholder="পরিমাণ লিখুন">
         </div>
         <button class="btn btn-success w-100 fw-bold py-2 rounded-pill shadow" onclick="collectDue()">কনফার্ম জমা নিন</button>
       </div>
@@ -115,29 +116,23 @@ const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-// ১. রিয়েল-টাইম স্ট্যাটাস এবং চার্ট আপডেট
+// ১. রিয়েল-টাইম স্ট্যাটাস এবং চার্ট আপডেট
 db.collection('sales').onSnapshot(snap => {
-    let totalSale=0, totalProfit=0, totalDue=0;
+    let totalSale=0, totalProfit=0, totalDue=0, dailyData = {};
     const today = new Date().toISOString().split('T')[0];
-    let dailyData = {};
-
     snap.forEach(doc => {
         const d = doc.data();
-        if(d.date === today){
-            totalSale += (Number(d.total) || 0);
-            totalProfit += (Number(d.profit) || 0);
-        }
+        if(d.date === today){ totalSale += (Number(d.total) || 0); totalProfit += (Number(d.profit) || 0); }
         totalDue += (Number(d.due) || 0);
         if(d.date) dailyData[d.date] = (dailyData[d.date] || 0) + (d.total || 0);
     });
-
     document.getElementById('dS').innerText = Math.round(totalSale) + "৳";
     document.getElementById('dP').innerText = Math.round(totalProfit) + "৳";
     document.getElementById('dDue').innerText = Math.round(totalDue) + "৳";
     updateMainChart(dailyData);
 });
 
-// ২. ইনভেন্টরি ভ্যালু এবং লো-স্টক এলার্ট
+// ২. ইনভেন্টরি এবং লো-স্টক
 db.collection('inventory').onSnapshot(snap => {
     let invValue=0, lowItems=[];
     snap.forEach(doc => {
@@ -146,8 +141,6 @@ db.collection('inventory').onSnapshot(snap => {
         if((Number(d.stock) || 0) <= 5) lowItems.push(d.name); 
     });
     document.getElementById('iV').innerText = Math.round(invValue) + "৳";
-
-    // এলার্ট দেখানো
     const alertBox = document.getElementById('lowStockSection');
     if(lowItems.length > 0){
         alertBox.style.display = "block";
@@ -155,28 +148,76 @@ db.collection('inventory').onSnapshot(snap => {
     } else { alertBox.style.display = "none"; }
 });
 
-// ৩. বাকি জমা নেওয়ার ফাংশন
+// ৩. কাস্টমার ডাটা লজিক (বাকি এবং কেনাকাটা)
+let allCustomers = [];
+db.collection('customers').onSnapshot(snap => {
+    const list = document.getElementById('customerSuggestions');
+    list.innerHTML = ""; allCustomers = [];
+    let dueNames = [], dueValues = [], buyerNames = [], totalPurchase = [];
+
+    snap.forEach(doc => {
+        const d = doc.data();
+        const customer = { name: doc.id, due: Number(d.due) || 0, mobile: d.mobile || "", spent: Number(d.totalSpent) || 0 };
+        allCustomers.push(customer);
+
+        // ১. অটো ডিলিট লজিক: যদি বাকি ০ হয়ে যায়
+        if (customer.due <= 0 && customer.spent <= 0) {
+            db.collection('customers').doc(doc.id).delete();
+        } else if (customer.due > 0) {
+            dueNames.push(doc.id);
+            dueValues.push(customer.due);
+        }
+
+        if(customer.spent > 0) { buyerNames.push(doc.id); totalPurchase.push(customer.spent); }
+
+        // সাজেশন লিস্ট আপডেট
+        const opt = document.createElement('option');
+        opt.value = customer.name;
+        if(customer.mobile) opt.label = customer.mobile;
+        list.appendChild(opt);
+    });
+    renderDueChart(dueNames, dueValues);
+    renderTopBuyersChart(buyerNames, totalPurchase);
+});
+
+// ৪. বাকি চেক করার ফাংশন
+function checkDueAmount(val) {
+    const notice = document.getElementById('dueAmountNotice');
+    const display = document.getElementById('currentDueVal');
+    const found = allCustomers.find(c => c.name === val || c.mobile === val);
+    if (found && found.due > 0) {
+        display.innerText = Math.round(found.due);
+        notice.classList.remove('d-none');
+        document.getElementById('payAmount').value = Math.round(found.due);
+    } else { notice.classList.add('d-none'); document.getElementById('payAmount').value = ""; }
+}
+
+// ৫. বাকি জমা নেওয়ার ফাংশন
 async function collectDue() {
     const name = document.getElementById('dueCustName').value;
     const amount = Number(document.getElementById('payAmount').value);
     if(!name || amount <= 0) return alert("সঠিক তথ্য দিন");
 
-    await db.collection('sales').add({
-        customer: name + " (বাকি পরিশোধ)",
-        total: amount, profit: 0, due: -amount,
-        date: new Date().toISOString().split('T')[0],
-        type: "COLLECTION"
-    });
-    alert("জমা সফল হয়েছে!");
-    location.reload();
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const custRef = db.collection('customers').doc(name);
+        const doc = await custRef.get();
+        if (doc.exists) {
+            const newDue = (doc.data().due || 0) - amount;
+            await db.collection('sales').add({ customer: name + " (বাকি পরিশোধ)", total: amount, profit: 0, due: -amount, date: today, type: "COLLECTION" });
+            if (newDue <= 0) { 
+                // বাকি পরিশোধ হলে ডাটা ক্লিয়ার
+                await custRef.update({ due: 0 }); 
+                alert("পুরো বাকি পরিশোধ হয়েছে!");
+            } else { await custRef.update({ due: newDue }); alert("আংশিক জমা হয়েছে।"); }
+            location.reload();
+        }
+    } catch (e) { alert("ত্রুটি হয়েছে!"); }
 }
 
-// ৪. চার্ট কনফিগারেশন
+// ৬. চার্ট রেন্ডারিং
 const ctxWeekly = document.getElementById('weeklySalesChart');
-const weeklyChart = new Chart(ctxWeekly, {
-    type: 'line',
-    data: { labels: [], datasets: [{ label: 'Daily Sales', data: [], borderColor: '#2563eb', fill: true, backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.4 }] }
-});
+const weeklyChart = new Chart(ctxWeekly, { type: 'line', data: { labels: [], datasets: [{ label: 'Sales (৳)', data: [], borderColor: '#2563eb', fill: true, backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.4 }] } });
 
 function updateMainChart(dailyData) {
     const sortedDates = Object.keys(dailyData).sort().slice(-7);
@@ -185,20 +226,16 @@ function updateMainChart(dailyData) {
     weeklyChart.update();
 }
 
-// ৫. কাস্টমার বাকি চার্ট (Top 5 Due)
-db.collection('customers').orderBy('due', 'desc').limit(5).onSnapshot(snap => {
-    let names = [], dues = [];
-    snap.forEach(d => { names.push(d.id); dues.push(d.data().due); });
-    renderDueChart(names, dues);
-});
-
-let dueChart;
+let dueChart, buyersChart;
 function renderDueChart(labels, data) {
     if(dueChart) dueChart.destroy();
-    dueChart = new Chart(document.getElementById('topDueChart'), {
-        type: 'pie',
-        data: { labels, datasets: [{ data, backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#6366f1'] }] }
-    });
+    dueChart = new Chart(document.getElementById('topDueChart'), { type: 'pie', data: { labels: labels.slice(0, 5), datasets: [{ data: data.slice(0, 5), backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#6366f1'] }] } });
+}
+
+function renderTopBuyersChart(labels, data) {
+    if(buyersChart) buyersChart.destroy();
+    const combined = labels.map((l, i) => ({l, v: data[i]})).sort((a, b) => b.v - a.v).slice(0, 5);
+    buyersChart = new Chart(document.getElementById('topBuyersChart'), { type: 'bar', data: { labels: combined.map(x => x.l), datasets: [{ label: 'কেনাকাটা (৳)', data: combined.map(x => x.v), backgroundColor: '#10b981' }] }, options: { indexAxis: 'y' } });
 }
 </script>
 </body>
