@@ -1,8 +1,9 @@
-body { font-family: 'Segoe UI', sans-serif; background:#f1f5f9; margin:0; padding:0; }
-.header { text-align:center; margin-bottom:20px; }
-.card { padding:20px; border-radius:15px; color:white; text-align:center; }
-.bg-sale { background:linear-gradient(135deg,#84cc16,#10b981); }
-.bg-profit { background:linear-gradient(135deg,#10b981,#059669); }
-.bg-inventory { background:linear-gradient(135deg,#8b5cf6,#6366f1); }
-input, select, button { margin-bottom:8px; }
-.receipt-box { display:none; background:#fff; padding:20px; border-radius:10px; border:1px solid #ccc; }
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f1f5f9;margin:0;padding:0;}
+.header{text-align:center;margin-bottom:20px;}
+.header h1{margin-bottom:5px;color:#0f172a;}
+.card{padding:15px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.05);background:#fff;margin-bottom:15px;}
+.bg-sale{background:linear-gradient(135deg,#84cc16,#10b981);color:white;}
+.bg-profit{background:linear-gradient(135deg,#10b981,#059669);color:white;}
+.bg-inventory{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:white;}
+input,select,button{border-radius:8px;}
+table th,table td{text-align:center;}
