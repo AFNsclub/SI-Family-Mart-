@@ -3,47 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stock Management</title>
-<link rel="stylesheet" href="style.css">
+<title>Stock | S.I. Family Mart</title>
+<link href="style.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
-<h2>Stock Management</h2>
-
-<input type="text" id="pName" placeholder="Product Name">
-<input type="number" id="pBuy" placeholder="Buy Price">
-<input type="number" id="pSell" placeholder="Sell Price">
-<input type="number" id="pStock" placeholder="Stock Quantity">
-<button onclick="addProductHandler()">Add / Update Product</button>
-
-<h3>Inventory</h3>
-<table id="stockTable">
-<thead><tr><th>Name</th><th>Buy</th><th>Sell</th><th>Stock</th></tr></thead>
-<tbody></tbody>
-</table>
-
-<script type="module">
-import { addProduct } from './app.js';
-import { onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { db } from './app.js';
-
-window.addProductHandler = ()=>{
-  const name=document.getElementById('pName').value;
-  const buy=parseFloat(document.getElementById('pBuy').value);
-  const sell=parseFloat(document.getElementById('pSell').value);
-  const stock=parseInt(document.getElementById('pStock').value);
-  addProduct(name,buy,sell,stock);
-  alert("Product Added/Updated!");
-};
-
-const tbody=document.querySelector('#stockTable tbody');
-onSnapshot(collection(db,'products'),snap=>{
-  let html="";
-  snap.forEach(d=>{
-    const data=d.data();
-    html+=`<tr><td>${data.name}</td><td>${data.buy}</td><td>${data.sell}</td><td>${data.stock}</td></tr>`;
-  });
-  tbody.innerHTML=html;
-});
-</script>
+<div class="container mt-4">
+    <h2>স্টক ম্যানেজমেন্ট</h2>
+    <div class="row g-2 mb-3">
+        <div class="col-md-3"><input type="text" id="pBC" class="form-control" placeholder="বারকোড"></div>
+        <div class="col-md-3"><input type="text" id="pN" class="form-control" placeholder="পণ্যের নাম"></div>
+        <div class="col-md-2"><input type="number" id="tBuy" class="form-control" placeholder="মোট ক্রয়"></div>
+        <div class="col-md-2"><input type="number" id="tQty" class="form-control" placeholder="মোট পিস"></div>
+        <div class="col-md-2"><input type="number" id="pS" class="form-control" placeholder="বেচা দাম"></div>
+    </div>
+    <button class="btn btn-dark w-100 mb-3" onclick="addStock()">স্টক আপডেট করুন</button>
+    <div id="stockList" class="table-responsive"></div>
+</div>
+<script src="app.js" type="module"></script>
 </body>
 </html>
