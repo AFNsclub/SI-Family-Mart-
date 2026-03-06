@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Management</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h2>Stock Management</h2>
+
+<input type="text" id="pName" placeholder="Product Name">
+<input type="number" id="pBuy" placeholder="Buy Price">
+<input type="number" id="pSell" placeholder="Sell Price">
+<input type="number" id="pStock" placeholder="Stock Quantity">
+<button onclick="addProductHandler()">Add / Update Product</button>
+
+<h3>Inventory</h3>
+<table id="stockTable">
+<thead><tr><th>Name</th><th>Buy</th><th>Sell</th><th>Stock</th></tr></thead>
+<tbody></tbody>
+</table>
+
+<script type="module">
+import { addProduct } from './app.js';
+import { onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { db } from './app.js';
+
+window.addProductHandler = ()=>{
+  const name=document.getElementById('pName').value;
+  const buy=parseFloat(document.getElementById('pBuy').value);
+  const sell=parseFloat(document.getElementById('pSell').value);
+  const stock=parseInt(document.getElementById('pStock').value);
+  addProduct(name,buy,sell,stock);
+  alert("Product Added/Updated!");
+};
+
+const tbody=document.querySelector('#stockTable tbody');
+onSnapshot(collection(db,'products'),snap=>{
+  let html="";
+  snap.forEach(d=>{
+    const data=d.data();
+    html+=`<tr><td>${data.name}</td><td>${data.buy}</td><td>${data.sell}</td><td>${data.stock}</td></tr>`;
+  });
+  tbody.innerHTML=html;
+});
+</script>
+</body>
+</html>
