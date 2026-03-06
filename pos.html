@@ -3,45 +3,99 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>POS | S.I. Family Mart</title>
+<title>S.I. Family Mart | POS</title>
 <link href="style.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 <div class="container mt-4">
-    <h2>POS / Billing</h2>
-    <div class="row">
+    <header class="d-flex justify-content-between align-items-center mb-3">
+        <h2>POS / Billing</h2>
+        <button id="logoutBtn" class="btn btn-danger">Logout</button>
+    </header>
+
+    <!-- POS Content -->
+    <div class="row g-3">
         <div class="col-md-5">
             <input type="text" id="cust" class="form-control mb-2" placeholder="ক্রেতার নাম">
             <select id="sItem" class="form-select mb-2"></select>
-            <div class="input-group mb-2">
-                <input type="number" id="sQ" class="form-control" value="1">
-                <button class="btn btn-warning" onclick="addToCart()">কার্টে দিন</button>
-            </div>
-            <div class="input-group mb-2">
-                <input type="number" id="totalDisc" class="form-control" placeholder="ছাড়">
-                <select id="totalDType" class="form-select">
-                    <option value="cash">৳</option>
-                    <option value="percent">%</option>
-                </select>
-            </div>
-            <button class="btn btn-success w-100" onclick="finalizeSale()">বিক্রি সম্পন্ন</button>
+            <input type="number" id="sQ" class="form-control mb-2" value="1">
+            <button class="btn btn-warning w-100" onclick="addToCart()">+ কার্টে দিন</button>
         </div>
         <div class="col-md-7">
             <table class="table table-sm">
                 <thead><tr><th>পণ্য</th><th>দাম</th><th>Qty</th><th>মোট</th><th>-</th></tr></thead>
                 <tbody id="cartBody"></tbody>
             </table>
+            <button class="btn btn-success w-100" onclick="finalizeSale()">মেমো সম্পন্ন</button>
         </div>
     </div>
-
-    <div id="receipt" class="receipt-box">
-        <h4>রিসিপ্ট</h4>
-        <div id="rItemsBody"></div>
-        <p>মোট: <span id="rGrand">0</span>৳</p>
-    </div>
 </div>
-<script src="app.js" type="module"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
+    authDomain: "fir-i-family-mart.firebaseapp.com",
+    projectId: "fir-i-family-mart",
+    storageBucket: "fir-i-family-mart.firebasestorage.app",
+    messagingSenderId: "73889024539",
+    appId: "1:73889024539:web:271561c9dba17b5a6b06be"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// --- Auth Check ---
+onAuthStateChanged(auth, user => { if(!user) window.location = "login.html"; });
+document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+    await signOut(auth); window.location = "login.html";
+});
+
+// --- POS Logic ---
+let inv = {}, cart = [];
+const fixNum = n => (isNaN(n)||n==null)?0:Number(n);
+
+window.addToCart = () => {
+    const n = document.getElementById('sItem').value;
+    const q = fixNum(document.getElementById('sQ').value);
+    if(!n||q<1) return alert("সঠিক পণ্য বাছুন");
+    const item = inv[n];
+    cart.push({name:n,qty:q,price:item.sell,buyPrice:item.buy,total:item.sell*q});
+    renderCart();
+};
+
+function renderCart(){
+    let h=""; cart.forEach((it,i)=>{h+=`<tr><td>${it.name}</td><td>${it.price}</td><td>${it.qty}</td><td>${it.total}</td><td><button class="btn btn-sm text-danger" onclick="removeItem(${i})">✖</button></td></tr>`;});
+    document.getElementById('cartBody').innerHTML = h;
+}
+window.removeItem = i => { cart.splice(i,1); renderCart(); };
+
+onSnapshot(collection(db,"inventory"),snap=>{
+    let ops="<option value=''>পণ্য বাছুন</option>";
+    snap.forEach(d=>{
+        const data=d.data(); inv[data.name]=data;
+        ops+=`<option value="${data.name}">${data.name}</option>`;
+    });
+    document.getElementById('sItem').innerHTML=ops;
+});
+
+window.finalizeSale = async ()=>{
+    if(cart.length===0)return alert("কার্ট খালি!");
+    const cust=document.getElementById('cust').value||"সম্মানিত ক্রেতা";
+    let sub=cart.reduce((s,it)=>s+it.total,0);
+    let profit=sub-cart.reduce((s,it)=>s+fixNum(it.buyPrice)*it.qty,0);
+    const now=new Date();
+    for(let it of cart) await updateDoc(doc(db,"inventory",it.name),{stock:increment(-it.qty)});
+    await addDoc(collection(db,"sales"),{customer:cust,items:cart,total:sub,profit:profit,date:now.toISOString().split('T')[0],time:now.toLocaleTimeString()});
+    alert("সেল সফলভাবে সম্পন্ন!");
+    cart=[]; renderCart();
+};
+</script>
 </body>
 </html>
