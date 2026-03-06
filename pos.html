@@ -10,14 +10,38 @@
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.6/umd/index.min.js"></script>
 <style>
 :root {--primary:#2563eb;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg:#f1f5f9;--card-bg:#fff;}
-body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif;}
+body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-top: 60px;}
+
+/* Navigation Index */
+.nav-index { background: #fff; position: fixed; top: 0; width: 100%; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; padding: 10px; }
+.nav-index a { text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; color: #1e293b; background: #f1f5f9; transition: 0.3s; }
+.nav-index a:hover, .nav-index a.active { background: var(--primary); color: #fff; }
+
 .header {background: linear-gradient(135deg, var(--primary), #1e3a8a); color:#fff; text-align:center; padding:25px; border-radius:0 0 30px 30px; box-shadow:0 10px 20px rgba(0,0,0,0.1);}
 .card{border-radius:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05); padding:20px; margin-bottom:15px; background:var(--card-bg);}
-#receipt{display:none;background:#fff;padding:25px;border-radius:15px;max-width:480px;margin:30px auto;box-shadow:0 10px 30px rgba(0,0,0,0.15); border: 1px solid #ddd;}
-@media print{ body * {visibility: hidden;} #receipt, #receipt * {visibility: visible;} #receipt {position: absolute; left: 0; top: 0; width: 100%; border:none;} .no-print {display:none;} }
+
+/* Receipt Styling */
+#receipt { display:none; background:#fff; padding:30px; border-radius:15px; max-width:450px; margin:30px auto; border: 2px dashed #bbb; color: #000; }
+.receipt-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+.promo-msg { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 10px; font-style: italic; color: #475569; margin-top: 15px; font-size: 13px; }
+
+@media print{ 
+    .no-print, .nav-index {display:none !important;} 
+    #receipt {display:block !important; width:100%; margin:0; border:none;} 
+    body {background:#fff; padding:0;}
+}
 </style>
 </head>
 <body>
+
+<nav class="nav-index no-print">
+    <a href="admin.html">📊 Admin</a>
+    <a href="pos.html" class="active">🛒 POS</a>
+    <a href="stock.html">📦 Stock</a>
+    <a href="ledger.html">📔 Ledger</a>
+    <a href="expense.html">💸 Expense</a>
+</nav>
+
 <div class="container mt-4 no-print">
   <header class="header">
     <h2 class="fw-bold m-0">S.I. Family Mart | POS</h2>
@@ -27,55 +51,53 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif;}
   <div class="row mt-4">
     <div class="col-md-5">
       <div class="card border-0">
-        <h5 class="fw-bold mb-3 text-primary">🛒 পণ্য নির্বাচন</h5>
+        <h5 class="fw-bold mb-3 text-primary">🛒 কাস্টমার ও পণ্য</h5>
         <div class="mb-2">
             <input type="text" id="cust" class="form-control mb-2" placeholder="ক্রেতার নাম (আবশ্যক)">
-            <input type="text" id="custMobile" class="form-control mb-2" placeholder="ক্রেতার মোবাইল নাম্বার">
+            <input type="text" id="custMobile" class="form-control mb-2" placeholder="মোবাইল নাম্বার">
         </div>
         <hr>
         <div class="mb-3">
-            <label class="small fw-bold">ম্যানুয়াল সার্চ</label>
+            <label class="small fw-bold">সার্চ করুন</label>
             <select id="sItem" class="form-select" onchange="autoFillBarcode(this.value)"><option value="">পণ্য বাছুন</option></select>
         </div>
         <div class="mb-3">
-            <label class="small fw-bold">বারকোড (অটো/স্ক্যান)</label>
-            <input type="text" id="barcodeInput" class="form-control" placeholder="পণ্য বাছলে এখানে চলে আসবে" oninput="scanToAdd()">
+            <label class="small fw-bold">বারকোড</label>
+            <input type="text" id="barcodeInput" class="form-control" placeholder="স্ক্যান বা টাইপ করুন" oninput="scanToAdd()">
         </div>
         <div class="row g-2 mb-3">
           <div class="col-6"><input type="number" id="sQ" class="form-control" value="1" min="1"></div>
           <div class="col-6"><button class="btn btn-success w-100 fw-bold shadow-sm" onclick="addToCart()">+ কার্টে দিন</button></div>
         </div>
-        <button class="btn btn-dark w-100 shadow-sm" onclick="startScanner()">📷 ক্যামেরা স্ক্যান শুরু</button>
+        <button class="btn btn-dark w-100 shadow-sm" onclick="startScanner()">📷 ক্যামেরা স্ক্যানার</button>
         <video id="scannerPreview" style="width:100%;display:none;margin-top:10px; border-radius: 10px;"></video>
       </div>
     </div>
 
     <div class="col-md-7">
       <div class="card border-0">
-        <h5 class="fw-bold mb-3 text-success">📝 কার্ট লিস্ট</h5>
+        <h5 class="fw-bold mb-3 text-success">📝 আইটেম লিস্ট</h5>
         <div class="table-responsive">
             <table class="table table-hover">
               <thead class="table-light"><tr><th>পণ্য</th><th>মূল্য</th><th>Qty</th><th>মোট</th><th>-</th></tr></thead>
               <tbody id="cartBody"></tbody>
             </table>
         </div>
-        <div class="mt-3 p-3 bg-light rounded-3">
+        <div class="mt-3 p-3 bg-light rounded-3 border">
           <div class="row g-2 mb-2">
             <div class="col-md-6">
+                <label class="small fw-bold">ছাড়</label>
                 <div class="input-group">
-                    <span class="input-group-text">ছাড়</span>
                     <input type="number" id="totalDisc" class="form-control" value="0">
                     <select id="totalDType" class="form-select" style="max-width:70px"><option value="cash">৳</option><option value="percent">%</option></select>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text bg-warning text-dark fw-bold">পেমেন্ট</span>
-                    <input type="number" id="paidAmount" class="form-control border-warning" placeholder="0.00">
-                </div>
+                <label class="small fw-bold text-danger">পেমেন্ট (জমা)</label>
+                <input type="number" id="paidAmount" class="form-control border-danger" placeholder="0.00">
             </div>
           </div>
-          <button class="btn btn-primary w-100 py-2 fw-bold shadow" id="finalBtn" onclick="finalizeSale()">🎉 মেমো ও বিক্রি সম্পন্ন</button>
+          <button class="btn btn-primary w-100 py-3 fw-bold shadow mt-2" id="finalBtn" onclick="finalizeSale()">🎉 বিক্রি সম্পন্ন ও মেমো</button>
         </div>
       </div>
     </div>
@@ -83,40 +105,42 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif;}
 </div>
 
 <div id="receipt">
-  <div class="text-center mb-3">
-    <h3 class="fw-bold m-0">S.I. FAMILY MART</h3>
+  <div class="text-center receipt-header">
+    <h2 class="fw-bold m-0" style="letter-spacing: 1px;">S.I. FAMILY MART</h2>
     <p class="small m-0">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
-    <p class="small m-0 fw-bold">📞 মোবাইল: 01568683171</p>
+    <p class="small m-0">প্রয়োজনে: <b>01568683171</b></p>
     <div class="my-2"><svg id="rBarcode"></svg></div>
-    <p class="small m-0" id="memoNum"></p>
+    <p class="small m-0" id="memoNum" style="font-weight:bold;"></p>
     <p class="small m-0" id="saleDate"></p>
   </div>
-  <hr>
+  
   <div class="small">
-    <p class="mb-1"><strong>ক্রেতা:</strong> <span id="custName"></span></p>
-    <p class="mb-3"><strong>মোবাইল:</strong> <span id="custMobileDisplay"></span></p>
-    <table class="table table-sm border">
-      <thead><tr><th>পণ্য</th><th>Qty</th><th>মূল্য</th><th>মোট</th></tr></thead>
+    <table style="width:100%; margin-bottom: 10px;">
+        <tr><td><b>ক্রেতা:</b> <span id="custName"></span></td><td style="text-align:right;"><b>মোবাইল:</b> <span id="custMobileDisplay"></span></td></tr>
+    </table>
+    <table class="table table-sm table-bordered">
+      <thead class="table-dark"><tr><th>পণ্য</th><th>Qty</th><th>মূল্য</th><th>মোট</th></tr></thead>
       <tbody id="rItemsBody"></tbody>
     </table>
   </div>
-  <div style="text-align:right;" class="small mt-3">
-    <p class="mb-1">মোট মূল্য: <span id="rSub">0</span>৳</p>
-    <p class="mb-1">ছাড়: <span id="rDiscount">0</span>৳</p>
-    <p class="mb-1 fw-bold fs-6">Grand Total: <span id="rGrand">0</span>৳</p>
-    <hr>
-    <p class="mb-1 text-success">Paid: <span id="rPaid">0</span>৳</p>
-    <p class="mb-1 text-danger fw-bold">Due: <span id="rDue">0</span>৳</p>
-  </div>
-  <div class="text-center mt-4 small border-top pt-2">
-    <p>পণ্য ফেরত নেওয়া হয় না। ধন্যবাদ!</p>
+
+  <div style="text-align:right;" class="small mt-2">
+    <p class="mb-1">উপ-মোট: <span id="rSub">0</span>৳</p>
+    <p class="mb-1">ডিসকাউন্ট: <span id="rDiscount">0</span>৳</p>
+    <h5 class="fw-bold">সর্বমোট বিল: <span id="rGrand">0</span>৳</h5>
+    <hr style="border-top: 1px dashed #000;">
+    <p class="mb-1">নগদ জমা: <span id="rPaid">0</span>৳</p>
+    <p class="mb-1 fw-bold text-danger" style="font-size: 1.1rem;">বকেয়া (Due): <span id="rDue">0</span>৳</p>
   </div>
 
-  <div id="wpButtonArea" class="mt-3 no-print"></div>
+  <div class="text-center promo-msg">
+    "আপনার প্রতিটি কেনাকাটা আমাদের কাছে মূল্যবান। পরবর্তী কেনাকাটায় বিশেষ অফার পেতে এই মেমোটি সাথে রাখুন। S.I. Family Mart-এর সাথেই থাকুন!"
+  </div>
 
-  <div class="mt-4 no-print text-center">
-      <button class="btn btn-success me-2 px-4" onclick="window.print()">🖨️ Print Receipt</button>
-      <button class="btn btn-outline-dark px-4" onclick="location.reload()">🔄 New Sale</button>
+  <div class="text-center mt-3 no-print border-top pt-3">
+      <div id="wpButtonArea" class="mb-3"></div>
+      <button class="btn btn-primary me-2 px-4" onclick="window.print()">🖨️ প্রিন্ট করুন</button>
+      <button class="btn btn-outline-dark px-4" onclick="location.reload()">🔄 নতুন মেমো</button>
   </div>
 </div>
 
@@ -124,46 +148,23 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif;}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
+// Firebase Config
 const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomain:"fir-i-family-mart.firebaseapp.com",projectId:"fir-i-family-mart",storageBucket:"fir-i-family-mart.firebasestorage.app",messagingSenderId:"73889024539",appId:"1:73889024539:web:271561c9dba17b5a6b06be"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
 let inv={}, cart=[];
 
-// হোয়াটসঅ্যাপ মেমো পাঠানোর ফাংশন
-function sendWPMemo(name, mobile, total, due, memo) {
-    if(!mobile || mobile === "-" || mobile.length < 11) {
-        alert("ক্রেতার সঠিক মোবাইল নাম্বার নেই!");
-        return;
-    }
-    
-    let text = `🛍️ *S.I. Family Mart* \n` +
-               `--------------------------\n` +
-               `नमस्ते *${name}*,\n` +
-               `আমাদের দোকান থেকে কেনাকাটা করার জন্য ধন্যবাদ।\n\n` +
-               `📄 মেমো নং: ${memo}\n` +
-               `💰 মোট বিল: *${total}৳*\n` +
-               `🛑 বর্তমান বকেয়া: *${due}৳*\n\n` +
-               `বংশীপুর, শ্যামনগর, সাতক্ষীরা।\n` +
-               `প্রয়োজনে: 01568683171\n` +
-               `আবার আসবেন! 😊`;
-    
-    let cleanMobile = mobile.replace(/[^0-9]/g, "");
-    if(cleanMobile.startsWith("0")) cleanMobile = "88" + cleanMobile;
-
-    window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(text)}`, '_blank');
-}
-
-// ইনভেন্টরি লোড
+// ১. ইনভেন্টরি লোড
 db.collection('inventory').onSnapshot(snap=>{
   let ops="<option value=''>পণ্য বাছুন</option>";
-  snap.forEach(d=>{ const data=d.data(); inv[data.name]=data; ops+=`<option value="${data.name}">${data.name} (Stock: ${data.stock})</option>`; });
+  snap.forEach(d=>{ const data=d.data(); inv[data.name]=data; ops+=`<option value="${data.name}">${data.name} (স্টক: ${data.stock})</option>`; });
   document.getElementById('sItem').innerHTML=ops;
 });
 
 function autoFillBarcode(name) {
-    if(name && inv[name]) { document.getElementById('barcodeInput').value = inv[name].barcode || "N/A"; }
-    else { document.getElementById('barcodeInput').value = ""; }
+    if(name && inv[name]) document.getElementById('barcodeInput').value = inv[name].barcode || "";
+    else document.getElementById('barcodeInput').value = "";
 }
 
 function scanToAdd(){
@@ -186,8 +187,7 @@ function addToCart(){
   if(inv[name].stock < qty) return alert("পর্যাপ্ত স্টক নেই!");
   
   const item=inv[name];
-  const total = item.sell * qty;
-  cart.push({name:name, qty:qty, price:item.sell, buyPrice:item.buy, total:total});
+  cart.push({name:name, qty:qty, price:item.sell, buyPrice:item.buy, total: item.sell * qty});
   renderCart();
 }
 
@@ -198,10 +198,11 @@ function renderCart(){
 
 function removeItem(i){cart.splice(i,1);renderCart();}
 
+// ২. মেমো এবং সেল সম্পন্ন করা
 async function finalizeSale(){
   const cust=document.getElementById('cust').value.trim();
   if(cart.length===0) return alert("কার্ট খালি!");
-  if(!cust) return alert("ক্রেতার নাম অবশ্যই দিতে হবে!");
+  if(!cust) return alert("ক্রেতার নাম দিন!");
 
   const finalBtn = document.getElementById('finalBtn');
   finalBtn.disabled=true;
@@ -215,28 +216,29 @@ async function finalizeSale(){
   let dAmt = (dType==='percent') ? (subTotal*dVal/100) : dVal;
   let grand = subTotal - dAmt;
   let due = grand - paidAmt;
-  let totalProfit = cart.reduce((s,it)=>s+(it.total - (it.buyPrice * it.qty)), 0) - dAmt;
+  let profit = cart.reduce((s,it)=>s+(it.total - (it.buyPrice * it.qty)), 0) - dAmt;
   const memoNum = "MEMO-" + Math.floor(1000 + Math.random() * 9000);
   const today = new Date().toISOString().split('T')[0];
 
   try {
+      // স্টক আপডেট
       for(let it of cart){ await db.collection('inventory').doc(it.name).update({ stock: firebase.firestore.FieldValue.increment(-it.qty) }); }
 
+      // সেল রেকর্ড
       await db.collection('sales').add({
         customer: cust, mobile: custMobile, items: cart,
-        total: grand, due: due, profit: totalProfit,
+        total: grand, due: due, profit: profit,
         date: today, memo: memoNum, time: new Date().toLocaleTimeString()
       });
 
-      const custRef = db.collection('customers').doc(cust);
-      await custRef.set({
+      // কাস্টমার লেজার আপডেট
+      await db.collection('customers').doc(cust).set({
           mobile: custMobile,
           due: firebase.firestore.FieldValue.increment(due),
-          totalSpent: firebase.firestore.FieldValue.increment(grand),
           lastUpdate: today
       }, { merge: true });
 
-      // রশিদে ডাটা বসানো
+      // রশিদে ডাটা ফিল করা
       let rHtml=""; cart.forEach(it=>{rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}৳</td><td>${it.total}৳</td></tr>`;});
       document.getElementById('rItemsBody').innerHTML=rHtml;
       document.getElementById('rSub').innerText=Math.round(subTotal);
@@ -246,31 +248,45 @@ async function finalizeSale(){
       document.getElementById('rDue').innerText=Math.round(due);
       document.getElementById('custName').innerText=cust;
       document.getElementById('custMobileDisplay').innerText=custMobile;
-      document.getElementById('memoNum').innerText="মেমো #: "+memoNum;
+      document.getElementById('memoNum').innerText="মেমো নং: "+memoNum;
       document.getElementById('saleDate').innerText="তারিখ: "+new Date().toLocaleDateString();
       
       JsBarcode("#rBarcode", memoNum, {format:"CODE128", width:1.5, height:30, displayValue:false});
 
-      // হোয়াটসঅ্যাপ বাটন দেখানো
+      // WhatsApp Button
       document.getElementById('wpButtonArea').innerHTML = `
-          <button class="btn btn-success w-100 fw-bold py-2 shadow-sm" 
+          <button class="btn btn-success w-100 fw-bold py-2 mb-2" 
           onclick="sendWPMemo('${cust}', '${custMobile}', '${Math.round(grand)}', '${Math.round(due)}', '${memoNum}')">
           💬 WhatsApp-এ মেমো পাঠান
-          </button>
-      `;
+          </button>`;
 
       document.querySelector('.container').style.display='none';
       document.getElementById('receipt').style.display='block';
       window.scrollTo(0,0);
 
-  } catch (error) { alert("ভুল হয়েছে!"); finalBtn.disabled=false; }
+  } catch (e) { alert("ভুল হয়েছে!"); finalBtn.disabled=false; }
+}
+
+function sendWPMemo(name, mobile, total, due, memo) {
+    if(!mobile || mobile === "-" || mobile.length < 11) return alert("মোবাইল নাম্বার সঠিক নয়!");
+    let text = `🛍️ *S.I. Family Mart* \n` +
+               `--------------------------\n` +
+               `প্রিয় *${name}*,\n` +
+               `আমাদের দোকান থেকে কেনাকাটা করার জন্য ধন্যবাদ।\n\n` +
+               `📄 মেমো নং: ${memo}\n` +
+               `💰 মোট বিল: *${total}৳*\n` +
+               `🛑 বর্তমান বকেয়া: *${due}৳*\n\n` +
+               `আবার আসবেন! 😊`;
+    let cleanMobile = mobile.replace(/[^0-9]/g, "");
+    if(cleanMobile.startsWith("0")) cleanMobile = "88" + cleanMobile;
+    window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(text)}`, '_blank');
 }
 
 const codeReader = new ZXing.BrowserMultiFormatReader();
 function startScanner(){
   const video = document.getElementById('scannerPreview');
   video.style.display = 'block';
-  codeReader.decodeFromVideoDevice(null, 'scannerPreview', (result, err) => {
+  codeReader.decodeFromVideoDevice(null, 'scannerPreview', (result) => {
     if (result) {
       document.getElementById('barcodeInput').value = result.text;
       scanToAdd();
