@@ -3,62 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reports | S.I. Family Mart</title>
-<link href="style.css" rel="stylesheet">
+<title>S.I. Family Mart | Reports</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--primary:#2563eb; --success:#10b981; --warning:#f59e0b; --bg:#f1f5f9; --card-bg:#fff;}
+body{background-color:var(--bg); font-family:'Segoe UI',sans-serif;}
+.header{background:linear-gradient(135deg,var(--primary),#1e3a8a); color:#fff; text-align:center; padding:20px; border-radius:0 0 20px 20px;}
+.header h2{margin:0; font-weight:700;}
+.card{border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); padding:20px; margin-bottom:15px; background:var(--card-bg);}
+</style>
 </head>
 <body>
+
 <div class="container mt-4">
-<header class="d-flex justify-content-between align-items-center mb-3">
-<h2>Reports & Analytics</h2>
-<button id="logoutBtn" class="btn btn-danger">Logout</button>
-</header>
+    <header class="header">
+        <h2>Sales Reports & Analytics</h2>
+        <p>আজকের বিক্রি, লাভ ও স্টক ট্র্যাক করুন</p>
+    </header>
 
-<div class="card p-4">
-<h5>Filter Sales</h5>
-<div class="row g-2 mb-3">
-    <div class="col-5"><input type="date" id="dF" class="form-control"></div>
-    <div class="col-5"><input type="date" id="dT" class="form-control"></div>
-    <div class="col-2"><button class="btn btn-primary w-100" onclick="search()">Search</button></div>
+    <div class="card mt-4">
+        <h5>Daily Sales Chart</h5>
+        <canvas id="dailySalesChart" height="150"></canvas>
+    </div>
+
+    <div class="card mt-4">
+        <h5>Top Selling Products</h5>
+        <canvas id="topProductsChart" height="150"></canvas>
+    </div>
 </div>
 
-<div id="searchRes" class="mt-3"></div>
-<canvas id="salesChart" height="150"></canvas>
-</div>
-</div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomain:"fir-i-family-mart.firebaseapp.com",projectId:"fir-i-family-mart",storageBucket:"fir-i-family-mart.firebasestorage.app",messagingSenderId:"73889024539",appId:"1:73889024539:web:271561c9dba17b5a6b06be"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(), db=firebase.firestore();
+auth.onAuthStateChanged(user=>{if(!user) location.href='login.html';});
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+let salesData={}, topProducts={};
 
-const firebaseConfig = {
-apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
-authDomain: "fir-i-family-mart.firebaseapp.com",
-projectId: "fir-i-family-mart",
-storageBucket: "fir-i-family-mart.firebasestorage.app",
-messagingSenderId: "73889024539",
-appId: "1:73889024539:web:271561c9dba17b5a6b06be"
-};
+db.collection('sales').onSnapshot(snap=>{
+    salesData={}; topProducts={};
+    snap.forEach(d=>{
+        const data=d.data();
+        const date=data.date;
+        if(!salesData[date]) salesData[date]=0;
+        salesData[date]+=data.total;
+        data.items.forEach(it=>{
+            if(!topProducts[it.name]) topProducts[it.name]=0;
+            topProducts[it.name]+=it.qty;
+        });
+    });
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+    renderCharts();
+});
 
-onAuthStateChanged(auth,user=>{if(!user)window.location="login.html";});
-document.getElementById('logoutBtn').addEventListener('click',async()=>{await signOut(auth); window.location="login.html";});
+function renderCharts(){
+    const dailyLabels=Object.keys(salesData).sort();
+    const dailyValues=dailyLabels.map(d=>salesData[d]);
 
-window.search=async()=>{
-    const f=document.getElementById('dF').value;
-    const t=document.getElementById('dT').value;
-    if(!f||!t){alert("Select Dates!"); return;}
-    const q=query(collection(db,"sales"),where("date",">=",f),where("date","<=",t));
-    const snap=await getDocs(q);
-    let s=0, p=0, count=0;
-    snap.forEach(d=>{const dt=d.data(); s+=dt.total||0; p+=dt.profit||0; count++;});
-    document.getElementById('searchRes').innerHTML=`<p>Total Sales: ${s}</p><p>Total Profit: ${p}</p><p>Invoices: ${count}</p>`;
-};
+    const topLabels=Object.keys(topProducts).sort((a,b)=>topProducts[b]-topProducts[a]).slice(0,5);
+    const topValues=topLabels.map(p=>topProducts[p]);
+
+    new Chart(document.getElementById('dailySalesChart'),{
+        type:'bar',
+        data:{labels:dailyLabels,datasets:[{label:'Daily Sales ৳',data:dailyValues,backgroundColor:'#2563eb'}]},
+        options:{responsive:true,plugins:{legend:{display:false}}}
+    });
+
+    new Chart(document.getElementById('topProductsChart'),{
+        type:'pie',
+        data:{labels:topLabels,datasets:[{label:'Top Products',data:topValues,backgroundColor:['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6']}]},
+        options:{responsive:true}
+    });
+}
 </script>
 </body>
 </html>
