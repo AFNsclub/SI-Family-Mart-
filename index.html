@@ -1,0 +1,195 @@
+<!DOCTYPE html><html lang="bn">
+<head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>S.I Family Mart POS</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"><style>
+
+body{
+background:#f1f5f9;
+font-family:Segoe UI;
+}
+
+header{
+background:#0f172a;
+color:white;
+padding:20px;
+text-align:center;
+}
+
+.card{
+border-radius:15px;
+}
+
+</style></head><body><header><h2>S.I FAMILY MART</h2>
+<p>POS Management System</p></header><div class="container mt-4"><div class="row"><div class="col-md-5"><div class="card p-3"><h5>পণ্য নির্বাচন</h5><select id="product" class="form-select mb-2"></select>
+
+<input type="number" id="qty" value="1" class="form-control mb-2"><button onclick="addCart()" class="btn btn-warning w-100">কার্টে যোগ করুন</button>
+
+</div></div><div class="col-md-7"><div class="card p-3"><h5>কার্ট</h5><table class="table"><thead><tr>
+<th>পণ্য</th>
+<th>দাম</th>
+<th>Qty</th>
+<th>মোট</th>
+</tr></thead><tbody id="cart"></tbody></table><h4>মোট = ৳ <span id="total">0</span></h4><button onclick="finishSale()" class="btn btn-success w-100">বিক্রি সম্পন্ন</button>
+
+</div></div></div><hr><div class="card p-3 mt-4"><h5>স্টক এন্ট্রি</h5><input id="pname" class="form-control mb-2" placeholder="পণ্যের নাম"><input id="buy" class="form-control mb-2" placeholder="ক্রয় মূল্য"><input id="sell" class="form-control mb-2" placeholder="বিক্রয় মূল্য"><input id="stock" class="form-control mb-2" placeholder="স্টক"><button onclick="addProduct()" class="btn btn-dark">স্টক সেভ</button>
+
+</div></div><script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+import { getFirestore, collection, addDoc, doc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
+
+authDomain: "fir-i-family-mart.firebaseapp.com",
+
+projectId: "fir-i-family-mart",
+
+storageBucket: "fir-i-family-mart.firebasestorage.app",
+
+messagingSenderId: "73889024539",
+
+appId: "1:73889024539:web:271561c9dba17b5a6b06be"
+
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+let inventory={}
+
+let cart=[]
+
+onSnapshot(collection(db,"products"),snap=>{
+
+let options="<option>পণ্য বাছুন</option>"
+
+snap.forEach(doc=>{
+
+let d=doc.data()
+
+inventory[d.name]=d
+
+options+=`<option value="${d.name}">${d.name}</option>`
+
+})
+
+document.getElementById("product").innerHTML=options
+
+})
+
+window.addProduct=async()=>{
+
+let name=document.getElementById("pname").value
+
+let buy=parseFloat(document.getElementById("buy").value)
+
+let sell=parseFloat(document.getElementById("sell").value)
+
+let stock=parseInt(document.getElementById("stock").value)
+
+await setDoc(doc(db,"products",name),{
+
+name:name,
+buy:buy,
+sell:sell,
+stock:increment(stock)
+
+},{merge:true})
+
+alert("স্টক যোগ হয়েছে")
+
+}
+
+window.addCart=()=>{
+
+let name=document.getElementById("product").value
+
+let qty=parseInt(document.getElementById("qty").value)
+
+let p=inventory[name]
+
+cart.push({
+
+name:name,
+price:p.sell,
+buy:p.buy,
+qty:qty,
+total:p.sell*qty
+
+})
+
+renderCart()
+
+}
+
+function renderCart(){
+
+let html=""
+
+let total=0
+
+cart.forEach(item=>{
+
+total+=item.total
+
+html+=`
+
+<tr>
+
+<td>${item.name}</td>
+<td>${item.price}</td>
+<td>${item.qty}</td>
+<td>${item.total}</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("cart").innerHTML=html
+
+document.getElementById("total").innerText=total
+
+}
+
+window.finishSale=async()=>{
+
+let total=0
+let profit=0
+
+for(let item of cart){
+
+total+=item.total
+profit+=(item.price-item.buy)*item.qty
+
+await updateDoc(doc(db,"products",item.name),{
+
+stock:increment(-item.qty)
+
+})
+
+}
+
+await addDoc(collection(db,"sales"),{
+
+items:cart,
+total:total,
+profit:profit,
+date:new Date().toISOString()
+
+})
+
+alert("বিক্রি সম্পন্ন")
+
+cart=[]
+
+renderCart()
+
+}
+
+</script></body>
+</html>
