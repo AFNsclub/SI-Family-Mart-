@@ -7,15 +7,15 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <style>
-:root {
-    --primary:#2563eb; --success:#10b981; --bg:#f1f5f9; --card-bg:#fff;
-}
-body{background-color:var(--bg); font-family:'Segoe UI',sans-serif;}
-.header{background:linear-gradient(135deg,var(--primary),#1e3a8a); color:#fff; text-align:center; padding:20px; border-radius:0 0 20px 20px;}
-.header h2{margin:0; font-weight:700;}
-.card{border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); padding:20px; margin-bottom:15px; background:var(--card-bg);}
-input,select{border-radius:10px;}
-table th, table td{font-size:14px;}
+:root { --primary:#2563eb; --success:#10b981; --danger:#ef4444; --bg:#f8fafc; }
+body{background-color:var(--bg); font-family:'Segoe UI',sans-serif; color: #1e293b;}
+.header{background:linear-gradient(135deg,var(--primary),#1e3a8a); color:#fff; text-align:center; padding:30px; border-radius:0 0 25px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);}
+.header h2{margin:0; font-weight:700; letter-spacing: 1px;}
+.card{border-radius:18px; border:none; box-shadow:0 4px 20px rgba(0,0,0,0.05); padding:25px; margin-bottom:20px; background:#fff;}
+.form-control { border-radius: 10px; padding: 10px 15px; border: 1px solid #e2e8f0; }
+.btn { border-radius: 10px; padding: 10px 20px; font-weight: 600; }
+.table thead { background: #f1f5f9; color: #475569; }
+.supplier-row:hover { background: #f8fafc; }
 </style>
 </head>
 <body>
@@ -23,28 +23,52 @@ table th, table td{font-size:14px;}
 <div class="container mt-4">
     <header class="header">
         <h2>Supplier Management</h2>
-        <p>নতুন সরবরাহকারী যুক্ত / আপডেট / মুছে ফেলুন</p>
+        <p class="mb-0">সরবরাহকারী বা মহাজনদের তালিকা ও তথ্য ব্যবস্থাপনা</p>
     </header>
 
     <div class="card mt-4">
-        <h5>নতুন সরবরাহকারী যুক্ত করুন</h5>
-        <div class="row g-2 mb-3">
-            <div class="col-md-4"><input type="text" id="sName" class="form-control" placeholder="Supplier Name"></div>
-            <div class="col-md-4"><input type="text" id="sPhone" class="form-control" placeholder="Phone"></div>
-            <div class="col-md-4"><input type="text" id="sAddress" class="form-control" placeholder="Address"></div>
+        <h5 class="fw-bold mb-3 text-primary">➕ নতুন সরবরাহকারী যুক্ত করুন</h5>
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label class="small fw-bold">সাপ্লায়ারের নাম</label>
+                <input type="text" id="sName" class="form-control" placeholder="উদা: এস.কে ডিস্ট্রিবিউশন">
+            </div>
+            <div class="col-md-4">
+                <label class="small fw-bold">ফোন নাম্বার</label>
+                <input type="text" id="sPhone" class="form-control" placeholder="০১XXX-XXXXXX">
+            </div>
+            <div class="col-md-4">
+                <label class="small fw-bold">ঠিকানা</label>
+                <input type="text" id="sAddress" class="form-control" placeholder="শহর/এলাকা">
+            </div>
         </div>
-        <button class="btn btn-success" onclick="addSupplier()">Add / Update Supplier</button>
+        <div class="text-end">
+            <button class="btn btn-success" onclick="addSupplier()">💾 তথ্য সংরক্ষণ করুন</button>
+        </div>
     </div>
 
     <div class="card mt-4">
-        <h5>Supplier List</h5>
-        <input type="text" id="searchSupplier" class="form-control mb-2" placeholder="Search Supplier">
-        <table class="table table-sm table-bordered">
-            <thead style="background:#e0e0e0;">
-                <tr><th>Supplier Name</th><th>Phone</th><th>Address</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="supplierBody"></tbody>
-        </table>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+            <h5 class="fw-bold m-0 text-dark">📋 সরবরাহকারী তালিকা</h5>
+            <input type="text" id="searchSupplier" class="form-control w-50" placeholder="সাপ্লায়ারের নাম দিয়ে খুঁজুন...">
+        </div>
+        
+        
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>সাপ্লায়ারের নাম</th>
+                        <th>ফোন</th>
+                        <th>ঠিকানা</th>
+                        <th>ব্যালেন্স (বাকি)</th>
+                        <th class="text-center">অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody id="supplierBody"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -54,48 +78,71 @@ table th, table td{font-size:14px;}
 <script>
 const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomain:"fir-i-family-mart.firebaseapp.com",projectId:"fir-i-family-mart",storageBucket:"fir-i-family-mart.firebasestorage.app",messagingSenderId:"73889024539",appId:"1:73889024539:web:271561c9dba17b5a6b06be"};
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(), db=firebase.firestore();
+const db=firebase.firestore();
 
-auth.onAuthStateChanged(user=>{if(!user) location.href='login.html';});
+let suppliers={};
 
-let suppliers={}, supplierBody=document.getElementById('supplierBody');
-
+// রিয়েল-টাইম ডাটা লোড
 db.collection('suppliers').onSnapshot(snap=>{
     suppliers={};
-    snap.forEach(d=>{suppliers[d.id]=d.data();});
-    renderSuppliers(document.getElementById('searchSupplier').value);
+    snap.forEach(d=>{ suppliers[d.id] = d.data(); });
+    renderSuppliers();
 });
 
-function renderSuppliers(filter=""){
+function renderSuppliers(){
+    const filter = document.getElementById('searchSupplier').value.toLowerCase();
     let html="";
     for(let id in suppliers){
         const sup=suppliers[id];
-        if(filter && !sup.name.toLowerCase().includes(filter.toLowerCase())) continue;
-        html+=`<tr>
-            <td>${sup.name}</td>
-            <td>${sup.phone}</td>
-            <td>${sup.address}</td>
-            <td>
-                <button class="btn btn-sm btn-danger" onclick="deleteSupplier('${id}')">Delete</button>
+        if(filter && !sup.name.toLowerCase().includes(filter)) continue;
+        
+        html+=`<tr class="supplier-row">
+            <td class="fw-bold text-primary">${sup.name}</td>
+            <td>${sup.phone || '-'}</td>
+            <td>${sup.address || '-'}</td>
+            <td class="fw-bold ${sup.balance < 0 ? 'text-danger' : 'text-success'}">${sup.balance || 0}৳</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editSup('${id}')">সম্পাদনা</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteSupplier('${id}')">মুছুন</button>
             </td>
         </tr>`;
     }
-    supplierBody.innerHTML=html;
+    document.getElementById('supplierBody').innerHTML=html;
 }
 
 function addSupplier(){
     const name=document.getElementById('sName').value.trim();
     const phone=document.getElementById('sPhone').value.trim();
     const address=document.getElementById('sAddress').value.trim();
-    if(!name) return alert("Supplier name is required!");
-    db.collection('suppliers').doc(name).set({name,phone,address}).then(()=>{alert("Supplier saved");});
+    
+    if(!name) return alert("সাপ্লায়ারের নাম অবশ্যই দিতে হবে!");
+
+    db.collection('suppliers').doc(name).set({
+        name, phone, address, 
+        balance: suppliers[name] ? suppliers[name].balance : 0 // আগের ব্যালেন্স ঠিক রাখা
+    }, { merge: true }).then(()=>{
+        alert("সফলভাবে সংরক্ষণ করা হয়েছে!");
+        document.getElementById('sName').value = "";
+        document.getElementById('sPhone').value = "";
+        document.getElementById('sAddress').value = "";
+    });
+}
+
+function editSup(id){
+    const s = suppliers[id];
+    document.getElementById('sName').value = s.name;
+    document.getElementById('sPhone').value = s.phone;
+    document.getElementById('sAddress').value = s.address;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function deleteSupplier(id){
-    if(confirm("আপনি কি সত্যিই মুছে ফেলতে চান?")) db.collection('suppliers').doc(id).delete();
+    if(confirm(`আপনি কি সত্যিই "${id}" কে তালিকা থেকে মুছে ফেলতে চান?`)) {
+        db.collection('suppliers').doc(id).delete();
+    }
 }
 
-document.getElementById('searchSupplier').addEventListener('input',e=>{renderSuppliers(e.target.value);});
+document.getElementById('searchSupplier').addEventListener('input', renderSuppliers);
 </script>
 </body>
 </html>
