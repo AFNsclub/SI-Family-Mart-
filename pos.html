@@ -86,6 +86,7 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif;}
   <div class="text-center mb-3">
     <h3 class="fw-bold m-0">S.I. FAMILY MART</h3>
     <p class="small m-0">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+    <p class="small m-0 fw-bold">📞 মোবাইল: 01568683171</p>
     <div class="my-2"><svg id="rBarcode"></svg></div>
     <p class="small m-0" id="memoNum"></p>
     <p class="small m-0" id="saleDate"></p>
@@ -110,6 +111,9 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif;}
   <div class="text-center mt-4 small border-top pt-2">
     <p>পণ্য ফেরত নেওয়া হয় না। ধন্যবাদ!</p>
   </div>
+
+  <div id="wpButtonArea" class="mt-3 no-print"></div>
+
   <div class="mt-4 no-print text-center">
       <button class="btn btn-success me-2 px-4" onclick="window.print()">🖨️ Print Receipt</button>
       <button class="btn btn-outline-dark px-4" onclick="location.reload()">🔄 New Sale</button>
@@ -126,23 +130,42 @@ const db=firebase.firestore();
 
 let inv={}, cart=[];
 
-// ১. ইনভেন্টরি লোড
+// হোয়াটসঅ্যাপ মেমো পাঠানোর ফাংশন
+function sendWPMemo(name, mobile, total, due, memo) {
+    if(!mobile || mobile === "-" || mobile.length < 11) {
+        alert("ক্রেতার সঠিক মোবাইল নাম্বার নেই!");
+        return;
+    }
+    
+    let text = `🛍️ *S.I. Family Mart* \n` +
+               `--------------------------\n` +
+               `नमस्ते *${name}*,\n` +
+               `আমাদের দোকান থেকে কেনাকাটা করার জন্য ধন্যবাদ।\n\n` +
+               `📄 মেমো নং: ${memo}\n` +
+               `💰 মোট বিল: *${total}৳*\n` +
+               `🛑 বর্তমান বকেয়া: *${due}৳*\n\n` +
+               `বংশীপুর, শ্যামনগর, সাতক্ষীরা।\n` +
+               `প্রয়োজনে: 01568683171\n` +
+               `আবার আসবেন! 😊`;
+    
+    let cleanMobile = mobile.replace(/[^0-9]/g, "");
+    if(cleanMobile.startsWith("0")) cleanMobile = "88" + cleanMobile;
+
+    window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+// ইনভেন্টরি লোড
 db.collection('inventory').onSnapshot(snap=>{
   let ops="<option value=''>পণ্য বাছুন</option>";
   snap.forEach(d=>{ const data=d.data(); inv[data.name]=data; ops+=`<option value="${data.name}">${data.name} (Stock: ${data.stock})</option>`; });
   document.getElementById('sItem').innerHTML=ops;
 });
 
-// ২. অটোমেটিক বারকোড বসানো (পণ্য বাছলে)
 function autoFillBarcode(name) {
-    if(name && inv[name]) {
-        document.getElementById('barcodeInput').value = inv[name].barcode || "N/A";
-    } else {
-        document.getElementById('barcodeInput').value = "";
-    }
+    if(name && inv[name]) { document.getElementById('barcodeInput').value = inv[name].barcode || "N/A"; }
+    else { document.getElementById('barcodeInput').value = ""; }
 }
 
-// ৩. বারকোড স্ক্যান লজিক
 function scanToAdd(){
   const val = document.getElementById('barcodeInput').value.trim();
   if(!val) return;
@@ -175,7 +198,6 @@ function renderCart(){
 
 function removeItem(i){cart.splice(i,1);renderCart();}
 
-// ৪. ফাইনাল বিক্রি সম্পন্ন করা (ট্র্যাকিং লজিক সহ)
 async function finalizeSale(){
   const cust=document.getElementById('cust').value.trim();
   if(cart.length===0) return alert("কার্ট খালি!");
@@ -184,7 +206,7 @@ async function finalizeSale(){
   const finalBtn = document.getElementById('finalBtn');
   finalBtn.disabled=true;
 
-  const custMobile=document.getElementById('custMobile').value || "-";
+  const custMobile=document.getElementById('custMobile').value.trim() || "-";
   const paidAmt=Number(document.getElementById('paidAmount').value) || 0;
   const dVal=Number(document.getElementById('totalDisc').value) || 0;
   const dType=document.getElementById('totalDType').value;
@@ -198,19 +220,14 @@ async function finalizeSale(){
   const today = new Date().toISOString().split('T')[0];
 
   try {
-      // স্টক আপডেট
-      for(let it of cart){
-        await db.collection('inventory').doc(it.name).update({ stock: firebase.firestore.FieldValue.increment(-it.qty) });
-      }
+      for(let it of cart){ await db.collection('inventory').doc(it.name).update({ stock: firebase.firestore.FieldValue.increment(-it.qty) }); }
 
-      // সেলস রিপোর্ট সেভ
       await db.collection('sales').add({
         customer: cust, mobile: custMobile, items: cart,
         total: grand, due: due, profit: totalProfit,
         date: today, memo: memoNum, time: new Date().toLocaleTimeString()
       });
 
-      // ৫. কাস্টমার ট্র্যাকিং (বাকি ও মোট কেনাকাটা)
       const custRef = db.collection('customers').doc(cust);
       await custRef.set({
           mobile: custMobile,
@@ -219,7 +236,7 @@ async function finalizeSale(){
           lastUpdate: today
       }, { merge: true });
 
-      // রশিদ প্রিন্ট ডাটা
+      // রশিদে ডাটা বসানো
       let rHtml=""; cart.forEach(it=>{rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}৳</td><td>${it.total}৳</td></tr>`;});
       document.getElementById('rItemsBody').innerHTML=rHtml;
       document.getElementById('rSub').innerText=Math.round(subTotal);
@@ -234,14 +251,19 @@ async function finalizeSale(){
       
       JsBarcode("#rBarcode", memoNum, {format:"CODE128", width:1.5, height:30, displayValue:false});
 
+      // হোয়াটসঅ্যাপ বাটন দেখানো
+      document.getElementById('wpButtonArea').innerHTML = `
+          <button class="btn btn-success w-100 fw-bold py-2 shadow-sm" 
+          onclick="sendWPMemo('${cust}', '${custMobile}', '${Math.round(grand)}', '${Math.round(due)}', '${memoNum}')">
+          💬 WhatsApp-এ মেমো পাঠান
+          </button>
+      `;
+
       document.querySelector('.container').style.display='none';
       document.getElementById('receipt').style.display='block';
       window.scrollTo(0,0);
 
-  } catch (error) {
-      alert("বিক্রি সম্পন্ন করতে সমস্যা হয়েছে!");
-      finalBtn.disabled=false;
-  }
+  } catch (error) { alert("ভুল হয়েছে!"); finalBtn.disabled=false; }
 }
 
 const codeReader = new ZXing.BrowserMultiFormatReader();
