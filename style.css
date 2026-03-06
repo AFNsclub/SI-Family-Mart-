@@ -1,10 +1,8 @@
-body { font-family: Arial, sans-serif; background:#f1f5f9; margin:0; padding:0; text-align:center; }
-header{ background:#2563eb; color:white; padding:20px; border-bottom: 5px solid #10b981; }
-.menu{ margin-top:50px; }
-.menu a{ display:block; margin:10px auto; padding:15px; width:90%; max-width:300px; text-decoration:none; color:white; background:#2563eb; border-radius:10px; font-weight:bold; transition:0.3s;}
-.menu a:hover{background:#10b981;}
-input, select, button{padding:10px; margin:5px;}
-table{width:100%; margin-top:10px; border-collapse: collapse;}
-th, td{border:1px solid #ddd; padding:8px; text-align:center;}
-th{background:#2563eb; color:white;}
-.graph-box{width:100%; max-width:700px; margin:20px auto;}
+body { font-family: 'Segoe UI', sans-serif; background:#f1f5f9; margin:0; padding:0; }
+.header { text-align:center; margin-bottom:20px; }
+.card { padding:20px; border-radius:15px; color:white; text-align:center; }
+.bg-sale { background:linear-gradient(135deg,#84cc16,#10b981); }
+.bg-profit { background:linear-gradient(135deg,#10b981,#059669); }
+.bg-inventory { background:linear-gradient(135deg,#8b5cf6,#6366f1); }
+input, select, button { margin-bottom:8px; }
+.receipt-box { display:none; background:#fff; padding:20px; border-radius:10px; border:1px solid #ccc; }
