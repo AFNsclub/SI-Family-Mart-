@@ -22,16 +22,41 @@ body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; }
 .header { background: linear-gradient(135deg, var(--primary), #1e3a8a); color: #fff; text-align: center; padding: 25px; border-radius: 0 0 30px 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
 .header h2 { font-weight: 700; margin-bottom:0; }
 .header p { opacity:0.8; margin-bottom:0; }
-
 .card { border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 15px; background: var(--card-bg);}
-#receipt { display:none; background:#fff; padding:20px; border-radius:15px; max-width:500px; margin:auto; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
-
 input, select { border-radius: 10px; }
 table th, table td { font-size:14px; }
+
+#receipt {
+    display:none;
+    background:#f9f9f9;
+    padding:20px;
+    border-radius:15px;
+    max-width:480px;
+    margin:auto;
+    box-shadow:0 4px 25px rgba(0,0,0,0.1);
+    font-family:'Segoe UI', sans-serif;
+    color:#333;
+}
+#receipt-header {
+    text-align:center;
+    border-bottom:2px dashed #333;
+    padding-bottom:10px;
+    margin-bottom:10px;
+}
+#receipt-header img { max-width:80px; margin-bottom:5px; }
+#receipt-header h2 { margin:0; font-size:18px; }
+#receipt-header p, #receipt-header small { margin:0; font-size:12px; }
+#receipt-header #memoNum { margin-top:5px; font-weight:600; }
+
+#rItemsBody td, #rItemsBody th { padding:4px 6px; }
+#rItemsBody th { background:#e0e0e0; }
+
+#receipt-footer { text-align:center; margin-top:15px; font-size:12px; color:#555; }
+#receipt-footer p { margin:2px 0; }
 @media print {
-  body * { visibility: hidden; }
-  #receipt, #receipt * { visibility: visible; }
-  #receipt { position: absolute; left:0; top:0; width:100%; }
+    body * { visibility: hidden; }
+    #receipt, #receipt * { visibility: visible; }
+    #receipt { position: absolute; left:0; top:0; width:100%; }
 }
 </style>
 </head>
@@ -85,18 +110,19 @@ table th, table td { font-size:14px; }
 
 <!-- Receipt -->
 <div id="receipt">
-    <div style="text-align:center; border-bottom:2px dashed #333; padding-bottom:10px;">
-        <h2 style="margin:0;">S.I. FAMILY MART</h2>
-        <p style="margin:0; font-size:14px;">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
-        <small style="font-size:12px;">📞 01568683171</small>
-        <p id="memoNum" style="margin:5px 0 0 0; font-size:12px;">মেমো #: 001</p>
+    <div id="receipt-header">
+        <img src="https://via.placeholder.com/80x50?text=Logo" alt="Logo">
+        <h2>S.I. FAMILY MART</h2>
+        <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+        <small>📞 01568683171</small>
+        <p id="memoNum">মেমো #: 001</p>
         <svg id="rBarcode"></svg>
-        <p id="saleDate" style="margin:0; font-size:12px;"></p>
+        <p id="saleDate"></p>
     </div>
-    <div style="margin-top:10px;">
+    <div>
         <p><strong>ক্রেতার নাম:</strong> <span id="custName">সম্মানিত ক্রেতা</span></p>
         <table class="table table-sm table-bordered" style="width:100%; font-size:14px;">
-            <thead style="background:#f0f0f0;">
+            <thead>
                 <tr>
                     <th>পণ্য</th>
                     <th>Qty</th>
@@ -111,9 +137,10 @@ table th, table td { font-size:14px; }
         <p>ছাড়: <span id="rDiscount">0</span>৳</p>
         <p><strong>Grand Total: </strong><span id="rGrand">0</span>৳</p>
     </div>
-    <div style="text-align:center; margin-top:15px; font-size:13px;">
+    <div id="receipt-footer">
         <p>🎉 ধন্যবাদ আমাদের সাথে থাকার জন্য! 🎉</p>
         <p>পরের বার আবার আসুন, নতুন অফার & প্রোডাক্ট দেখুন। 😊</p>
+        <p>💡 মনে রাখুন: আমাদের প্রোডাক্ট সবসময় fresh & best quality! 💡</p>
     </div>
     <button class="btn btn-dark w-100 mt-2" onclick="window.print()">প্রিন্ট করুন</button>
 </div>
@@ -123,21 +150,12 @@ table th, table td { font-size:14px; }
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
-    authDomain: "fir-i-family-mart.firebaseapp.com",
-    projectId: "fir-i-family-mart",
-    storageBucket: "fir-i-family-mart.firebasestorage.app",
-    messagingSenderId: "73889024539",
-    appId: "1:73889024539:web:271561c9dba17b5a6b06be"
-};
+// Firebase config
+const firebaseConfig = {apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomain:"fir-i-family-mart.firebaseapp.com",projectId:"fir-i-family-mart",storageBucket:"fir-i-family-mart.firebasestorage.app",messagingSenderId:"73889024539",appId:"1:73889024539:web:271561c9dba17b5a6b06be"};
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-auth.onAuthStateChanged(user=>{
-    if(!user) location.href='login.html';
-});
+const auth=firebase.auth();
+const db=firebase.firestore();
+auth.onAuthStateChanged(user=>{if(!user) location.href='login.html';});
 
 let inv={}, cart=[];
 db.collection('inventory').onSnapshot(snap=>{
@@ -149,28 +167,15 @@ db.collection('inventory').onSnapshot(snap=>{
     });
     document.getElementById('sItem').innerHTML=ops;
 });
-
-// Auto barcode fill on manual select
 document.getElementById('sItem').addEventListener('change', ()=>{
     const name = document.getElementById('sItem').value;
     if(name && inv[name]) document.getElementById('barcodeInput').value = inv[name].barcode || '';
 });
 
-// Cart
-function addToCart(){
-    const name = document.getElementById('sItem').value;
-    const qty = Number(document.getElementById('sQ').value);
-    if(!name||qty<1) return alert("সঠিক পণ্য ও পরিমাণ দিন");
-    const item = inv[name];
-    cart.push({name:name, qty:qty, price:item.sell, buyPrice:item.buy, total:item.sell*qty});
-    renderCart();
-}
-function renderCart(){
-    let h="";
-    cart.forEach((it,i)=>{ h+=`<tr><td>${it.name}</td><td>${it.price}</td><td>${it.qty}</td><td>${it.total}</td><td><button class="btn btn-sm btn-danger" onclick="removeItem(${i})">✖</button></td></tr>`; });
-    document.getElementById('cartBody').innerHTML=h;
-}
-function removeItem(i){ cart.splice(i,1); renderCart(); }
+// Cart functions
+function addToCart(){const name=document.getElementById('sItem').value;const qty=Number(document.getElementById('sQ').value);if(!name||qty<1)return alert("সঠিক পণ্য ও পরিমাণ দিন");const item=inv[name];cart.push({name:name,qty:qty,price:item.sell,buyPrice:item.buy,total:item.sell*qty});renderCart();}
+function renderCart(){let h="";cart.forEach((it,i)=>{h+=`<tr><td>${it.name}</td><td>${it.price}</td><td>${it.qty}</td><td>${it.total}</td><td><button class="btn btn-sm btn-danger" onclick="removeItem(${i})">✖</button></td></tr>`});document.getElementById('cartBody').innerHTML=h;}
+function removeItem(i){cart.splice(i,1);renderCart();}
 
 // Finalize Sale
 function finalizeSale(){
@@ -183,17 +188,17 @@ function finalizeSale(){
     let dAmt=(dType==='percent')? (sub*dVal/100):dVal;
     let grand=sub-dAmt;
     cart.forEach(it=>{ db.collection('inventory').doc(it.name).update({stock: firebase.firestore.FieldValue.increment(-it.qty)}); });
-    const memoNum = Math.floor(Math.random()*10000);
+    const memoNum=Math.floor(Math.random()*10000);
     db.collection('sales').add({customer:cust,items:cart,total:grand,discount:dAmt,profit:cart.reduce((s,it)=>s+(it.total-it.buyPrice*it.qty),0)-dAmt,date:new Date().toISOString().split('T')[0],memo:memoNum});
-    // Render receipt
+
     let rHtml="";
     cart.forEach(it=>{ rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}৳</td><td>${it.total}৳</td></tr>`; });
     document.getElementById('rItemsBody').innerHTML=rHtml;
     document.getElementById('rGrand').innerText=Math.round(grand);
     document.getElementById('rDiscount').innerText=dAmt;
     document.getElementById('custName').innerText=cust;
-    document.getElementById('memoNum').innerText = "মেমো #: " + memoNum;
-    document.getElementById('saleDate').innerText = "তারিখ: " + new Date().toLocaleDateString();
+    document.getElementById('memoNum').innerText="মেমো #: "+memoNum;
+    document.getElementById('saleDate').innerText="তারিখ: "+new Date().toLocaleDateString();
     JsBarcode("#rBarcode", memoNum, {format:"CODE128", width:2, height:40, displayValue:true});
     document.querySelector('.container').style.display='none';
     document.getElementById('receipt').style.display='block';
@@ -201,29 +206,9 @@ function finalizeSale(){
 
 // Barcode Scanner
 let selectedDeviceId;
-const codeReader = new ZXing.BrowserMultiFormatReader();
-function startScanner(){
-    codeReader.listVideoInputDevices().then(videoInputDevices=>{
-        selectedDeviceId=videoInputDevices[0].deviceId;
-        document.getElementById('scannerPreview').style.display='block';
-        codeReader.decodeFromVideoDevice(selectedDeviceId,'scannerPreview',(result,err)=>{
-            if(result) {
-                document.getElementById('barcodeInput').value=result.text;
-                codeReader.reset();
-                scanToSelect();
-            }
-        });
-    });
-}
-function scanToSelect(){
-    const val=document.getElementById('barcodeInput').value;
-    for(let name in inv){
-        if(inv[name].barcode===val){
-            document.getElementById('sItem').value=name;
-            break;
-        }
-    }
-}
+const codeReader=new ZXing.BrowserMultiFormatReader();
+function startScanner(){codeReader.listVideoInputDevices().then(videoInputDevices=>{selectedDeviceId=videoInputDevices[0].deviceId;document.getElementById('scannerPreview').style.display='block';codeReader.decodeFromVideoDevice(selectedDeviceId,'scannerPreview',(result,err)=>{if(result){document.getElementById('barcodeInput').value=result.text;codeReader.reset();scanToSelect();}});});}
+function scanToSelect(){const val=document.getElementById('barcodeInput').value;for(let name in inv){if(inv[name].barcode===val){document.getElementById('sItem').value=name;break;}}}
 </script>
 </body>
 </html>
