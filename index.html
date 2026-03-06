@@ -3,174 +3,77 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>S.I. Family Mart | Dashboard</title>
-
+<title>S.I. Family Mart | Admin Dashboard</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-
-:root{
---primary:#2563eb;
---success:#10b981;
---warning:#f59e0b;
---danger:#ef4444;
---bg:#f1f5f9;
+:root {
+    --primary: #2563eb;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --bg: #f1f5f9;
+    --card-bg: #ffffff;
 }
+body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; }
+.header { text-align:center; padding:25px; background:linear-gradient(135deg,var(--primary),#1e3a8a); color:#fff; border-radius:0 0 30px 30px; box-shadow:0 10px 20px rgba(0,0,0,0.1);}
+.header h1 { font-weight:700; }
+.header .btn { margin:5px; border-radius:50px; font-weight:600; }
 
-body{
-background:var(--bg);
-font-family:'Segoe UI';
-}
+.stats .card { border-radius:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05); text-align:center; padding:20px; color:white;}
+.bg-sale { background:linear-gradient(135deg,#84cc16,#10b981); }
+.bg-profit { background:linear-gradient(135deg,#2563eb,#3b82f6); }
+.bg-inventory { background:linear-gradient(135deg,#f59e0b,#f97316); }
 
-.header{
-text-align:center;
-padding:25px;
-background:linear-gradient(135deg,#2563eb,#1e3a8a);
-color:white;
-border-radius:0 0 30px 30px;
-}
-
-.header h1{
-font-weight:700;
-}
-
-.nav-btns a{
-margin:5px;
-border-radius:30px;
-}
-
-.card{
-border-radius:18px;
-padding:20px;
-color:white;
-text-align:center;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-.sale{background:linear-gradient(135deg,#84cc16,#10b981);}
-.profit{background:linear-gradient(135deg,#2563eb,#3b82f6);}
-.stock{background:linear-gradient(135deg,#f59e0b,#f97316);}
-.due{background:linear-gradient(135deg,#ef4444,#dc2626);cursor:pointer;}
-
-.chart-box{
-background:white;
-padding:20px;
-margin-top:30px;
-border-radius:20px;
-box-shadow:0 5px 20px rgba(0,0,0,0.08);
-}
-
+.table-hover tbody tr:hover { background:#f0f0f0; cursor:pointer; }
+.modal-body table td, .modal-body table th { padding:5px; font-size:14px; }
 </style>
 </head>
-
 <body>
-
 <div class="container mt-4">
 
 <header class="header">
-
-<h1>S.I. Family Mart</h1>
-
+<h1>S.I. Family Mart Admin Dashboard</h1>
 <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
-
-<div class="nav-btns">
-
-<a href="pos.html" class="btn btn-light">POS / Billing</a>
-
-<a href="stock.html" class="btn btn-success">Stock</a>
-
-<a href="report.html" class="btn btn-warning">Reports</a>
-
-<a href="ledger.html" class="btn btn-danger">Ledger</a>
-
+<div>
+<a href="pos.html" class="btn btn-primary">POS / Billing</a>
+<a href="stock.html" class="btn btn-success">Stock Management</a>
+<a href="ledger.html" class="btn btn-warning">Customer Ledger</a>
+<a href="supplier.html" class="btn btn-info">Supplier Ledger</a>
+<button class="btn btn-danger" id="logoutBtn">Logout</button>
 </div>
-
 </header>
 
+<!-- Stats -->
+<section class="stats mt-4">
+<div class="row g-3">
+<div class="col-md-4 card bg-sale">
+<h5>আজকের বিক্রি</h5><h3 id="dS">0</h3>
+</div>
+<div class="col-md-4 card bg-profit">
+<h5>আজকের লাভ</h5><h3 id="dP">0</h3>
+</div>
+<div class="col-md-4 card bg-inventory">
+<h5>স্টক মান</h5><h3 id="iV">0</h3>
+</div>
+</div>
+</section>
 
-<!-- Dashboard Stats -->
-
-<div class="row g-3 mt-4">
-
-<div class="col-md-3">
-
-<div class="card sale">
-
-<h5>আজকের বিক্রি</h5>
-
-<h3 id="todaySales">0</h3>
+<!-- Sales Chart -->
+<section class="charts mt-5">
+<canvas id="salesChart" height="150"></canvas>
+</section>
 
 </div>
-
-</div>
-
-
-<div class="col-md-3">
-
-<div class="card profit">
-
-<h5>আজকের লাভ</h5>
-
-<h3 id="todayProfit">0</h3>
-
-</div>
-
-</div>
-
-
-<div class="col-md-3">
-
-<div class="card stock">
-
-<h5>স্টক মূল্য</h5>
-
-<h3 id="stockValue">0</h3>
-
-</div>
-
-</div>
-
-
-<div class="col-md-3">
-
-<div class="card due" onclick="openLedger()">
-
-<h5>মোট বাকি</h5>
-
-<h3 id="overallDue">0</h3>
-
-<p>Click for details</p>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- Chart -->
-
-<div class="chart-box">
-
-<h5 class="mb-3">Sales Chart</h5>
-
-<canvas id="salesChart" height="100"></canvas>
-
-</div>
-
-</div>
-
 
 <!-- Firebase -->
-
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-
 <script>
-
 const firebaseConfig={
 apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
 authDomain:"fir-i-family-mart.firebaseapp.com",
@@ -179,147 +82,39 @@ storageBucket:"fir-i-family-mart.firebasestorage.app",
 messagingSenderId:"73889024539",
 appId:"1:73889024539:web:271561c9dba17b5a6b06be"
 };
-
 firebase.initializeApp(firebaseConfig);
-
+const auth=firebase.auth();
 const db=firebase.firestore();
 
-const todaySales=document.getElementById("todaySales");
-const todayProfit=document.getElementById("todayProfit");
-const stockValue=document.getElementById("stockValue");
-const overallDue=document.getElementById("overallDue");
+// Auth check
+auth.onAuthStateChanged(user=>{if(!user) location.href='login.html';});
+document.getElementById('logoutBtn').addEventListener('click',()=>{auth.signOut().then(()=>location.href='login.html');});
 
-let salesChart;
-
-function openLedger(){
-
-location.href="ledger.html";
-
-}
-
-
-// SALES DATA
-
-db.collection("sales").onSnapshot(snap=>{
-
-let sale=0;
-let profit=0;
-
-let chartData={};
-
-const today=new Date().toISOString().split("T")[0];
-
+// --- Stats ---
+const dS=document.getElementById('dS'), dP=document.getElementById('dP'), iV=document.getElementById('iV');
+db.collection('sales').onSnapshot(snap=>{
+let totalSale=0, totalProfit=0;
+const today=new Date().toISOString().split('T')[0];
 snap.forEach(doc=>{
-
-const d=doc.data();
-
-if(d.date==today){
-
-sale+=d.total||0;
-
-profit+=d.profit||0;
-
-}
-
-if(!chartData[d.date]) chartData[d.date]=0;
-
-chartData[d.date]+=d.total||0;
-
+const data=doc.data();
+if(data.date===today){ totalSale+=data.total||0; totalProfit+=data.profit||0; }
+});
+dS.innerText=Math.round(totalSale);
+dP.innerText=Math.round(totalProfit);
+});
+db.collection('inventory').onSnapshot(snap=>{
+let invValue=0;
+snap.forEach(doc=>{ const data=doc.data(); invValue+=(data.stock||0)*(data.buy||0); });
+iV.innerText=Math.round(invValue);
 });
 
-todaySales.innerText=Math.round(sale);
-todayProfit.innerText=Math.round(profit);
-
-drawChart(chartData);
-
+// --- Sales Chart ---
+const ctx=document.getElementById('salesChart').getContext('2d');
+const salesChart=new Chart(ctx,{
+type:'line',
+data:{labels:[], datasets:[{label:'মোট বিক্রি', data:[], borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.2)', fill:true, tension:0.4}]},
+options:{responsive:true, plugins:{legend:{display:true}, title:{display:true,text:'সাপ্তাহিক বিক্রি'}}, scales:{x:{title:{display:true,text:'তারিখ'}}, y:{title:{display:true,text:'টাকা'}, beginAtZero:true}}}
 });
-
-
-// INVENTORY
-
-db.collection("inventory").onSnapshot(snap=>{
-
-let value=0;
-
-snap.forEach(doc=>{
-
-const d=doc.data();
-
-value+= (d.stock||0)*(d.buy||0);
-
-});
-
-stockValue.innerText=Math.round(value);
-
-});
-
-
-// CUSTOMER DUE
-
-db.collection("customers").onSnapshot(snap=>{
-
-let due=0;
-
-snap.forEach(doc=>{
-
-due+=doc.data().due||0;
-
-});
-
-overallDue.innerText=Math.round(due);
-
-});
-
-
-// CHART
-
-function drawChart(data){
-
-const labels=Object.keys(data).sort();
-
-const values=labels.map(d=>data[d]);
-
-if(salesChart) salesChart.destroy();
-
-salesChart=new Chart(
-
-document.getElementById("salesChart"),
-
-{
-
-type:"line",
-
-data:{
-
-labels:labels,
-
-datasets:[{
-
-label:"Sales",
-
-data:values,
-
-borderColor:"#2563eb",
-
-backgroundColor:"rgba(37,99,235,0.2)",
-
-fill:true,
-
-tension:0.4
-
-}]
-
-},
-
-options:{responsive:true}
-
-}
-
-);
-
-}
-
 </script>
-
 </body>
 </html>
