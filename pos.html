@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S.I. Family Mart | POS /Billings</title>
+<title>S.I. Family Mart | POS / Billings</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -16,207 +16,251 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif;}
 .card{border-radius:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05); padding:20px; margin-bottom:15px; background:var(--card-bg);}
 input, select{border-radius:10px;}
 table th, table td{font-size:14px;}
-#receipt{display:none;background:#f9f9f9;padding:20px;border-radius:15px;max-width:480px;margin:auto;box-shadow:0 4px 25px rgba(0,0,0,0.1);color:#333;}
-#receipt-header{text-align:center;border-bottom:2px dashed #333;padding-bottom:10px;margin-bottom:10px;}
-#rItemsBody td, #rItemsBody th{padding:4px 6px;}
-#rItemsBody th{background:#e0e0e0;}
-#receipt-footer{text-align:center;margin-top:15px;font-size:12px;color:#555;}
-#receipt-footer p{margin:2px 0;}
-.table-hover tbody tr:hover{background:#f0f0f0; cursor:pointer;}
-@media print{body *{visibility:hidden;} #receipt, #receipt *{visibility:visible;} #receipt{position:absolute; left:0; top:0; width:100%;}}
+#receipt{display:none;background:#fff;padding:25px;border-radius:15px;max-width:480px;margin:30px auto;box-shadow:0 10px 30px rgba(0,0,0,0.15);color:#333; border: 1px solid #ddd;}
+#receipt-header{text-align:center;border-bottom:2px dashed #333;padding-bottom:15px;margin-bottom:15px;}
+#rItemsBody td, #rItemsBody th{padding:6px 8px; border-bottom: 1px solid #eee;}
+#receipt-footer{text-align:center;margin-top:20px;font-size:12px;color:#555; border-top: 1px solid #eee; padding-top: 10px;}
+.table-hover tbody tr:hover{background:#f8f9fa; cursor:pointer;}
+@media print{ body * {visibility: hidden;} #receipt, #receipt * {visibility: visible;} #receipt {position: absolute; left: 0; top: 0; width: 100%; border:none; box-shadow:none;} .no-print {display:none;} }
 </style>
 </head>
 <body>
-<div class="container mt-4">
+<div class="container mt-4 no-print">
   <header class="header">
     <h2>S.I. Family Mart | POS</h2>
     <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
   </header>
 
   <div class="row mt-4">
-    <!-- POS -->
     <div class="col-md-5">
-      <div class="card">
-        <h5>পণ্য নির্বাচন</h5>
-        <input type="text" id="cust" class="form-control mb-3" placeholder="ক্রেতার নাম">
-        <input type="text" id="custMobile" class="form-control mb-3" placeholder="ক্রেতার মোবাইল নাম্বার">
-        <input type="text" id="barcodeInput" class="form-control mb-3" placeholder="Barcode Scan / Manual Input">
-        <select id="sItem" class="form-select mb-3"><option value="">পণ্য বাছুন</option></select>
-        <div class="row g-2 mb-2">
-          <div class="col-6"><input type="number" id="sQ" class="form-control" value="1"></div>
-          <div class="col-6"><button class="btn btn-success w-100" onclick="addToCart()">+ কার্টে দিন</button></div>
+      <div class="card border-0">
+        <h5 class="fw-bold mb-3 text-primary">🛒 পণ্য নির্বাচন</h5>
+        <div class="mb-2">
+            <input type="text" id="cust" class="form-control mb-2" placeholder="ক্রেতার নাম">
+            <input type="text" id="custMobile" class="form-control mb-2" placeholder="ক্রেতার মোবাইল নাম্বার">
         </div>
-        <button class="btn btn-primary w-100 mb-2" onclick="startScanner()">📷 ক্যামেরা স্ক্যান শুরু করুন</button>
-        <video id="scannerPreview" style="width:100%;display:none;margin-top:10px;"></video>
+        <hr>
+        <div class="mb-3">
+            <label class="small fw-bold">বারকোড স্ক্যান</label>
+            <input type="text" id="barcodeInput" class="form-control" placeholder="Scan Barcode here..." oninput="scanToAdd()">
+        </div>
+        <div class="mb-3">
+            <label class="small fw-bold">ম্যানুয়াল সার্চ</label>
+            <select id="sItem" class="form-select"><option value="">পণ্য বাছুন</option></select>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-6"><input type="number" id="sQ" class="form-control" value="1" min="1"></div>
+          <div class="col-6"><button class="btn btn-success w-100 fw-bold" onclick="addToCart()">+ কার্টে দিন</button></div>
+        </div>
+        <button class="btn btn-dark w-100" onclick="startScanner()">📷 ক্যামেরা স্ক্যান শুরু</button>
+        <video id="scannerPreview" style="width:100%;display:none;margin-top:10px; border-radius: 10px;"></video>
       </div>
     </div>
 
-    <!-- Cart -->
     <div class="col-md-7">
-      <div class="card">
-        <h5>কার্ট লিস্ট</h5>
-        <table class="table table-sm">
-          <thead><tr><th>পণ্য</th><th>মূল্য</th><th>Qty</th><th>মোট</th><th>-</th></tr></thead>
-          <tbody id="cartBody"></tbody>
-        </table>
-        <div class="mt-3">
-          <div class="input-group mb-2">
-            <span class="input-group-text">ছাড়</span>
-            <input type="number" id="totalDisc" class="form-control" placeholder="0">
-            <select id="totalDType" class="form-select" style="max-width:70px">
-              <option value="cash">৳</option>
-              <option value="percent">%</option>
-            </select>
+      <div class="card border-0">
+        <h5 class="fw-bold mb-3 text-success">📝 কার্ট লিস্ট</h5>
+        <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light"><tr><th>পণ্য</th><th>মূল্য</th><th>Qty</th><th>মোট</th><th>-</th></tr></thead>
+              <tbody id="cartBody"></tbody>
+            </table>
+        </div>
+        <div class="mt-3 p-3 bg-light rounded-3">
+          <div class="row g-2 mb-2">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text">ছাড়</span>
+                    <input type="number" id="totalDisc" class="form-control" value="0">
+                    <select id="totalDType" class="form-select" style="max-width:70px"><option value="cash">৳</option><option value="percent">%</option></select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text">পেমেন্ট</span>
+                    <input type="number" id="paidAmount" class="form-control" placeholder="0.00">
+                </div>
+            </div>
           </div>
-          <div class="input-group mb-2">
-            <span class="input-group-text">পেমেন্ট</span>
-            <input type="number" id="paidAmount" class="form-control" placeholder="ক্রেতা কত দিয়েছে">
-          </div>
-          <button class="btn btn-warning w-100" id="finalBtn" onclick="finalizeSale()">মেমো ও বিক্রি সম্পন্ন</button>
+          <button class="btn btn-primary w-100 py-2 fw-bold" id="finalBtn" onclick="finalizeSale()">🎉 মেমো ও বিক্রি সম্পন্ন</button>
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- Customer Ledger Button -->
-  <div class="card mt-4 text-center">
-    <h5>Customer Ledger / বাকি টাকা</h5>
-    <p>বাকি লেনদেন দেখতে নিচের বাটনে ক্লিক করুন</p>
-    <a href="ledger.html" class="btn btn-primary btn-lg">Open Ledger</a>
   </div>
 </div>
 
-<!-- Receipt -->
 <div id="receipt">
   <div id="receipt-header">
-    <h2>S.I. FAMILY MART</h2>
-    <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
-    <p id="memoNum">মেমো #: 001</p>
-    <svg id="rBarcode"></svg>
-    <p id="saleDate"></p>
+    <h3 class="fw-bold m-0">S.I. FAMILY MART</h3>
+    <p class="small m-0">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+    <p class="small m-0">মোবাইল: ০১XXX-XXXXXX</p>
+    <div class="my-2">
+        <svg id="rBarcode"></svg>
+    </div>
+    <p class="small m-0" id="memoNum">মেমো #: </p>
+    <p class="small m-0" id="saleDate"></p>
   </div>
-  <div>
-    <p><strong>ক্রেতার নাম:</strong> <span id="custName"></span></p>
-    <p><strong>মোবাইল:</strong> <span id="custMobileDisplay"></span></p>
-    <table class="table table-sm table-bordered">
-      <thead><tr><th>পণ্য</th><th>Qty</th><th>মূল্য</th><th>মোট</th></tr></thead>
+  <div class="small">
+    <p class="mb-1"><strong>ক্রেতা:</strong> <span id="custName"></span></p>
+    <p class="mb-3"><strong>মোবাইল:</strong> <span id="custMobileDisplay"></span></p>
+    <table class="table table-sm">
+      <thead class="table-dark"><tr><th>পণ্য</th><th>Qty</th><th>মূল্য</th><th>মোট</th></tr></thead>
       <tbody id="rItemsBody"></tbody>
     </table>
   </div>
-  <div style="text-align:right;">
-    <p>ছাড়: <span id="rDiscount">0</span>৳</p>
-    <p>Paid: <span id="rPaid">0</span>৳</p>
-    <p>Due: <span id="rDue">0</span>৳</p>
-    <p>Grand Total: <span id="rGrand">0</span>৳</p>
+  <div style="text-align:right;" class="small">
+    <p class="mb-1">মোট মূল্য: <span id="rSub">0</span>৳</p>
+    <p class="mb-1">ছাড়: <span id="rDiscount">0</span>৳</p>
+    <p class="mb-1 fw-bold">Grand Total: <span id="rGrand">0</span>৳</p>
+    <hr>
+    <p class="mb-1 text-success">Paid: <span id="rPaid">0</span>৳</p>
+    <p class="mb-1 text-danger">Due: <span id="rDue">0</span>৳</p>
   </div>
   <div id="receipt-footer">
-    <p>ধন্যবাদ! পরের বার আবার আসুন।</p>
+    <p>পণ্য বিক্রয় করা ফেরত নেওয়া হয় না।</p>
+    <p class="fw-bold">ধন্যবাদ! আবার আসবেন।</p>
   </div>
-  <button class="btn btn-dark w-100 mt-2" onclick="window.print()">Print</button>
+  <div class="mt-4 no-print text-center">
+      <button class="btn btn-success me-2" onclick="window.print()">🖨️ Print Receipt</button>
+      <button class="btn btn-outline-dark" onclick="location.reload()">🔄 New Sale</button>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.6/umd/index.min.js"></script>
 
 <script>
-// Firebase config
+// Firebase Initialization
 const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomain:"fir-i-family-mart.firebaseapp.com",projectId:"fir-i-family-mart",storageBucket:"fir-i-family-mart.firebasestorage.app",messagingSenderId:"73889024539",appId:"1:73889024539:web:271561c9dba17b5a6b06be"};
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
 const db=firebase.firestore();
-auth.onAuthStateChanged(user=>{if(!user) location.href='login.html';});
 
 let inv={}, cart=[];
 
-// Inventory Load
+// Load Inventory
 db.collection('inventory').onSnapshot(snap=>{
   let ops="<option value=''>পণ্য বাছুন</option>";
   snap.forEach(d=>{
     const data=d.data();
     inv[data.name]=data;
-    ops+=`<option value="${data.name}">${data.name}</option>`;
+    ops+=`<option value="${data.name}">${data.name} (Stock: ${data.stock})</option>`;
   });
   document.getElementById('sItem').innerHTML=ops;
 });
-document.getElementById('sItem').addEventListener('change', ()=>{
-  const name=document.getElementById('sItem').value;
-  if(name && inv[name]) document.getElementById('barcodeInput').value = inv[name].barcode || '';
-});
 
-// Cart
+// Barcode Scan to Cart
+function scanToAdd(){
+  const val = document.getElementById('barcodeInput').value.trim();
+  if(!val) return;
+  for(let name in inv){
+    if(inv[name].barcode === val){
+      document.getElementById('sItem').value = name;
+      addToCart();
+      document.getElementById('barcodeInput').value = ""; // Clear for next scan
+      break;
+    }
+  }
+}
+
 function addToCart(){
   const name=document.getElementById('sItem').value;
   const qty=Number(document.getElementById('sQ').value);
-  if(!name||qty<1) return alert("সঠিক পণ্য ও পরিমাণ দিন");
+  if(!name || qty<1) return;
+  if(inv[name].stock < qty) return alert("পর্যাপ্ত স্টক নেই!");
+  
   const item=inv[name];
-  cart.push({name:name, qty:qty, price:item.sell, buyPrice:item.buy, total:item.sell*qty});
+  const total = item.sell * qty;
+  cart.push({name:name, qty:qty, price:item.sell, buyPrice:item.buy, total:total});
   renderCart();
 }
+
 function renderCart(){
-  let h=""; cart.forEach((it,i)=>{h+=`<tr><td>${it.name}</td><td>${it.price}</td><td>${it.qty}</td><td>${it.total}</td><td><button class="btn btn-sm btn-danger" onclick="removeItem(${i})">✖</button></td></tr>`;});
+  let h=""; 
+  cart.forEach((it,i)=>{
+      h+=`<tr><td>${it.name}</td><td>${it.price}</td><td>${it.qty}</td><td>${it.total}</td><td><button class="btn btn-sm text-danger" onclick="removeItem(${i})">✖</button></td></tr>`;
+  });
   document.getElementById('cartBody').innerHTML=h;
 }
+
 function removeItem(i){cart.splice(i,1);renderCart();}
 
-// Finalize Sale
-function finalizeSale(){
+async function finalizeSale(){
   if(cart.length===0) return alert("কার্ট খালি!");
-  document.getElementById('finalBtn').disabled=true;
-  const cust=document.getElementById('cust').value||"সম্মানিত ক্রেতা";
-  const custMobile=document.getElementById('custMobile').value||"-";
-  const paidAmt=Number(document.getElementById('paidAmount').value)||0;
-  const dVal=Number(document.getElementById('totalDisc').value);
+  const finalBtn = document.getElementById('finalBtn');
+  finalBtn.disabled=true;
+
+  const cust=document.getElementById('cust').value || "সম্মানিত ক্রেতা";
+  const custMobile=document.getElementById('custMobile').value || "-";
+  const paidAmt=Number(document.getElementById('paidAmount').value) || 0;
+  const dVal=Number(document.getElementById('totalDisc').value) || 0;
   const dType=document.getElementById('totalDType').value;
-  let sub=cart.reduce((s,it)=>s+it.total,0);
-  let dAmt=(dType==='percent')? (sub*dVal/100):dVal;
-  let grand=sub-dAmt;
-  let due=grand-paidAmt;
-  cart.forEach(it=>{db.collection('inventory').doc(it.name).update({stock:firebase.firestore.FieldValue.increment(-it.qty)});});
-  const memoNum=Math.floor(Math.random()*10000);
-  db.collection('sales').add({customer:cust, mobile:custMobile, items:cart, total:grand, discount:dAmt, paid:paidAmt, due:due, profit:cart.reduce((s,it)=>s+(it.total-it.buyPrice*it.qty),0)-dAmt, date:new Date().toISOString().split('T')[0], memo:memoNum});
-  const custRef=db.collection('customers').doc(cust);
-  custRef.get().then(doc=>{
-    if(doc.exists){
-      custRef.update({due:(doc.data().due||0)+due, mobile:custMobile, lastDate:new Date().toISOString().split('T')[0]});
-    }else{
-      custRef.set({due:due, mobile:custMobile, lastDate:new Date().toISOString().split('T')[0]});
+  
+  let subTotal = cart.reduce((s,it)=>s+it.total,0);
+  let dAmt = (dType==='percent') ? (subTotal*dVal/100) : dVal;
+  let grand = subTotal - dAmt;
+  let due = grand - paidAmt;
+  
+  // Profit calculation (Price - BuyCost - Discount)
+  let totalProfit = cart.reduce((s,it)=>s+(it.total - (it.buyPrice * it.qty)), 0) - dAmt;
+
+  const memoNum = "MEMO-" + Math.floor(1000 + Math.random() * 9000);
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+      // 1. Update Inventory and Save Sale
+      for(let it of cart){
+        await db.collection('inventory').doc(it.name).update({
+            stock: firebase.firestore.FieldValue.increment(-it.qty)
+        });
+      }
+
+      await db.collection('sales').add({
+        customer: cust, mobile: custMobile, items: cart,
+        subTotal: subTotal, total: grand, discount: dAmt,
+        paid: paidAmt, due: due, profit: totalProfit,
+        date: today, memo: memoNum, time: new Date().toLocaleTimeString()
+      });
+
+      // 2. Receipt Display
+      let rHtml=""; cart.forEach(it=>{rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}৳</td><td>${it.total}৳</td></tr>`;});
+      document.getElementById('rItemsBody').innerHTML=rHtml;
+      document.getElementById('rSub').innerText=Math.round(subTotal);
+      document.getElementById('rGrand').innerText=Math.round(grand);
+      document.getElementById('rDiscount').innerText=Math.round(dAmt);
+      document.getElementById('rPaid').innerText=Math.round(paidAmt);
+      document.getElementById('rDue').innerText=Math.round(due);
+      document.getElementById('custName').innerText=cust;
+      document.getElementById('custMobileDisplay').innerText=custMobile;
+      document.getElementById('memoNum').innerText="মেমো #: "+memoNum;
+      document.getElementById('saleDate').innerText="তারিখ: "+new Date().toLocaleDateString();
+      
+      JsBarcode("#rBarcode", memoNum, {format:"CODE128", width:1.5, height:30, displayValue:false});
+
+      document.querySelector('.container').style.display='none';
+      document.getElementById('receipt').style.display='block';
+      window.scrollTo(0,0);
+
+  } catch (error) {
+      console.error(error);
+      alert("বিক্রি সম্পন্ন করতে সমস্যা হয়েছে!");
+      finalBtn.disabled=false;
+  }
+}
+
+// Camera Scanner Logic
+const codeReader = new ZXing.BrowserMultiFormatReader();
+function startScanner(){
+  const video = document.getElementById('scannerPreview');
+  video.style.display = 'block';
+  codeReader.decodeFromVideoDevice(null, 'scannerPreview', (result, err) => {
+    if (result) {
+      document.getElementById('barcodeInput').value = result.text;
+      scanToAdd();
+      codeReader.reset();
+      video.style.display = 'none';
     }
   });
-
-  // Receipt
-  let rHtml=""; cart.forEach(it=>{rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}৳</td><td>${it.total}৳</td></tr>`;});
-  document.getElementById('rItemsBody').innerHTML=rHtml;
-  document.getElementById('rGrand').innerText=Math.round(grand);
-  document.getElementById('rDiscount').innerText=dAmt;
-  document.getElementById('rPaid').innerText=paidAmt;
-  document.getElementById('rDue').innerText=due;
-  document.getElementById('custName').innerText=cust;
-  document.getElementById('custMobileDisplay').innerText=custMobile;
-  document.getElementById('memoNum').innerText="মেমো #: "+memoNum;
-  document.getElementById('saleDate').innerText="তারিখ: "+new Date().toLocaleDateString();
-  JsBarcode("#rBarcode", memoNum, {format:"CODE128", width:2, height:40, displayValue:true});
-  document.querySelector('.container').style.display='none';
-  document.getElementById('receipt').style.display='block';
-}
-
-// Barcode Scanner
-let selectedDeviceId;
-const codeReader=new ZXing.BrowserMultiFormatReader();
-function startScanner(){
-  codeReader.listVideoInputDevices().then(videoInputDevices=>{
-    selectedDeviceId=videoInputDevices[0].deviceId;
-    document.getElementById('scannerPreview').style.display='block';
-    codeReader.decodeFromVideoDevice(selectedDeviceId,'scannerPreview',(result,err)=>{
-      if(result){document.getElementById('barcodeInput').value=result.text; codeReader.reset(); scanToAdd();}
-    });
-  });
-}
-function scanToAdd(){
-  const val=document.getElementById('barcodeInput').value;
-  for(let name in inv){if(inv[name].barcode===val){document.getElementById('sItem').value=name; addToCart(); break;}}
 }
 </script>
 </body>
