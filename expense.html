@@ -9,15 +9,58 @@
 </head>
 <body>
 <div class="container mt-4">
-    <h2>Expenses Management</h2>
-    <div class="row g-2 mb-3">
-        <div class="col-md-4"><input type="text" id="expName" class="form-control" placeholder="Expense নাম"></div>
-        <div class="col-md-3"><input type="number" id="expAmount" class="form-control" placeholder="টাকা"></div>
-        <div class="col-md-3"><input type="date" id="expDate" class="form-control"></div>
-        <div class="col-md-2"><button class="btn btn-danger w-100" onclick="addExpense()">Add Expense</button></div>
-    </div>
-    <div id="expenseList" class="table-responsive"></div>
+<header class="d-flex justify-content-between align-items-center mb-3">
+<h2>Expenses</h2>
+<button id="logoutBtn" class="btn btn-danger">Logout</button>
+</header>
+
+<div class="card p-4">
+<h5>Add Expense</h5>
+<div class="row g-2 mb-2">
+    <div class="col-md-4"><input type="text" id="expTitle" class="form-control" placeholder="Expense Title"></div>
+    <div class="col-md-4"><input type="number" id="expAmount" class="form-control" placeholder="Amount"></div>
+    <div class="col-md-4"><input type="date" id="expDate" class="form-control"></div>
 </div>
-<script type="module" src="app.js"></script>
+<button class="btn btn-success w-100 mb-3" onclick="addExpense()">Save Expense</button>
+<div id="expList" class="table-responsive"></div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
+authDomain: "fir-i-family-mart.firebaseapp.com",
+projectId: "fir-i-family-mart",
+storageBucket: "fir-i-family-mart.firebasestorage.app",
+messagingSenderId: "73889024539",
+appId: "1:73889024539:web:271561c9dba17b5a6b06be"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth,user=>{if(!user)window.location="login.html";});
+document.getElementById('logoutBtn').addEventListener('click',async()=>{await signOut(auth); window.location="login.html";});
+
+window.addExpense=async()=>{
+    const title=document.getElementById('expTitle').value;
+    const amount=Number(document.getElementById('expAmount').value);
+    const date=document.getElementById('expDate').value;
+    if(!title||amount<=0) return alert("সঠিক তথ্য দিন!");
+    await addDoc(collection(db,"expenses"),{title,amount,date});
+    alert("Expense Added!"); location.reload();
+};
+
+onSnapshot(collection(db,"expenses"),snap=>{
+    let l="<table class='table table-sm'><thead><tr><th>Title</th><th>Amount</th><th>Date</th></tr></thead><tbody>";
+    snap.forEach(d=>{const e=d.data(); l+=`<tr><td>${e.title}</td><td>${e.amount}</td><td>${e.date}</td></tr>`;});
+    document.getElementById('expList').innerHTML=l+"</tbody></table>";
+});
+</script>
 </body>
 </html>
