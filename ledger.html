@@ -31,7 +31,7 @@ th { background: #f1f5f9; color: var(--dark); font-weight: bold; }
 /* Buttons */
 .btn-call { background: var(--primary); color: white; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
 .btn-payment { background: var(--success); color: white; width: 100%; font-weight: bold; border: none; margin-top: 10px; cursor: pointer; border-radius: 8px; padding: 10px; }
-.btn-pdf { background: #64748b; color: white; border: none; cursor: pointer; margin-top: 10px; padding: 10px 20px; border-radius: 8px; }
+.btn-pdf { background: #475569; color: white; border: none; cursor: pointer; margin-top: 10px; padding: 10px 20px; border-radius: 8px; font-weight: bold; }
 
 .summary-box { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
 .summary-item { flex: 1; min-width: 150px; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--primary); }
@@ -71,32 +71,38 @@ th { background: #f1f5f9; color: var(--dark); font-weight: bold; }
   </div>
 
   <div class="card" id="detailsSection" style="display:none;">
-    <div id="printArea" style="padding: 15px; background: white;">
-        <h2 style="text-align: center; color: var(--primary); margin: 0;">S.I. Family Mart</h2>
-        <h4 id="detailTitle" style="text-align: center; margin: 10px 0;"></h4>
-        <p id="phoneDisplay" style="text-align: center; font-size: 13px; margin-top: -5px;"></p>
+    <div id="printArea" style="padding: 20px; background: white; border-radius: 10px;">
+        <h2 style="text-align: center; color: var(--primary); margin: 0; font-size: 24px;">S.I. Family Mart</h2>
+        <p style="text-align: center; font-size: 14px; margin: 5px 0; color: #64748b;">Customer Statement</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+        
+        <div style="margin-bottom: 20px;">
+            <p style="margin: 3px 0; font-size: 16px;"><b>কাস্টমার নেম:</b> <span id="detailCustName" style="color: #334155;"></span></p>
+            <p style="margin: 3px 0; font-size: 16px;"><b>মোবাইল:</b> <span id="phoneDisplay" style="color: #334155;"></span></p>
+        </div>
         
         <div style="overflow-x: auto;">
             <table id="transTable">
                 <thead>
-                    <tr><th>তারিখ</th><th>ধরণ</th><th>পরিমাণ</th><th>ব্যালেন্স</th></tr>
+                    <tr style="background: #f1f5f9;"><th>তারিখ</th><th>ধরণ</th><th>পরিমাণ</th><th>ব্যালেন্স</th></tr>
                 </thead>
                 <tbody id="transBody"></tbody>
                 <tfoot>
-                    <tr style="background: #f8fafc; font-weight: bold;">
-                        <td colspan="3" style="text-align: right; padding: 12px;">বর্তমান মোট বকেয়া:</td>
-                        <td id="finalDueDisplay" style="padding: 12px;">০৳</td>
+                    <tr style="background: #f8fafc; font-weight: bold; border-top: 2px solid #e2e8f0;">
+                        <td colspan="3" style="text-align: right; padding: 12px; font-size: 16px;">বর্তমান মোট বকেয়া:</td>
+                        <td id="finalDueDisplay" style="padding: 12px; font-size: 16px; color: var(--danger);">০৳</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
+        <p style="font-size: 10px; color: #94a3b8; margin-top: 20px; text-align: center;">Generated on: <span id="genDate"></span></p>
     </div>
     
     <div style="background: #f1f5f9; padding: 15px; border-radius: 10px; margin-top: 20px;">
         <label style="font-weight: bold; display: block; margin-bottom: 5px;">বাকি টাকা জমা নিন:</label>
         <div style="display: flex; gap: 10px;">
             <input type="number" id="payAmount" placeholder="টাকার পরিমাণ" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-            <button class="btn-payment" style="margin:0; width: auto;" onclick="processPayment()">💸 জমা নিন</button>
+            <button class="btn-payment" style="margin:0; width: auto;" onclick="processPayment()">💸 টাকা জমা দিন</button>
         </div>
     </div>
     
@@ -150,7 +156,6 @@ db.collection('sales').onSnapshot((snap) => {
     for(let n in customerMap) {
         const c = customerMap[n];
         const lastDate = new Date(c.lastDate);
-        // ১০ দিন বকেয়া ০ থাকলে লিস্ট থেকে বাদ
         if(c.due <= 1 && lastDate < tenDaysAgo) continue;
 
         if(c.due > 0.5) totalDue += c.due;
@@ -164,7 +169,7 @@ db.collection('sales').onSnapshot((snap) => {
                 <td><span class="${isPaid ? 'badge-pay' : 'badge-buy'}">${isPaid ? 'Paid' : 'Due'}</span></td>
                 <td>
                     <a href="tel:${c.mobile}" class="btn-call">📞 Call</a>
-                    <button onclick="showCustomerDetails('${n}', '${c.mobile}')" style="font-size:11px; cursor:pointer;">View</button>
+                    <button onclick="showCustomerDetails('${n}', '${c.mobile}')" style="font-size:11px; cursor:pointer; padding:5px;">View</button>
                 </td>
             </tr>`;
     }
@@ -176,8 +181,11 @@ db.collection('sales').onSnapshot((snap) => {
 async function showCustomerDetails(name, mobile) {
     currentCustomer = name; currentMobile = mobile;
     document.getElementById('detailsSection').style.display = "block";
-    document.getElementById('detailTitle').innerText = "ইতিহাস: " + name;
-    document.getElementById('phoneDisplay').innerText = "মোবাইল: " + mobile;
+    
+    // নাম সুন্দর করে দেখানোর জন্য আপডেট
+    document.getElementById('detailCustName').innerText = name;
+    document.getElementById('phoneDisplay').innerText = mobile;
+    document.getElementById('genDate').innerText = new Date().toLocaleString();
     
     const transBody = document.getElementById('transBody');
     transBody.innerHTML = "<tr><td colspan='4'>লোডিং...</td></tr>";
@@ -201,35 +209,34 @@ async function showCustomerDetails(name, mobile) {
     window.scrollTo({ top: document.getElementById('detailsSection').offsetTop - 80, behavior: 'smooth' });
 }
 
-// PDF ফাংশন (সাদা পেজ সমাধান)
+// PDF সমাধান: নিখুঁত রেন্ডারিং কনফিগারেশন
 function downloadStatement() {
     const element = document.getElementById('printArea');
     const options = {
-        margin: 10,
+        margin: [10, 10],
         filename: `Statement_${currentCustomer}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 1 },
         html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            logging: false, 
-            letterRendering: true 
+            scale: 3, // রেজোলিউশন বাড়ানো হয়েছে
+            useCORS: true,
+            backgroundColor: '#ffffff' // ব্যাকগ্রাউন্ড সাদা নিশ্চিত করা হয়েছে
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
     
-    // রেন্ডারিং শুরু হওয়ার আগে ১ সেকেন্ড সময় দেওয়া হয়েছে যাতে সাদা না আসে
-    html2pdf().set(options).from(element).save();
+    // সাদা পেজ সমস্যা সমাধানের জন্য রেন্ডারিং কমান্ড
+    html2pdf().from(element).set(options).save();
 }
 
 async function processPayment() {
     const amount = Number(document.getElementById('payAmount').value);
-    if(!amount || amount <= 0) return alert("পরিমাণ লিখুন");
+    if(!amount || amount <= 0) return alert("সঠিক পরিমাণ লিখুন");
     
     const todayStr = new Date().toISOString().split('T')[0];
     await db.collection('sales').add({
         customer: currentCustomer, mobile: currentMobile, due: -amount, date: todayStr, type: 'DUE_COLLECTION'
     });
-    alert("সফলভাবে জমা হয়েছে!");
+    alert("সফলভাবে জমা হয়েছে!");
     document.getElementById('payAmount').value = "";
     showCustomerDetails(currentCustomer, currentMobile);
 }
