@@ -1,9 +1,9 @@
-body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f1f5f9;margin:0;padding:0;}
-.header{text-align:center;margin-bottom:20px;}
-.header h1{margin-bottom:5px;color:#0f172a;}
-.card{padding:15px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.05);background:#fff;margin-bottom:15px;}
-.bg-sale{background:linear-gradient(135deg,#84cc16,#10b981);color:white;}
-.bg-profit{background:linear-gradient(135deg,#10b981,#059669);color:white;}
-.bg-inventory{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:white;}
-input,select,button{border-radius:8px;}
-table th,table td{text-align:center;}
+body { font-family:'Segoe UI', sans-serif; background:#f1f5f9; margin:0; padding:0;}
+.header { text-align:center; padding:20px; background:linear-gradient(135deg,#0f172a,#1e293b); color:white; border-radius:0 0 20px 20px;}
+.card { border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.1); padding:15px;}
+.bg-sale { background:linear-gradient(135deg,#84cc16,#10b981); color:white;}
+.bg-profit { background:linear-gradient(135deg,#10b981,#059669); color:white;}
+.bg-inventory { background:linear-gradient(135deg,#8b5cf6,#6366f1); color:white;}
+.table th, .table td { vertical-align:middle; }
+.btn { border-radius:50px;}
+input, select { border-radius:10px; }
