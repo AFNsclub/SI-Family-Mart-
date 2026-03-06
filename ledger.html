@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ledger System</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f5f5;
+margin:0;
+}
+
+header{
+background:#111;
+color:white;
+padding:15px;
+text-align:center;
+}
+
+.container{
+padding:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+margin:10px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+button{
+padding:8px 15px;
+border:none;
+background:#0066ff;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+input{
+padding:8px;
+margin:5px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th,td{
+padding:10px;
+border:1px solid #ddd;
+text-align:left;
+}
+
+th{
+background:#333;
+color:white;
+}
+
+.customer{
+cursor:pointer;
+color:blue;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>Ledger Dashboard</h2>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h3>Report Filter</h3>
+
+<button onclick="loadDaily()">Daily</button>
+<button onclick="loadMonthly()">Monthly</button>
+<button onclick="loadYearly()">Yearly</button>
+<button onclick="loadAll()">All Time</button>
+
+<br><br>
+
+<input type="date" id="fromDate">
+<input type="date" id="toDate">
+
+<button onclick="customReport()">Search</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Dashboard</h3>
+
+<p>Total Sales : <span id="sales">0</span></p>
+<p>Total Profit : <span id="profit">0</span></p>
+<p>Total Due : <span id="due">0</span></p>
+
+</div>
+
+
+<div class="card">
+
+<h3>Customers</h3>
+
+<input type="text" id="searchCustomer" placeholder="Search Customer" onkeyup="searchCustomer()">
+
+<table id="customerTable">
+
+<tr>
+<th>Name</th>
+<th>Phone</th>
+<th>Due</th>
+</tr>
+
+</table>
+
+</div>
+
+
+<div class="card">
+
+<h3>Customer Details</h3>
+
+<div id="customerDetails">
+
+Click customer name to see details
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>PDF Download</h3>
+
+<button onclick="downloadFull()">Full Report</button>
+
+<button onclick="downloadCustomer()">Customer Statement</button>
+
+<button onclick="downloadPayment()">Payment History</button>
+
+<button onclick="downloadSupplier()">Supplier Ledger</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+const firebaseConfig = {
+
+apiKey: "YOUR_KEY",
+authDomain: "YOUR_DOMAIN",
+projectId: "YOUR_PROJECT"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+
+function loadCustomers(){
+
+db.collection("customers").get().then(snapshot=>{
+
+let table = document.getElementById("customerTable")
+
+snapshot.forEach(doc=>{
+
+let d = doc.data()
+
+table.innerHTML +=
+
+`
+<tr>
+<td class="customer" onclick="showCustomer('${doc.id}')">${d.name}</td>
+<td>${d.phone}</td>
+<td>${d.due}</td>
+</tr>
+`
+
+})
+
+})
+
+}
+
+
+function showCustomer(id){
+
+db.collection("customers").doc(id).get().then(doc=>{
+
+let d = doc.data()
+
+document.getElementById("customerDetails").innerHTML =
+
+`
+<h4>${d.name}</h4>
+
+<p>Phone : ${d.phone}</p>
+
+<p>Total Due : ${d.due}</p>
+
+`
+
+})
+
+}
+
+
+
+function searchCustomer(){
+
+let input = document.getElementById("searchCustomer").value.toLowerCase()
+
+let tr = document.querySelectorAll("#customerTable tr")
+
+tr.forEach(row=>{
+
+if(row.innerText.toLowerCase().includes(input)){
+
+row.style.display=""
+
+}else{
+
+row.style.display="none"
+
+}
+
+})
+
+}
+
+
+
+function downloadFull(){
+
+const { jsPDF } = window.jspdf;
+
+let doc = new jsPDF();
+
+doc.text("Full Ledger Report",20,20)
+
+doc.save("ledger-report.pdf")
+
+}
+
+
+
+function downloadCustomer(){
+
+const { jsPDF } = window.jspdf;
+
+let doc = new jsPDF();
+
+doc.text("Customer Statement",20,20)
+
+doc.save("customer-statement.pdf")
+
+}
+
+
+
+function downloadPayment(){
+
+const { jsPDF } = window.jspdf;
+
+let doc = new jsPDF();
+
+doc.text("Customer Payment History",20,20)
+
+doc.save("payment-history.pdf")
+
+}
+
+
+
+function downloadSupplier(){
+
+const { jsPDF } = window.jspdf;
+
+let doc = new jsPDF();
+
+doc.text("Supplier Ledger",20,20)
+
+doc.save("supplier-ledger.pdf")
+
+}
+
+
+
+loadCustomers()
+
+</script>
+
+</body>
+</html>
