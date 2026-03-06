@@ -2,151 +2,226 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ledger Dashboard | S.I. Family Mart</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
 <style>
-body { font-family: Arial; background: #f5f5f5; margin:0; }
-header { background:#111; color:white; padding:15px; text-align:center; }
-.container { padding:20px; }
-.card { background:white; padding:15px; margin:10px 0; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
-button { padding:8px 15px; border:none; background:#0066ff; color:white; border-radius:6px; cursor:pointer; margin:2px;}
-input { padding:8px; margin:5px; }
-table { width:100%; border-collapse:collapse; margin-top:10px; }
-th,td { padding:10px; border:1px solid #ddd; text-align:left; }
-th { background:#333; color:white; }
-.customer { cursor:pointer; color:blue; }
+:root { --primary: #2563eb; --dark: #1e293b; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin:0; color: #333; }
+header { background: var(--dark); color:white; padding:20px; text-align:center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.container { padding:25px; max-width: 1200px; margin: auto; }
+.card { background:white; padding:20px; margin-bottom:20px; border-radius:15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+button { padding:10px 18px; border:none; background: var(--primary); color:white; border-radius:8px; cursor:pointer; font-weight: 600; transition: 0.3s; }
+button:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-payment { background: var(--success); margin-top: 10px; }
+.btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+input { padding:10px; border: 1px solid #cbd5e1; border-radius: 8px; margin: 5px 0; }
+table { width:100%; border-collapse:collapse; margin-top:15px; background: white; }
+th,td { padding:12px; border:1px solid #e2e8f0; text-align:left; }
+th { background: #f1f5f9; color: var(--dark); }
+.customer-link { color: var(--primary); font-weight: bold; cursor: pointer; }
+.summary-box { display: flex; gap: 20px; flex-wrap: wrap; }
+.summary-item { flex: 1; min-width: 200px; background: #f8fafc; padding: 15px; border-radius: 12px; border-left: 5px solid var(--primary); }
+.summary-item p { margin: 5px 0 0; font-size: 1.5rem; font-weight: bold; }
 </style>
 </head>
 
 <body>
 
 <header>
-<h2>Ledger Dashboard | S.I. Family Mart</h2>
+    <h2 style="margin:0;">S.I. Family Mart | লেজার ড্যাশবোর্ড</h2>
 </header>
 
 <div class="container">
 
-  <!-- Report Filter -->
   <div class="card">
-    <h3>Report Filter</h3>
-    <button onclick="loadDaily()">Daily</button>
-    <button onclick="loadMonthly()">Monthly</button>
-    <button onclick="loadYearly()">Yearly</button>
-    <button onclick="loadAll()">All Time</button>
-    <br><br>
-    <input type="date" id="fromDate">
-    <input type="date" id="toDate">
-    <button onclick="customReport()">Search</button>
+    <h3>📊 হিসাবের সারাংশ (সর্বমোট)</h3>
+    <div class="summary-box">
+        <div class="summary-item"><h4>মোট বিক্রি</h4><p id="totalSales" style="color: var(--primary);">০৳</p></div>
+        <div class="summary-item" style="border-left-color: var(--success);"><h4>মোট লাভ</h4><p id="totalProfit" style="color: var(--success);">০৳</p></div>
+        <div class="summary-item" style="border-left-color: var(--danger);"><h4>মোট বাকি</h4><p id="totalDue" style="color: var(--danger);">০৳</p></div>
+    </div>
   </div>
 
-  <!-- Dashboard Summary -->
   <div class="card">
-    <h3>Dashboard</h3>
-    <p>Total Sales : <span id="sales">0</span></p>
-    <p>Total Profit : <span id="profit">0</span></p>
-    <p>Total Due : <span id="due">0</span></p>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <h3>👥 কাস্টমার তালিকা</h3>
+        <input type="text" id="searchCustomer" placeholder="নাম বা মোবাইল দিয়ে খুঁজুন..." onkeyup="searchCustomer()">
+    </div>
+    <div style="overflow-x: auto;">
+        <table id="customerTable">
+          <thead>
+            <tr>
+              <th>কাস্টমারের নাম</th>
+              <th>মোবাইল</th>
+              <th>মোট বাকি</th>
+              <th>অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="custBody"></tbody>
+        </table>
+    </div>
   </div>
 
-  <!-- Customer Table -->
-  <div class="card">
-    <h3>Customers</h3>
-    <input type="text" id="searchCustomer" placeholder="Search Customer Name or Mobile" onkeyup="searchCustomer()">
-    <table id="customerTable">
-      <tr>
-        <th>Name</th>
-        <th>Mobile</th>
-        <th>Due</th>
-      </tr>
-    </table>
-  </div>
-
-  <!-- Customer Details -->
-  <div class="card">
-    <h3>Customer Details</h3>
-    <div id="customerDetails">Click customer name to see details</div>
-  </div>
-
-  <!-- PDF Download -->
-  <div class="card">
-    <h3>PDF Download</h3>
-    <button onclick="downloadFull()">Full Report</button>
-    <button onclick="downloadCustomer()">Customer Statement</button>
-    <button onclick="downloadPayment()">Payment History</button>
-    <button onclick="downloadSupplier()">Supplier Ledger</button>
+  <div class="card" id="detailsSection" style="display:none;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+        <h3 id="detailTitle">লেনদেনের বিস্তারিত</h3>
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 10px; min-width: 250px;">
+            <label class="fw-bold">বাকি টাকা জমা নিন:</label><br>
+            <input type="number" id="payAmount" placeholder="টাকার পরিমাণ" style="width: 100%;">
+            <button class="btn-payment" onclick="processPayment()" style="width: 100%;">💸 জমা দিন</button>
+        </div>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table id="transTable">
+            <thead>
+                <tr>
+                    <th>তারিখ</th>
+                    <th>বিবরণ</th>
+                    <th>পরিমাণ</th>
+                    <th>অবশিষ্ট বাকি</th>
+                </tr>
+            </thead>
+            <tbody id="transBody"></tbody>
+        </table>
+    </div>
+    <div class="mt-3 text-end">
+        <button class="btn-outline" onclick="downloadStatement()">📄 PDF রিপোর্ট ডাউনলোড</button>
+    </div>
   </div>
 
 </div>
 
+
+
 <script>
-// Firebase config (replace with your actual keys)
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_PROJECT"
+    apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
+    authDomain:"fir-i-family-mart.firebaseapp.com",
+    projectId:"fir-i-family-mart",
+    storageBucket:"fir-i-family-mart.firebasestorage.app",
+    messagingSenderId:"73889024539",
+    appId:"1:73889024539:web:271561c9dba17b5a6b06be"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Load customers from Firestore
-function loadCustomers() {
-  db.collection("customers").get().then(snapshot => {
-    let table = document.getElementById("customerTable");
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      table.innerHTML += `
-        <tr>
-          <td class="customer" onclick="showCustomer('${doc.id}')">${doc.id}</td>
-          <td>${d.mobile || '-'}</td>
-          <td>${d.due || 0}</td>
-        </tr>
-      `;
+let currentCustomer = "";
+
+// ১. ডাটা লোড করা
+db.collection('sales').onSnapshot(snap => {
+    let sales = 0, profit = 0, due = 0;
+    let customerData = {};
+
+    snap.forEach(doc => {
+        const d = doc.data();
+        sales += Number(d.total || 0);
+        profit += Number(d.profit || 0);
+        due += Number(d.due || 0);
+
+        if(d.customer) {
+            if(!customerData[d.customer]) customerData[d.customer] = { due: 0, mobile: d.mobile || '-' };
+            customerData[d.customer].due += Number(d.due || 0);
+        }
     });
-  });
+
+    document.getElementById('totalSales').innerText = Math.round(sales) + "৳";
+    document.getElementById('totalProfit').innerText = Math.round(profit) + "৳";
+    document.getElementById('totalDue').innerText = Math.round(due) + "৳";
+
+    renderCustomerTable(customerData);
+});
+
+// ২. কাস্টমার টেবিল দেখানো
+function renderCustomerTable(data) {
+    const tbody = document.getElementById('custBody');
+    tbody.innerHTML = "";
+    for (let name in data) {
+        const c = data[name];
+        tbody.innerHTML += `
+            <tr>
+                <td class="customer-link" onclick="showCustomerDetails('${name}')">${name}</td>
+                <td>${c.mobile}</td>
+                <td style="color: ${c.due > 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:bold;">${Math.round(c.due)}৳</td>
+                <td><button onclick="showCustomerDetails('${name}')" style="padding:5px 10px;">বিস্তারিত</button></td>
+            </tr>
+        `;
+    }
 }
 
-// Show customer details
-function showCustomer(id) {
-  db.collection("customers").doc(id).get().then(doc => {
-    const d = doc.data();
-    document.getElementById("customerDetails").innerHTML = `
-      <h4>${doc.id}</h4>
-      <p>Mobile: ${d.mobile || '-'}</p>
-      <p>Total Due: ${d.due || 0}</p>
-    `;
-  });
+// ৩. বিস্তারিত দেখানো
+async function showCustomerDetails(name) {
+    currentCustomer = name;
+    const section = document.getElementById('detailsSection');
+    const transBody = document.getElementById('transBody');
+    document.getElementById('detailTitle').innerText = "লেনদেন ইতিহাস: " + name;
+    section.style.display = "block";
+    transBody.innerHTML = "লোডিং...";
+
+    const snap = await db.collection('sales').where('customer', '==', name).orderBy('date', 'desc').get();
+    
+    let html = "";
+    snap.forEach(doc => {
+        const d = doc.data();
+        html += `
+            <tr>
+                <td>${d.date || '-'}</td>
+                <td>${d.due < 0 ? 'টাকা জমা দিয়েছেন' : 'পণ্য ক্রয়'}</td>
+                <td>${Math.abs(d.total)}৳</td>
+                <td style="font-weight:bold;">${Math.round(d.due)}৳</td>
+            </tr>
+        `;
+    });
+    transBody.innerHTML = html;
+    window.scrollTo({ top: section.offsetTop, behavior: 'smooth' });
 }
 
-// Search function
+// ৪. বাকি টাকা শোধ (Payment Process)
+async function processPayment() {
+    const amount = Number(document.getElementById('payAmount').value);
+    if(!amount || amount <= 0) return alert("সঠিক পরিমাণ লিখুন");
+
+    if(confirm(`${currentCustomer} এর কাছ থেকে ${amount}৳ জমা নিচ্ছেন?`)) {
+        try {
+            await db.collection('sales').add({
+                customer: currentCustomer,
+                total: amount,
+                due: -amount, // বাকি কমানোর জন্য মাইনাস
+                profit: 0,
+                date: new Date().toISOString().split('T')[0],
+                type: 'DUE_COLLECTION'
+            });
+            document.getElementById('payAmount').value = "";
+            alert("জমা সফল হয়েছে!");
+            showCustomerDetails(currentCustomer);
+        } catch (e) {
+            alert("ভুল হয়েছে: " + e.message);
+        }
+    }
+}
+
 function searchCustomer() {
-  let input = document.getElementById("searchCustomer").value.toLowerCase();
-  let tr = document.querySelectorAll("#customerTable tr");
-  tr.forEach((row, i) => {
-    if(i === 0) return; // skip header
-    if(row.innerText.toLowerCase().includes(input)) row.style.display="";
-    else row.style.display="none";
-  });
+    let input = document.getElementById("searchCustomer").value.toLowerCase();
+    let tr = document.querySelectorAll("#custBody tr");
+    tr.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+    });
 }
 
-// PDF download placeholders
-function downloadFull(){ const { jsPDF } = window.jspdf; let doc = new jsPDF(); doc.text("Full Ledger Report",20,20); doc.save("ledger-report.pdf"); }
-function downloadCustomer(){ const { jsPDF } = window.jspdf; let doc = new jsPDF(); doc.text("Customer Statement",20,20); doc.save("customer-statement.pdf"); }
-function downloadPayment(){ const { jsPDF } = window.jspdf; let doc = new jsPDF(); doc.text("Customer Payment History",20,20); doc.save("payment-history.pdf"); }
-function downloadSupplier(){ const { jsPDF } = window.jspdf; let doc = new jsPDF(); doc.text("Supplier Ledger",20,20); doc.save("supplier-ledger.pdf"); }
-
-// Placeholder report filters
-function loadDaily(){ alert("Daily report filter coming soon"); }
-function loadMonthly(){ alert("Monthly report filter coming soon"); }
-function loadYearly(){ alert("Yearly report filter coming soon"); }
-function loadAll(){ alert("All time report filter coming soon"); }
-function customReport(){ alert("Custom report search coming soon"); }
-
-// Initial load
-loadCustomers();
-
+function downloadStatement() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("S.I. Family Mart - Customer Report", 14, 15);
+    doc.autoTable({ html: '#transTable', startY: 25 });
+    doc.save(`Ledger_${currentCustomer}.pdf`);
+}
 </script>
 </body>
 </html>
