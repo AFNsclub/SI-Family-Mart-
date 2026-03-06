@@ -11,11 +11,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
-body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;}
-.header{background:linear-gradient(135deg,#2563eb,#1e3a8a);color:#fff;text-align:center;padding:25px;border-radius:0 0 30px 30px;}
-.header h2{font-weight:700;margin:0;}
-.card{border-radius:20px;box-shadow:0 4px 15px rgba(0,0,0,0.05);padding:20px;margin-bottom:20px;background:#fff;}
-.table-hover tbody tr:hover{background:#f0f0f0;cursor:pointer;}
+:root { --primary: #2563eb; --success: #10b981; --danger: #ef4444; }
+body{font-family:'Segoe UI', sans-serif; background:#f8fafc; color: #1e293b;}
+.header{background:linear-gradient(135deg,#2563eb,#1e3a8a); color:#fff; text-align:center; padding:30px; border-radius:0 0 30px 30px; box-shadow: 0 10px 25px rgba(30, 58, 138, 0.2);}
+.header h2{font-weight:700; margin:0;}
+.card{border-radius:20px; border:none; box-shadow:0 4px 20px rgba(0,0,0,0.05); padding:25px; margin-bottom:20px; background:#fff;}
+.stat-card h5 { color: #64748b; font-size: 0.9rem; margin-bottom: 10px; }
+.stat-card h3 { font-weight: 800; color: #1e293b; }
+.table thead { background: #f1f5f9; }
+.modal-content { border-radius: 25px; border: none; }
 </style>
 </head>
 <body>
@@ -23,169 +27,201 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;}
 <div class="container mt-4">
   <header class="header">
     <h2>S.I. Family Mart | Complete Reports</h2>
-    <p>বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+    <p class="mb-0">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
   </header>
 
-  <!-- Filters & Downloads -->
-  <div class="card mt-4">
-    <div class="row g-2">
-      <div class="col-md-3"><input type="date" id="startDate" class="form-control"></div>
-      <div class="col-md-3"><input type="date" id="endDate" class="form-control"></div>
-      <div class="col-md-2"><button class="btn btn-primary w-100" id="filterBtn">Filter</button></div>
-      <div class="col-md-2"><button class="btn btn-success w-100" id="downloadExcelBtn">Download Excel</button></div>
-      <div class="col-md-2"><button class="btn btn-danger w-100" id="downloadPDFBtn">Download PDF</button></div>
+  <div class="card mt-4 no-print">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="small fw-bold mb-1">শুরু</label>
+        <input type="date" id="startDate" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="small fw-bold mb-1">শেষ</label>
+        <input type="date" id="endDate" class="form-control">
+      </div>
+      <div class="col-md-2"><button class="btn btn-primary w-100 fw-bold" id="filterBtn">📊 Filter</button></div>
+      <div class="col-md-2"><button class="btn btn-success w-100 fw-bold" id="downloadExcelBtn">📗 Excel</button></div>
+      <div class="col-md-2"><button class="btn btn-danger w-100 fw-bold" id="downloadPDFBtn">📕 PDF</button></div>
     </div>
   </div>
 
-  <!-- Stats -->
-  <div class="row mt-4 g-3">
-    <div class="col-md-3 card text-center"><h5>আজকের বিক্রি</h5><h3 id="dS">0</h3></div>
-    <div class="col-md-3 card text-center"><h5>আজকের লাভ</h5><h3 id="dP">0</h3></div>
-    <div class="col-md-3 card text-center"><h5>স্টক মান</h5><h3 id="iV">0</h3></div>
-    <div class="col-md-3 card text-center"><h5>Total Due</h5><h3 id="totalDue">0</h3></div>
+  <div class="row mt-2 g-3">
+    <div class="col-md-3"><div class="card stat-card text-center"><h5>আজকের বিক্রি</h5><h3 id="dS">0৳</h3></div></div>
+    <div class="col-md-3"><div class="card stat-card text-center" style="border-bottom: 5px solid var(--success);"><h5>আজকের লাভ</h5><h3 id="dP" class="text-success">0৳</h3></div></div>
+    <div class="col-md-3"><div class="card stat-card text-center"><h5>স্টক মূল্য (কেনা)</h5><h3 id="iV">0৳</h3></div></div>
+    <div class="col-md-3"><div class="card stat-card text-center" style="border-bottom: 5px solid var(--danger);"><h5>মোট বাকি পাওনা</h5><h3 id="totalDue" class="text-danger">0৳</h3></div></div>
   </div>
 
-  <!-- Charts -->
-  <div class="card mt-4"><canvas id="salesChart" height="150"></canvas></div>
-  <div class="card mt-4"><canvas id="topProductsChart" height="150"></canvas></div>
+  <div class="row">
+      <div class="col-md-8"><div class="card"><h5 class="fw-bold mb-4">📈 বিক্রয় প্রবণতা (Sales Trend)</h5><canvas id="salesChart" height="150"></canvas></div></div>
+      <div class="col-md-4"><div class="card"><h5 class="fw-bold mb-4">🏆 সেরা ৫ পণ্য</h5><canvas id="topProductsChart" height="340"></canvas></div></div>
+  </div>
 
-  <!-- Customer Ledger -->
-  <div class="card mt-4">
-    <h5>Customer Ledger / বাকি টাকা</h5>
-    <input type="text" id="searchCust" class="form-control mb-2" placeholder="Customer Name দিয়ে Search করুন">
-    <table class="table table-bordered table-hover">
-      <thead><tr><th>ক্রেতার নাম</th><th>মোট বাকি</th><th>শেষ লেনদেনের তারিখ</th></tr></thead>
-      <tbody id="customerLedger"></tbody>
-    </table>
+  <div class="card mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <h5 class="fw-bold m-0">👥 কাস্টমার লেজার ও বাকি তালিকা</h5>
+        <input type="text" id="searchCust" class="form-control w-50" placeholder="ক্রেতার নাম বা মোবাইল দিয়ে খুঁজুন...">
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead><tr><th>ক্রেতার নাম</th><th>মোট বাকি</th><th>শেষ লেনদেন</th><th>বিস্তারিত</th></tr></thead>
+          <tbody id="customerLedger"></tbody>
+        </table>
+    </div>
   </div>
 </div>
 
-<!-- Customer Details Modal -->
-<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title">Customer Details</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body">
-        <p><strong>Name:</strong> <span id="modalName"></span></p>
-        <p><strong>Total Due:</strong> <span id="modalDue"></span>৳</p>
-        <table class="table table-bordered">
-          <thead><tr><th>Memo</th><th>Date</th><th>Total</th><th>Paid</th><th>Due</th><th>Discount</th></tr></thead>
-          <tbody id="modalHistory"></tbody>
-        </table>
+<div class="modal fade" id="detailsModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header border-0 bg-light">
+        <h5 class="modal-title fw-bold">Customer Transaction History</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="row mb-4">
+            <div class="col-6"><h6>নাম: <span id="modalName" class="fw-bold"></span></h6></div>
+            <div class="col-6 text-end"><h6>বর্তমান বাকি: <span id="modalDue" class="text-danger fw-bold"></span>৳</h6></div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="table-dark"><tr><th>মেমো</th><th>তারিখ</th><th>মোট বিল</th><th>জমা</th><th>বাকি</th><th>ছাড়</th></tr></thead>
+              <tbody id="modalHistory"></tbody>
+            </table>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-// Firebase Config
 const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomain:"fir-i-family-mart.firebaseapp.com",projectId:"fir-i-family-mart",storageBucket:"fir-i-family-mart.firebasestorage.app",messagingSenderId:"73889024539",appId:"1:73889024539:web:271561c9dba17b5a6b06be"};
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(), db=firebase.firestore();
-
-// Elements
-const dS=document.getElementById('dS'), dP=document.getElementById('dP'), iV=document.getElementById('iV'), totalDueEl=document.getElementById('totalDue');
-const ledgerTbody=document.getElementById('customerLedger'), searchInput=document.getElementById('searchCust');
+const db=firebase.firestore();
 
 let salesData=[], customerData=[], topProducts={};
 let salesChart=null, topChart=null;
 
-// Load Data
-async function loadData(){
-  const salesSnap=await db.collection('sales').get();
-  salesData=[]; topProducts={};
-  salesSnap.forEach(d=>{ const s=d.data(); salesData.push(s); s.items.forEach(it=>{topProducts[it.name]=(topProducts[it.name]||0)+it.qty;}); });
+// লাইভ ডাটা লোড
+function initData(){
+  // Sales & Charts
+  db.collection('sales').onSnapshot(snap=>{
+    salesData=[]; topProducts={};
+    snap.forEach(d=>{ 
+        const s=d.data(); 
+        salesData.push(s); 
+        if(s.items) s.items.forEach(it=>{topProducts[it.name]=(topProducts[it.name]||0)+it.qty;}); 
+    });
+    updateStats();
+    renderCharts();
+  });
 
-  const custSnap=await db.collection('customers').get();
-  customerData=[];
-  custSnap.forEach(d=>{ customerData.push({name:d.id, ...d.data()}); });
-  
-  renderLedger(); renderCharts(); updateStats();
-}
-
-// Stats
-function updateStats(){
-  const today=new Date().toISOString().split('T')[0];
-  let sale=0, profit=0, totalDue=0;
-  salesData.forEach(s=>{if(s.date===today){sale+=s.total; profit+=s.profit;}});
-  dS.innerText=Math.round(sale); dP.innerText=Math.round(profit);
-  db.collection('inventory').get().then(snap=>{ let val=0; snap.forEach(d=>{ const dt=d.data(); val+=(dt.stock||0)*(dt.buy||0); }); iV.innerText=Math.round(val);});
-  customerData.forEach(c=>{totalDue+=c.due||0;}); totalDueEl.innerText=Math.round(totalDue);
-}
-
-// Charts
-function renderCharts(){
-  const daily={}; salesData.forEach(s=>{daily[s.date]=(daily[s.date]||0)+s.total;});
-  const labels=Object.keys(daily).sort(); const data=labels.map(l=>daily[l]);
-  if(salesChart) salesChart.destroy();
-  salesChart=new Chart(document.getElementById('salesChart'),{type:'line',data:{labels,data,datasets:[{label:'Daily Sales', data, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.2)', fill:true}]}, options:{responsive:true}});
-  const topLabels=Object.keys(topProducts).sort((a,b)=>topProducts[b]-topProducts[a]).slice(0,5);
-  const topValues=topLabels.map(l=>topProducts[l]);
-  if(topChart) topChart.destroy();
-  topChart=new Chart(document.getElementById('topProductsChart'),{type:'bar',data:{labels:topLabels,datasets:[{label:'Top Products',data:topValues, backgroundColor:'#10b981'}]}, options:{responsive:true}});
-}
-
-// Ledger
-function renderLedger(search=""){
-  let html=""; customerData.forEach(c=>{ if(c.name.toLowerCase().includes(search.toLowerCase())){ html+=`<tr data-name="${c.name}"><td>${c.name}</td><td>${c.due||0}৳</td><td>${c.lastDate||'-'}</td></tr>`; } });
-  ledgerTbody.innerHTML=html;
-  document.querySelectorAll('#customerLedger tr').forEach(r=>r.addEventListener('click',()=>showCustomerDetails(r.dataset.name)));
-}
-searchInput.addEventListener('input',e=>{renderLedger(e.target.value);});
-
-// Customer Modal
-function showCustomerDetails(name){
-  const modal=new bootstrap.Modal(document.getElementById('detailsModal'));
-  const cust=customerData.find(c=>c.name===name);
-  document.getElementById('modalName').innerText=name;
-  document.getElementById('modalDue').innerText=cust.due||0;
-  db.collection('sales').where('customer','==',name).orderBy('date','desc').get().then(snap=>{
-    let html=""; snap.forEach(doc=>{ const d=doc.data(); html+=`<tr><td>${d.memo}</td><td>${d.date}</td><td>${d.total}</td><td>${d.paid||0}</td><td>${d.due||0}</td><td>${d.discount||0}</td></tr>`; });
-    document.getElementById('modalHistory').innerHTML=html; modal.show();
+  // Customers & Ledger
+  db.collection('customers').onSnapshot(snap=>{
+    customerData=[];
+    snap.forEach(d=>{ customerData.push({name:d.id, ...d.data()}); });
+    renderLedger();
+    updateStats();
   });
 }
 
-// Filter
-document.getElementById('filterBtn').addEventListener('click',()=>{
-  const start=document.getElementById('startDate').value; const end=document.getElementById('endDate').value;
-  let filtered=salesData.filter(s=>(!start||s.date>=start)&&(!end||s.date<=end));
-  const daily={}; filtered.forEach(s=>{daily[s.date]=(daily[s.date]||0)+s.total;});
-  const labels=Object.keys(daily).sort(); const data=labels.map(l=>daily[l]);
-  if(salesChart) salesChart.destroy();
-  salesChart=new Chart(document.getElementById('salesChart'),{type:'line',data:{labels,data,datasets:[{label:'Sales',data,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,0.2)',fill:true}]}, options:{responsive:true}});
-});
+function updateStats(){
+  const today=new Date().toISOString().split('T')[0];
+  let todaySale=0, todayProfit=0, totalDue=0;
+  
+  salesData.forEach(s=>{ if(s.date===today){ todaySale+=s.total; todayProfit+=s.profit; } });
+  customerData.forEach(c=>{ totalDue+=Number(c.due||0); });
 
-// Excel Download
+  document.getElementById('dS').innerText=Math.round(todaySale)+"৳";
+  document.getElementById('dP').innerText=Math.round(todayProfit)+"৳";
+  document.getElementById('totalDue').innerText=Math.round(totalDue)+"৳";
+
+  db.collection('inventory').get().then(snap=>{ 
+      let val=0; snap.forEach(d=>{ const dt=d.data(); val+=(dt.stock||0)*(dt.buy||0); }); 
+      document.getElementById('iV').innerText=Math.round(val)+"৳";
+  });
+}
+
+function renderCharts(){
+  const daily={}; 
+  salesData.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>{daily[s.date]=(daily[s.date]||0)+s.total;});
+  const labels=Object.keys(daily); const data=Object.values(daily);
+  
+  if(salesChart) salesChart.destroy();
+  salesChart=new Chart(document.getElementById('salesChart'),{
+      type:'line',
+      data:{labels, datasets:[{label:'বিক্রি (৳)', data, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', fill:true, tension: 0.3}]},
+      options:{responsive:true}
+  });
+
+  const topLabels=Object.keys(topProducts).sort((a,b)=>topProducts[b]-topProducts[a]).slice(0,5);
+  const topValues=topLabels.map(l=>topProducts[l]);
+  
+  if(topChart) topChart.destroy();
+  topChart=new Chart(document.getElementById('topProductsChart'),{
+      type:'doughnut',
+      data:{labels:topLabels, datasets:[{data:topValues, backgroundColor:['#2563eb','#10b981','#f59e0b','#ef4444','#6366f1']}]},
+      options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+function renderLedger(search=""){
+  let html=""; 
+  customerData.forEach(c=>{ 
+      if(c.name.toLowerCase().includes(search.toLowerCase()) || (c.mobile && c.mobile.includes(search))){ 
+          html+=`<tr>
+            <td class="fw-bold">${c.name}</td>
+            <td class="text-danger fw-bold">${Math.round(c.due||0)}৳</td>
+            <td>${c.lastDate||'-'}</td>
+            <td><button class="btn btn-sm btn-outline-primary" onclick="showCustomerDetails('${c.name}')">View History</button></td>
+          </tr>`; 
+      } 
+  });
+  document.getElementById('customerLedger').innerHTML=html;
+}
+
+document.getElementById('searchCust').addEventListener('input', e=>renderLedger(e.target.value));
+
+async function showCustomerDetails(name){
+  const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+  const cust = customerData.find(c=>c.name===name);
+  document.getElementById('modalName').innerText=name;
+  document.getElementById('modalDue').innerText=Math.round(cust.due||0);
+  
+  const snap=await db.collection('sales').where('customer','==',name).orderBy('date','desc').get();
+  let html=""; 
+  snap.forEach(doc=>{ 
+      const d=doc.data(); 
+      html+=`<tr><td>${d.memo||'-'}</td><td>${d.date}</td><td>${d.total}৳</td><td>${d.paid||0}৳</td><td>${d.due||0}৳</td><td>${d.discount||0}৳</td></tr>`; 
+  });
+  document.getElementById('modalHistory').innerHTML=html; 
+  modal.show();
+}
+
+// Download Excel
 document.getElementById('downloadExcelBtn').addEventListener('click',()=>{
   const wb=XLSX.utils.book_new();
-  const wsSales=XLSX.utils.json_to_sheet(salesData.map(s=>({Date:s.date, Customer:s.customer, Total:s.total, Paid:s.paid, Due:s.due, Discount:s.discount})));
-  XLSX.utils.book_append_sheet(wb, wsSales, "Sales Summary");
-  const wsTop=XLSX.utils.json_to_sheet(Object.keys(topProducts).map(p=>({Product:p, Qty:topProducts[p]})));
-  XLSX.utils.book_append_sheet(wb, wsTop, "Top Products");
-  const wsCust=XLSX.utils.json_to_sheet(customerData.map(c=>({Name:c.name, Due:c.due, LastDate:c.lastDate})));
-  XLSX.utils.book_append_sheet(wb, wsCust, "Customer Ledger");
-  XLSX.writeFile(wb, "SIFamilyMart_CompleteReport.xlsx");
+  const wsSales=XLSX.utils.json_to_sheet(salesData);
+  XLSX.utils.book_append_sheet(wb, wsSales, "Sales");
+  const wsCust=XLSX.utils.json_to_sheet(customerData);
+  XLSX.utils.book_append_sheet(wb, wsCust, "Customers");
+  XLSX.writeFile(wb, "SI_FamilyMart_Report.xlsx");
 });
 
-// PDF Download
-document.getElementById('downloadPDFBtn').addEventListener('click', async ()=>{
-  const { jsPDF } = window.jspdf; const doc = new jsPDF('p','pt','a4'); let y=40;
-  doc.setFontSize(18); doc.text("S.I. Family Mart | Complete Report",40,y); y+=20;
-  const salesImg=document.getElementById('salesChart').toDataURL("image/png",1.0);
-  doc.setFontSize(14); doc.text("Daily Sales Chart",40,y); y+=10; doc.addImage(salesImg,'PNG',40,y,500,200); y+=210;
-  const topImg=document.getElementById('topProductsChart').toDataURL("image/png",1.0);
-  doc.text("Top Products Chart",40,y); y+=10; doc.addImage(topImg,'PNG',40,y,500,200); y+=210;
-  doc.text("Customer Ledger",40,y); y+=20;
-  const tableData=customerData.map(c=>[c.name,c.due||0,c.lastDate||'-']);
-  doc.autoTable({head:[['Name','Due','Last Transaction']], body:tableData, startY:y, theme:'grid'});
-  doc.save("SIFamilyMart_CompleteReport.pdf");
+// Download PDF
+document.getElementById('downloadPDFBtn').addEventListener('click', ()=>{
+  const { jsPDF } = window.jspdf; const doc = new jsPDF('p','pt','a4');
+  doc.text("S.I. Family Mart | Complete Business Report", 40, 40);
+  const tableData = customerData.map(c=>[c.name, c.mobile || '-', c.due||0, c.lastDate||'-']);
+  doc.autoTable({ head: [['Name', 'Mobile', 'Due', 'Last Date']], body: tableData, startY: 60 });
+  doc.save("SI_FamilyMart_Report.pdf");
 });
 
-loadData();
+initData();
 </script>
 </body>
 </html>
