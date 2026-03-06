@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expenses</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h2>Expenses Entry</h2>
+
+<input type="text" id="expDesc" placeholder="Expense Description">
+<input type="number" id="expAmt" placeholder="Amount">
+<button onclick="addExp()">Add Expense</button>
+
+<h3>Expenses List</h3>
+<table id="expTable">
+<thead><tr><th>Description</th><th>Amount</th><th>Date</th></tr></thead>
+<tbody></tbody>
+</table>
+
+<script type="module">
+import { addExpense } from './app.js';
+import { onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { db } from './app.js';
+
+window.addExp = ()=>{
+  const desc=document.getElementById('expDesc').value;
+  const amt=parseFloat(document.getElementById('expAmt').value);
+  addExpense(desc,amt);
+};
+
+const tbody=document.querySelector('#expTable tbody');
+onSnapshot(collection(db,'expenses'),snap=>{
+  let html="";
+  snap.forEach(d=>{
+    const data=d.data();
+    html+=`<tr><td>${data.desc}</td><td>${data.amt}</td><td>${data.date}</td></tr>`;
+  });
+  tbody.innerHTML=html;
+});
+</script>
+</body>
+</html>
