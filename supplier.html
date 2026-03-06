@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supplier Management</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h2>Supplier Management</h2>
+
+<input type="text" id="supName" placeholder="Supplier Name">
+<input type="text" id="supPhone" placeholder="Phone">
+<button onclick="addSup()">Add Supplier</button>
+
+<h3>Suppliers List</h3>
+<table id="supTable">
+<thead><tr><th>Name</th><th>Phone</th></tr></thead>
+<tbody></tbody>
+</table>
+
+<script type="module">
+import { addSupplier } from './app.js';
+import { onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { db } from './app.js';
+
+window.addSup = ()=>{
+  const name=document.getElementById('supName').value;
+  const phone=document.getElementById('supPhone').value;
+  addSupplier(name,phone);
+};
+
+const tbody=document.querySelector('#supTable tbody');
+onSnapshot(collection(db,'suppliers'),snap=>{
+  let html="";
+  snap.forEach(d=>{
+    const data=d.data();
+    html+=`<tr><td>${data.name}</td><td>${data.phone}</td></tr>`;
+  });
+  tbody.innerHTML=html;
+});
+</script>
+</body>
+</html>
