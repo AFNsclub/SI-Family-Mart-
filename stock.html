@@ -3,62 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S.I. Family Mart | Stock Management</title>
+<title>Stock Management | S.I. Family Mart</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
 <style>
 :root { --primary: #2563eb; --success: #10b981; --bg: #f1f5f9; }
-body { background-color: var(--bg); font-family: 'Segoe UI', Tahoma, sans-serif; }
-.header { background: linear-gradient(135deg, var(--primary), #1e3a8a); color: #fff; text-align: center; padding: 25px; border-radius: 0 0 25px 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.card { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; }
-.form-label { font-weight: 600; font-size: 13px; color: #555; }
-.btn-add { background: var(--success); color: white; font-weight: bold; border-radius: 10px; padding: 12px; width: 100%; border: none; transition: 0.3s; }
-.btn-add:hover { background: #059669; transform: translateY(-2px); }
-.table thead { background: #f8fafc; }
-.badge-stock { padding: 5px 10px; border-radius: 8px; font-weight: 600; }
+body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-top: 60px; }
+
+/* Navigation Index */
+.nav-index { background: #fff; position: fixed; top: 0; width: 100%; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; padding: 10px; }
+.nav-index a { text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; color: #1e293b; background: #f1f5f9; }
+.nav-index a.active { background: var(--primary); color: #fff; }
+
+.header { background: linear-gradient(135deg, var(--primary), #1e3a8a); color: #fff; text-align: center; padding: 25px; border-radius: 0 0 25px 25px; }
+.card { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; background: #fff; }
+.btn-add { background: var(--success); color: white; font-weight: bold; border-radius: 10px; padding: 12px; width: 100%; border: none; }
+.badge-stock { padding: 5px 10px; border-radius: 8px; }
+
+/* প্রিন্টিং এর জন্য বিশেষ স্টাইল */
+#printArea { display: none; text-align: center; padding: 20px; background: white; }
+@media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+}
 </style>
 </head>
 <body>
 
+<nav class="nav-index">
+    <a href="index.html">📊 Admin</a>
+    <a href="pos.html">🛒 POS</a>
+    <a href="stock.html" class="active">📦 Stock</a>
+    <a href="ledger.html">📔 Ledger</a>
+</nav>
+
 <div class="container mt-4">
     <header class="header">
         <h2>Stock Management</h2>
-        <p class="mb-0">নতুন মাল ইনপুট দিন এবং স্টক চেক করুন</p>
+        <p class="mb-0">নতুন মাল ইনপুট দিন এবং বারকোড তৈরি করুন</p>
     </header>
 
-    <div class="card mt-4 shadow-sm">
-        <h5 class="fw-bold border-bottom pb-2 mb-3 text-primary">📦 নতুন স্টক এন্ট্রি করুন</h5>
+    <div class="card mt-4">
+        <h5 class="fw-bold border-bottom pb-2 mb-3 text-primary">📦 নতুন স্টক এন্ট্রি</h5>
         <div class="row g-3">
             <div class="col-md-3">
-                <label class="form-label">পণ্যের নাম</label>
+                <label class="form-label small fw-bold">পণ্যের নাম</label>
                 <input type="text" id="pName" class="form-control" placeholder="যেমন: লাক্স সাবান">
             </div>
             <div class="col-md-2">
-                <label class="form-label">মোট কেনা দাম (লট)</label>
-                <input type="number" id="pTotalBuy" class="form-control" placeholder="যেমন: ১০০০">
+                <label class="form-label small fw-bold">কেনা দাম (লট)</label>
+                <input type="number" id="pTotalBuy" class="form-control">
             </div>
             <div class="col-md-2">
-                <label class="form-label">নতুন কত পিস আনলেন</label>
-                <input type="number" id="pStock" class="form-control" placeholder="যেমন: ১০">
+                <label class="form-label small fw-bold">পরিমাণ (পিস)</label>
+                <input type="number" id="pStock" class="form-control">
             </div>
             <div class="col-md-2">
-                <label class="form-label">বিক্রয় মূল্য (পিস)</label>
-                <input type="number" id="pSell" class="form-control" placeholder="যেমন: ১২০">
+                <label class="form-label small fw-bold">বিক্রয় মূল্য (পিস)</label>
+                <input type="number" id="pSell" class="form-control">
             </div>
             <div class="col-md-3">
-                <label class="form-label">বারকোড (ঐচ্ছিক)</label>
-                <input type="text" id="pBarcode" class="form-control" placeholder="স্ক্যান করুন">
+                <label class="form-label small fw-bold">বারকোড নাম্বার (ID)</label>
+                <input type="text" id="pBarcode" class="form-control" placeholder="যেমন: 1001" oninput="previewBarcode(this.value)">
+                <div class="mt-2 text-center"><svg id="barcodePreview" style="display:none; max-width: 100%; height: 40px;"></svg></div>
             </div>
-            <div class="col-12 mt-4">
-                <button class="btn-add shadow" id="submitBtn" onclick="addOrUpdateItem()">✅ স্টক আপডেট করুন</button>
+            <div class="col-12">
+                <button class="btn-add shadow" id="submitBtn" onclick="addOrUpdateItem()">✅ স্টক ও বারকোড সেভ করুন</button>
             </div>
         </div>
     </div>
 
-    <div class="card mt-2">
+    <div class="card">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">📊 বর্তমান স্টক তালিকা</h5>
-            <input type="text" id="searchItem" class="form-control w-50" placeholder="পণ্য খুঁজুন...">
+            <h5 class="fw-bold mb-0">📊 বর্তমান স্টক ও বারকোড লিস্ট</h5>
+            <input type="text" id="searchItem" class="form-control w-50" placeholder="নাম লিখে খুঁজুন...">
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -78,6 +99,12 @@ body { background-color: var(--bg); font-family: 'Segoe UI', Tahoma, sans-serif;
     </div>
 </div>
 
+<div id="printArea">
+    <h4 id="printName" style="margin-bottom: 5px;"></h4>
+    <svg id="barcodeImg"></svg>
+    <p style="font-size: 14px; font-weight: bold; margin-top: 5px;">S.I. Family Mart</p>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -95,12 +122,21 @@ const db = firebase.firestore();
 
 let inv = {};
 
-// লাইভ ইনভেন্টরি রিডিং
+// লাইভ ইনভেন্টরি
 db.collection('inventory').onSnapshot(snap=>{
     inv={};
     snap.forEach(d=>{ const data=d.data(); inv[data.name]=data; });
     renderStock(document.getElementById('searchItem').value);
 });
+
+function previewBarcode(val) {
+    if(val) {
+        document.getElementById('barcodePreview').style.display = "inline-block";
+        JsBarcode("#barcodePreview", val, { format: "CODE128", height: 30, displayValue: true });
+    } else {
+        document.getElementById('barcodePreview').style.display = "none";
+    }
+}
 
 function renderStock(filter=""){
     let html="";
@@ -114,16 +150,28 @@ function renderStock(filter=""){
             <td>${item.buy}৳</td>
             <td class="text-primary fw-bold">${item.sell}৳</td>
             <td><span class="badge ${stockClass} badge-stock">${item.stock}</span></td>
-            <td class="text-muted small">${item.barcode || '-'}</td>
+            <td>${item.barcode ? `<small>${item.barcode}</small>` : '-'}</td>
             <td class="text-center">
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${item.name}')">✖ ডিলিট</button>
+                ${item.barcode ? `<button class="btn btn-sm btn-dark me-2" onclick="printBarcode('${item.name}', '${item.barcode}')">🖨️ প্রিন্ট</button>` : ''}
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${item.name}')">✖</button>
             </td>
         </tr>`;
     }
     document.getElementById('stockBody').innerHTML = html;
 }
 
-// স্মার্ট স্টক আপডেট ফাংশন
+// বারকোড প্রিন্ট ফাংশন
+function printBarcode(name, code) {
+    document.getElementById('printName').innerText = name;
+    JsBarcode("#barcodeImg", code, {
+        format: "CODE128",
+        width: 2,
+        height: 60,
+        displayValue: true
+    });
+    window.print();
+}
+
 async function addOrUpdateItem(){
     const btn = document.getElementById('submitBtn');
     const name = document.getElementById('pName').value.trim();
@@ -132,49 +180,30 @@ async function addOrUpdateItem(){
     const sell = Number(document.getElementById('pSell').value);
     const barcode = document.getElementById('pBarcode').value.trim();
 
-    if(!name || !totalBuy || !qty || !sell) return alert("দয়া করে সবগুলো ঘর সঠিক তথ্য দিয়ে পূরণ করুন");
+    if(!name || !totalBuy || !qty || !sell) return alert("সবগুলো ঘর পূরণ করুন!");
 
     btn.disabled = true;
-    btn.innerText = "প্রসেস হচ্ছে...";
-
     const buyPerPiece = parseFloat((totalBuy / qty).toFixed(2));
-    const docRef = db.collection('inventory').doc(name);
 
     try {
-        const doc = await docRef.get();
-        if (doc.exists) {
-            // পণ্য থাকলে নতুন স্টক যোগ (Increment) হবে
-            await docRef.update({
-                buy: buyPerPiece,
-                sell: sell,
-                stock: firebase.firestore.FieldValue.increment(qty),
-                barcode: barcode
-            });
-            alert(`${name}-এর স্টকে নতুন ${qty} পিস যোগ করা হয়েছে।`);
-        } else {
-            // নতুন পণ্য হলে সেভ হবে
-            await docRef.set({ name, buy: buyPerPiece, sell, stock: qty, barcode });
-            alert("নতুন পণ্য সফলভাবে স্টকে যোগ হয়েছে।");
-        }
+        await db.collection('inventory').doc(name).set({
+            name, buy: buyPerPiece, sell, 
+            stock: firebase.firestore.FieldValue.increment(qty),
+            barcode: barcode
+        }, { merge: true });
         
-        // ফর্ম ক্লিয়ার করা
+        alert("স্টক আপডেট হয়েছে!");
         ['pName', 'pTotalBuy', 'pStock', 'pSell', 'pBarcode'].forEach(id => document.getElementById(id).value = "");
-        
-    } catch (e) {
-        alert("ভুল হয়েছে: " + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "✅ স্টক আপডেট করুন";
-    }
+        document.getElementById('barcodePreview').style.display = "none";
+    } catch (e) { alert("ভুল হয়েছে!"); }
+    finally { btn.disabled = false; }
 }
 
 function deleteItem(name){
-    if(confirm(`${name} কি স্টক থেকে মুছে ফেলতে চান?`)) {
-        db.collection('inventory').doc(name).delete();
-    }
+    if(confirm(`${name} মুছে ফেলবেন?`)) db.collection('inventory').doc(name).delete();
 }
 
-document.getElementById('searchItem').addEventListener('input', e=>{ renderStock(e.target.value); });
+document.getElementById('searchItem').addEventListener('input', e=> renderStock(e.target.value));
 </script>
 </body>
 </html>
