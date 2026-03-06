@@ -6,106 +6,77 @@
 <title>S.I. Family Mart | Admin Dashboard</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
 <style>
 :root { --primary:#2563eb; --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --bg:#f8fafc; }
-body { background:var(--bg); font-family:'Segoe UI', Tahoma, sans-serif; padding-bottom: 50px; display:none; } /* লগইন ছাড়া বডি হাইড থাকবে */
-.header { text-align:center; padding:40px 20px; background:linear-gradient(135deg,var(--primary),#1e3a8a); color:#fff; border-radius:0 0 40px 40px; box-shadow:0 10px 30px rgba(0,0,0,0.15); }
-.header .btn { margin:5px; border-radius:12px; font-weight:600; padding: 10px 18px; transition: 0.3s; border:none; font-size: 14px; }
-.header .btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-.stats .card { border-radius:20px; text-align:center; padding:20px; color:white; border:none; transition:0.3s; box-shadow:0 8px 20px rgba(0,0,0,0.08); }
+body { background:var(--bg); font-family:'Segoe UI', sans-serif; display:none; }
+#loginPage { display: flex; align-items: center; justify-content: center; height: 100vh; background: #1e3a8a; }
+.header { text-align:center; padding:30px 20px; background:linear-gradient(135deg,var(--primary),#1e3a8a); color:#fff; border-radius:0 0 30px 30px; }
+.header .btn { margin:5px; border-radius:10px; font-weight:600; transition: 0.3s; border:none; }
+.stats .card { border-radius:15px; text-align:center; padding:20px; color:white; border:none; box-shadow:0 5px 15px rgba(0,0,0,0.08); }
 .bg-sale { background: linear-gradient(135deg,#84cc16,#10b981); }
 .bg-profit { background: linear-gradient(135deg,#2563eb,#3b82f6); }
+.bg-expense { background: linear-gradient(135deg,#6366f1,#a855f7); }
 .bg-inventory { background: linear-gradient(135deg,#f59e0b,#f97316); }
 .bg-due { background: linear-gradient(135deg,#ef4444,#f87171); }
-.bg-expense { background: linear-gradient(135deg,#6366f1,#a855f7); }
-.alert-card { background: #fff; border-radius: 20px; padding: 20px; border-left: 8px solid var(--danger); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-.chart-container { background:white; padding:25px; border-radius:20px; box-shadow:0 5px 20px rgba(0,0,0,0.05); margin-top:20px; }
 </style>
 </head>
 <body>
 
-<div class="container mt-4">
-    <header class="header">
-        <h1 class="fw-bold">S.I. Family Mart Admin Panel</h1>
-        <p class="opacity-75">বংশীপুর, শ্যামনগর, সাতক্ষীরা | 📞 01568683171</p>
-        <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
-            <a href="pos.html" class="btn btn-light text-primary shadow">🛒 POS / Billing</a>
-            <a href="stock.html" class="btn btn-info text-white shadow">📦 Stock</a>
-            <a href="ledger.html" class="btn btn-warning text-dark shadow">📔 Ledger</a>
-            <button class="btn btn-primary shadow" data-bs-toggle="modal" data-bs-target="#expenseModal">💸 খরচ এন্ট্রি</button>
-            <button class="btn btn-dark shadow" data-bs-toggle="modal" data-bs-target="#dueModal">💰 বাকি জমা</button>
-            <button class="btn btn-success shadow" onclick="downloadFullBackup()">📂 ব্যাকআপ PDF</button>
-            <button class="btn btn-danger shadow" onclick="logout()">🚪 Logout</button>
-        </div>
-    </header>
-
-    <div id="lowStockSection" class="mt-4" style="display:none;">
-        <div class="alert-card">
-            <h6 class="text-danger fw-bold"><span class="spinner-grow spinner-grow-sm text-danger"></span> স্টক ফুরিয়ে যাচ্ছে!</h6>
-            <div id="lowStockList" class="small text-muted mt-2"></div>
-        </div>
+<div id="loginPage">
+    <div class="card p-4 shadow-lg" style="width: 350px; border-radius: 20px;">
+        <h4 class="text-center fw-bold mb-4 text-primary">Admin Login</h4>
+        <input type="text" id="adminUser" class="form-control mb-3 rounded-pill" placeholder="Username">
+        <input type="password" id="adminPass" class="form-control mb-3 rounded-pill" placeholder="Password">
+        <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="handleLogin()">Login</button>
     </div>
-
-    <section class="stats mt-4">
-        <div class="row g-3">
-            <div class="col-6 col-md-4 col-lg-2"><div class="card bg-sale"><h6>আজকের বিক্রি</h6><h4 id="dS">০৳</h4></div></div>
-            <div class="col-6 col-md-4 col-lg-2"><div class="card bg-profit"><h6>আজকের লাভ</h6><h4 id="dP">০৳</h4></div></div>
-            <div class="col-6 col-md-4 col-lg-2"><div class="card bg-expense"><h6>আজকের খরচ</h6><h4 id="dE">০৳</h4></div></div>
-            <div class="col-6 col-md-4 col-lg-3"><div class="card bg-inventory"><h6>স্টক ভ্যালু</h6><h4 id="iV">০৳</h4></div></div>
-            <div class="col-6 col-md-4 col-lg-3"><div class="card bg-due"><h6>মোট বাকি</h6><h4 id="dDue">০৳</h4></div></div>
-        </div>
-    </section>
-
-    <section class="charts mt-2">
-        <div class="row g-3">
-            <div class="col-md-12">
-                <div class="chart-container">
-                    <h6 class="fw-bold mb-3 text-primary text-center">📈 বিক্রয় প্রবণতা (শেষ ৭ দিন)</h6>
-                    <canvas id="weeklySalesChart"></canvas>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="chart-container">
-                    <h6 class="fw-bold mb-3 text-info text-center">👑 সেরা ৫ ক্রেতা</h6>
-                    <canvas id="topBuyersChart"></canvas>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="chart-container text-center">
-                    <h6 class="fw-bold mb-3 text-danger text-center">⚠️ টপ ৫ বাকি</h6>
-                    <canvas id="topDueChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </section>
 </div>
 
-<div class="modal fade" id="expenseModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 border-0 shadow">
-      <div class="modal-header bg-primary text-white"><h5>💸 দোকানের খরচ এন্ট্রি</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body p-4">
-        <input type="text" id="expNote" class="form-control mb-3 rounded-pill" placeholder="খরচের বিবরণ (যেমন: কারেন্ট বিল)">
-        <input type="number" id="expAmount" class="form-control mb-3 rounded-pill" placeholder="টাকার পরিমাণ">
-        <button class="btn btn-success w-100 py-2 rounded-pill fw-bold" onclick="addExpense()">খরচ সেভ করুন</button>
-      </div>
+<div id="adminContent">
+    <div class="container mt-4">
+        <header class="header">
+            <h2 class="fw-bold">S.I. Family Mart Admin</h2>
+            <div class="mt-3 d-flex flex-wrap justify-content-center gap-2">
+                <a href="pos.html" class="btn btn-light text-primary">🛒 POS</a>
+                <a href="stock.html" class="btn btn-info text-white">📦 Stock</a>
+                <a href="supplier.html" class="btn btn-secondary text-white">🚛 Supplier</a>
+                <a href="ledger.html" class="btn btn-warning text-dark">📔 Ledger</a>
+                <a href="report.html" class="btn btn-success text-white">📊 Report</a>
+                <button class="btn btn-danger" onclick="logout()">🚪 Logout</button>
+            </div>
+        </header>
+
+        <section class="stats mt-4">
+            <div class="row g-3">
+                <div class="col-6 col-md-4"><div class="card bg-sale"><h6>আজকের বিক্রি</h6><h3 id="dS">০৳</h3></div></div>
+                <div class="col-6 col-md-4"><div class="card bg-profit"><h6>আজকের লাভ</h6><h3 id="dP">০৳</h3></div></div>
+                <div class="col-6 col-md-4"><div class="card bg-expense"><h6>আজকের খরচ</h6><h3 id="dE">০৳</h3></div></div>
+                <div class="col-6 col-md-6"><div class="card bg-inventory"><h6>স্টক ভ্যালু</h6><h3 id="iV">০৳</h3></div></div>
+                <div class="col-6 col-md-6"><div class="card bg-due"><h6>মোট বাকি</h6><h3 id="dDue">০৳</h3></div></div>
+            </div>
+        </section>
+
+        <div class="text-center mt-5">
+            <button class="btn btn-primary px-5 py-3 rounded-pill shadow-lg fw-bold" data-bs-toggle="modal" data-bs-target="#dueModal">💰 বাকি টাকা জমা নিন</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <div class="modal fade" id="dueModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 border-0 shadow">
-      <div class="modal-header bg-dark text-white"><h5>💰 বাকি টাকা জমা নিন</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+    <div class="modal-content rounded-4 border-0">
+      <div class="modal-header bg-primary text-white"><h5>সতর্ক বাকি জমা</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
       <div class="modal-body p-4">
-        <input type="text" id="dueCustName" class="form-control mb-3 rounded-pill" placeholder="কাস্টমার নাম বা মোবাইল" list="customerSuggestions" oninput="checkDueAmount(this.value)">
-        <div id="dueAmountNotice" class="alert alert-warning py-2 rounded-4 d-none text-center">বাকি আছে: <span id="currentDueVal" class="fw-bold text-danger">০</span>৳</div>
-        <input type="number" id="payAmount" class="form-control mb-3 rounded-pill" placeholder="জমার পরিমাণ">
-        <button class="btn btn-success w-100 py-2 rounded-pill fw-bold" onclick="collectDue()">কনফার্ম জমা</button>
+        <label class="small fw-bold">কাস্টমার সিলেক্ট করুন:</label>
+        <input type="text" id="dueCustName" class="form-control mb-3" placeholder="নাম টাইপ করুন..." list="customerSuggestions" oninput="checkDueAmount(this.value)">
+        
+        <div id="dueNotice" class="alert alert-warning py-2 d-none">
+            বর্তমান বকেয়া: <span id="currentDueVal" class="fw-bold">০</span>৳
+        </div>
+
+        <label class="small fw-bold">জমার পরিমাণ:</label>
+        <input type="number" id="payAmount" class="form-control mb-3" placeholder="টাকা লিখুন">
+        
+        <button class="btn btn-success w-100 fw-bold py-2 shadow" onclick="collectDue()">কনফার্ম পেমেন্ট</button>
       </div>
     </div>
   </div>
@@ -121,177 +92,98 @@ const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-// ১. সিকিউরিটি (লগইন চেক)
-window.onload = function() {
-    if(localStorage.getItem('adminLogged') !== 'true'){
-        let pass = prompt("অ্যাডমিন পাসওয়ার্ড দিন:");
-        if(pass === "1234"){ // আপনার পাসওয়ার্ড এখানে বদলাতে পারেন
-            localStorage.setItem('adminLogged', 'true');
-            document.body.style.display = "block";
-        } else {
-            alert("ভুল পাসওয়ার্ড!");
-            window.location.reload();
-        }
-    } else { document.body.style.display = "block"; }
-};
-
-function logout(){
-    localStorage.removeItem('adminLogged');
-    window.location.reload();
+function handleLogin() {
+    const user = document.getElementById('adminUser').value;
+    const pass = document.getElementById('adminPass').value;
+    if(user === "admin" && pass === "1234") {
+        sessionStorage.setItem('isLogged', 'true');
+        showDashboard();
+    } else { alert("ভুল ইউজার বা পাসওয়ার্ড!"); }
 }
 
-// ২. ডাটা এবং স্ট্যাটাস আপডেট
+function showDashboard() {
+    document.body.style.display = 'block';
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('adminContent').style.display = 'block';
+}
+
+function logout() { sessionStorage.clear(); window.location.reload(); }
+
+window.onload = () => { if(sessionStorage.getItem('isLogged')) showDashboard(); else document.body.style.display = 'block'; };
+
+// Data Update
 db.collection('sales').onSnapshot(snap => {
-    let totalSale=0, totalProfit=0, totalDue=0, todayExp=0, dailyData = {};
+    let sale=0, profit=0, due=0, exp=0;
     const today = new Date().toISOString().split('T')[0];
-    
     snap.forEach(doc => {
         const d = doc.data();
-        if(d.date === today){ 
-            if(d.type === 'EXPENSE') todayExp += (Number(d.total) || 0);
-            else {
-                totalSale += (Number(d.total) || 0); 
-                totalProfit += (Number(d.profit) || 0); 
-            }
+        if(d.date === today) {
+            if(d.type === 'EXPENSE') exp += Number(d.total || 0);
+            else { sale += Number(d.total || 0); profit += Number(d.profit || 0); }
         }
-        totalDue += (Number(d.due) || 0);
-        if(d.date && d.type !== 'EXPENSE') dailyData[d.date] = (dailyData[d.date] || 0) + (d.total || 0);
+        due += Number(d.due || 0);
     });
-    
-    document.getElementById('dS').innerText = Math.round(totalSale) + "৳";
-    document.getElementById('dP').innerText = Math.round(totalProfit) + "৳";
-    document.getElementById('dE').innerText = Math.round(todayExp) + "৳";
-    document.getElementById('dDue').innerText = Math.round(totalDue) + "৳";
-    updateMainChart(dailyData);
+    document.getElementById('dS').innerText = Math.round(sale) + "৳";
+    document.getElementById('dP').innerText = Math.round(profit) + "৳";
+    document.getElementById('dE').innerText = Math.round(exp) + "৳";
+    document.getElementById('dDue').innerText = due < 0 ? "০৳" : Math.round(due) + "৳";
 });
 
-// ৩. ইনভেন্টরি লোড
 db.collection('inventory').onSnapshot(snap => {
-    let invValue=0, lowItems=[];
-    snap.forEach(doc => {
-        const d = doc.data();
-        invValue += (Number(d.stock) || 0) * (Number(d.buy) || 0);
-        if((Number(d.stock) || 0) <= 5) lowItems.push(d.name); 
-    });
-    document.getElementById('iV').innerText = Math.round(invValue) + "৳";
-    const alertBox = document.getElementById('lowStockSection');
-    if(lowItems.length > 0){
-        alertBox.style.display = "block";
-        document.getElementById('lowStockList').innerText = "দ্রুত কিনুন: " + lowItems.join(", ");
-    } else { alertBox.style.display = "none"; }
+    let val=0; snap.forEach(doc => { val += (Number(doc.data().stock)*Number(doc.data().buy)); });
+    document.getElementById('iV').innerText = Math.round(val) + "৳";
 });
 
-// ৪. কাস্টমার ও চার্ট লজিক
-let allCustomers = [];
+let customers = [];
 db.collection('customers').onSnapshot(snap => {
     const list = document.getElementById('customerSuggestions');
-    list.innerHTML = ""; allCustomers = [];
-    let dueNames = [], dueValues = [], buyerNames = [], totalPurchase = [];
-
+    list.innerHTML = ""; customers = [];
     snap.forEach(doc => {
         const d = doc.data();
-        const customer = { name: doc.id, due: Math.round(d.due) || 0, mobile: d.mobile || "", spent: Math.round(d.totalSpent) || 0 };
-        
-        // অটো ডিলিট: যদি বাকি এবং কেনাকাটা দুইটাই ০ হয়
-        if (customer.due <= 0 && customer.spent <= 0) {
-            db.collection('customers').doc(doc.id).delete();
-        } else {
-            allCustomers.push(customer);
-            if (customer.due > 0) { dueNames.push(doc.id); dueValues.push(customer.due); }
-            if (customer.spent > 0) { buyerNames.push(doc.id); totalPurchase.push(customer.spent); }
-            const opt = document.createElement('option'); opt.value = customer.name; list.appendChild(opt);
-        }
+        customers.push({name: doc.id, due: d.due || 0});
+        const opt = document.createElement('option'); opt.value = doc.id; list.appendChild(opt);
     });
-    renderDueChart(dueNames, dueValues);
-    renderTopBuyersChart(buyerNames, totalPurchase);
 });
 
-// ৫. খরচ এন্ট্রি ফাংশন
-async function addExpense() {
-    const note = document.getElementById('expNote').value;
-    const amount = Number(document.getElementById('expAmount').value);
-    if(!note || amount <= 0) return alert("সঠিক তথ্য দিন");
-    try {
-        await db.collection('sales').add({
-            customer: "Expense: " + note,
-            total: amount,
-            profit: 0,
-            due: 0,
-            date: new Date().toISOString().split('T')[0],
-            type: "EXPENSE"
-        });
-        alert("খরচ সেভ হয়েছে!");
-        location.reload();
-    } catch (e) { alert("ভুল হয়েছে!"); }
-}
-
-// ৬. বাকি চেক এবং জমা
 function checkDueAmount(val) {
-    const notice = document.getElementById('dueAmountNotice');
-    const display = document.getElementById('currentDueVal');
-    const found = allCustomers.find(c => c.name === val || c.mobile === val);
-    if (found && found.due > 0) {
-        display.innerText = found.due;
-        notice.classList.remove('d-none');
-        document.getElementById('payAmount').value = found.due;
-    } else { notice.classList.add('d-none'); }
+    const found = customers.find(c => c.name === val);
+    if(found) {
+        document.getElementById('currentDueVal').innerText = Math.round(found.due);
+        document.getElementById('dueNotice').classList.remove('d-none');
+    } else {
+        document.getElementById('dueNotice').classList.add('d-none');
+    }
 }
 
 async function collectDue() {
     const name = document.getElementById('dueCustName').value;
     const amount = Number(document.getElementById('payAmount').value);
-    if(!name || amount <= 0) return alert("সঠিক তথ্য দিন");
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        const custRef = db.collection('customers').doc(name);
-        const doc = await custRef.get();
-        if (doc.exists) {
-            const newDue = (doc.data().due || 0) - amount;
-            await db.collection('sales').add({ customer: name, total: amount, profit: 0, due: -amount, date: today, type: "DUE_COLLECTION" });
-            await custRef.update({ due: newDue });
-            alert("জমা সফল হয়েছে!");
-            location.reload();
-        }
-    } catch (e) { alert("ত্রুটি!"); }
-}
+    const found = customers.find(c => c.name === name);
 
-// ৭. ব্যাকআপ PDF ডাউনলোড
-async function downloadFullBackup() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.text("S.I. Family Mart - Full System Backup", 10, 10);
+    if(!found) return alert("কাস্টমার খুঁজে পাওয়া যায়নি!");
+    if(amount <= 0) return alert("সঠিক পরিমাণ লিখুন!");
     
-    // স্টক ব্যাকআপ
-    doc.text("Current Inventory:", 10, 20);
-    const invSnap = await db.collection('inventory').get();
-    let invRows = [];
-    invSnap.forEach(d => invRows.push([d.id, d.data().stock, d.data().sell + "৳"]));
-    doc.autoTable({ startY: 25, head: [['Product', 'Stock', 'Price']], body: invRows });
+    // মাইনাস হওয়া আটকানোর প্রধান শর্ত (বকেয়ার চেয়ে বেশি টাকা জমা নেওয়া যাবে না)
+    if(amount > Math.round(found.due)) {
+        return alert("ভুল এন্ট্রি! কাস্টমারের মোট বকেয়া মাত্র " + Math.round(found.due) + " টাকা। এর বেশি শোধ নেওয়া সম্ভব নয়।");
+    }
 
-    doc.save("SI_FamilyMart_Backup.pdf");
-}
-
-// ৮. চার্ট ফাংশনগুলো
-const ctxWeekly = document.getElementById('weeklySalesChart');
-const weeklyChart = new Chart(ctxWeekly, { type: 'line', data: { labels: [], datasets: [{ label: 'বিক্রি (৳)', data: [], borderColor: '#2563eb', fill: true, backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.4 }] } });
-
-function updateMainChart(dailyData) {
-    const sortedDates = Object.keys(dailyData).sort().slice(-7);
-    weeklyChart.data.labels = sortedDates;
-    weeklyChart.data.datasets[0].data = sortedDates.map(d => dailyData[d]);
-    weeklyChart.update();
-}
-
-let dueChart, buyersChart;
-function renderDueChart(labels, data) {
-    if(dueChart) dueChart.destroy();
-    dueChart = new Chart(document.getElementById('topDueChart'), { type: 'pie', data: { labels: labels.slice(0, 5), datasets: [{ data: data.slice(0, 5), backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#6366f1'] }] } });
-}
-
-function renderTopBuyersChart(labels, data) {
-    if(buyersChart) buyersChart.destroy();
-    const combined = labels.map((l, i) => ({l, v: data[i]})).sort((a, b) => b.v - a.v).slice(0, 5);
-    buyersChart = new Chart(document.getElementById('topBuyersChart'), { type: 'bar', data: { labels: combined.map(x => x.l), datasets: [{ label: 'মোট কেনাকাটা (৳)', data: combined.map(x => x.v), backgroundColor: '#10b981' }] }, options: { indexAxis: 'y' } });
+    if(confirm(`${name} এর কাছ থেকে ${amount}৳ জমা নিচ্ছেন?`)) {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            await db.collection('sales').add({
+                customer: name, total: amount, profit: 0, due: -amount,
+                date: today, type: "DUE_COLLECTION"
+            });
+            await db.collection('customers').doc(name).update({ 
+                due: firebase.firestore.FieldValue.increment(-amount) 
+            });
+            alert("সফলভাবে জমা হয়েছে!");
+            document.getElementById('dueCustName').value = "";
+            document.getElementById('payAmount').value = "";
+            bootstrap.Modal.getInstance(document.getElementById('dueModal')).hide();
+        } catch (e) { alert("ত্রুটি! আবার চেষ্টা করুন।"); }
+    }
 }
 </script>
 </body>
