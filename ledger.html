@@ -99,10 +99,13 @@ th { background: #f1f5f9; color: var(--dark); font-weight: bold; }
     </div>
     
     <div style="background: #f1f5f9; padding: 15px; border-radius: 10px; margin-top: 20px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px;">বাকি টাকা জমা নিন:</label>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="font-weight: bold;">বাকি টাকা জমা নিন:</label>
+            <span id="payHint" style="font-size: 12px; color: var(--danger); font-weight: bold;"></span>
+        </div>
         <div style="display: flex; gap: 10px;">
             <input type="number" id="payAmount" placeholder="টাকার পরিমাণ" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-            <button class="btn-payment" style="margin:0; width: auto;" onclick="processPayment()">💸 টাকা জমা দিন</button>
+            <button class="btn-payment" id="btnPayProcess" style="margin:0; width: auto;" onclick="processPayment()">💸 জমা ও মেসেজ</button>
         </div>
     </div>
     
@@ -182,7 +185,6 @@ async function showCustomerDetails(name, mobile) {
     currentCustomer = name; currentMobile = mobile;
     document.getElementById('detailsSection').style.display = "block";
     
-    // নাম সুন্দর করে দেখানোর জন্য আপডেট
     document.getElementById('detailCustName').innerText = name;
     document.getElementById('phoneDisplay').innerText = mobile;
     document.getElementById('genDate').innerText = new Date().toLocaleString();
@@ -203,13 +205,14 @@ async function showCustomerDetails(name, mobile) {
         html += `<tr><td>${d.date || '-'}</td><td>${typeBadge}</td><td>${Math.abs(amt)}৳</td><td style="font-weight:bold;">${Math.round(runningDue)}৳</td></tr>`;
     });
     
-    currentDueValue = runningDue;
+    currentDueValue = Math.round(runningDue);
+    document.getElementById('payHint').innerText = currentDueValue > 0 ? `সর্বোচ্চ জমা: ${currentDueValue}৳` : "বকেয়া নেই";
+    
     transBody.innerHTML = html;
-    document.getElementById('finalDueDisplay').innerText = Math.round(runningDue) + "৳";
+    document.getElementById('finalDueDisplay').innerText = currentDueValue + "৳";
     window.scrollTo({ top: document.getElementById('detailsSection').offsetTop - 80, behavior: 'smooth' });
 }
 
-// PDF সমাধান: নিখুঁত রেন্ডারিং কনফিগারেশন
 function downloadStatement() {
     const element = document.getElementById('printArea');
     const options = {
@@ -217,28 +220,52 @@ function downloadStatement() {
         filename: `Statement_${currentCustomer}.pdf`,
         image: { type: 'jpeg', quality: 1 },
         html2canvas: { 
-            scale: 3, // রেজোলিউশন বাড়ানো হয়েছে
+            scale: 2, 
             useCORS: true,
-            backgroundColor: '#ffffff' // ব্যাকগ্রাউন্ড সাদা নিশ্চিত করা হয়েছে
+            backgroundColor: '#ffffff'
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    
-    // সাদা পেজ সমস্যা সমাধানের জন্য রেন্ডারিং কমান্ড
     html2pdf().from(element).set(options).save();
 }
 
 async function processPayment() {
-    const amount = Number(document.getElementById('payAmount').value);
+    const amount = Math.round(Number(document.getElementById('payAmount').value));
+    
     if(!amount || amount <= 0) return alert("সঠিক পরিমাণ লিখুন");
     
+    if(currentDueValue <= 0) {
+        return alert("এই কাস্টমারের কোনো বকেয়া নেই, তাই জমা নেওয়া সম্ভব নয়।");
+    }
+    
+    if(amount > currentDueValue) {
+        return alert(`অতিরিক্ত টাকা জমা নেওয়া যাবে না! কাস্টমারের বকেয়া মাত্র ${currentDueValue}৳। অনুগ্রহ করে সঠিক হিসাব লিখুন।`);
+    }
+    
     const todayStr = new Date().toISOString().split('T')[0];
-    await db.collection('sales').add({
-        customer: currentCustomer, mobile: currentMobile, due: -amount, date: todayStr, type: 'DUE_COLLECTION'
-    });
-    alert("সফলভাবে জমা হয়েছে!");
-    document.getElementById('payAmount').value = "";
-    showCustomerDetails(currentCustomer, currentMobile);
+    const newDue = currentDueValue - amount;
+
+    try {
+        await db.collection('sales').add({
+            customer: currentCustomer, 
+            mobile: currentMobile, 
+            due: -amount, 
+            date: todayStr, 
+            type: 'DUE_COLLECTION'
+        });
+
+        // হোয়াটসঅ্যাপ মেসেজ তৈরি
+        const msg = `আসসালামু আলাইকুম, *${currentCustomer}*।\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে।\nএখন আপনার মোট বকেয়া: *${newDue}৳*।\nধন্যবাদ— *S.I. Family Mart*`;
+        const waUrl = `https://api.whatsapp.com/send?phone=${currentMobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`;
+        
+        alert("সফলভাবে জমা হয়েছে! এখন হোয়াটসঅ্যাপে মেসেজ পাঠানো হবে।");
+        window.open(waUrl, '_blank');
+        
+        document.getElementById('payAmount').value = "";
+        showCustomerDetails(currentCustomer, currentMobile);
+    } catch (e) {
+        alert("ত্রুটি হয়েছে: " + e.message);
+    }
 }
 
 function searchCustomer() {
