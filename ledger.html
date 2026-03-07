@@ -294,25 +294,41 @@ function downloadStatement(){
     pdfBtn.disabled = true;
 
     const opt = {
-        margin: 10,
+        margin: [10,10,10,10], // top, left, bottom, right
         filename: `Statement_${currentCustomer}.pdf`,
         image: { type: 'jpeg', quality: 1 },
         html2canvas: { 
             scale: 3, 
             useCORS: true, 
-            backgroundColor: '#ffffff',
+            backgroundColor: '#ffffff', // ensure white background
             letterRendering: true,
             logging: false
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // ৩৫০ মিলি-সেকেন্ড ডিলে দেওয়া হয়েছে যাতে কন্টেন্ট ঠিকমতো রেন্ডার হয়
+    // কিছু time delay দিয়ে render করি যাতে সব DOM element load হয়
     setTimeout(() => {
-        html2pdf().from(element).set(opt).save().then(() => {
-            pdfBtn.innerText = "📄 PDF ডাউনলোড";
-            pdfBtn.disabled = false;
-        });
+        html2pdf()
+            .set(opt)
+            .from(element)
+            .toPdf()
+            .get('pdf')
+            .then(function(pdf){
+                // Optional: প্রপার scaling adjustment
+                const totalPages = pdf.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.setPage(i);
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(150);
+                    pdf.text(`Page ${i} of ${totalPages}`, pdf.internal.pageSize.getWidth()/2, pdf.internal.pageSize.getHeight() - 10, {align: 'center'});
+                }
+            })
+            .save()
+            .finally(()=>{
+                pdfBtn.innerText = "📄 PDF ডাউনলোড";
+                pdfBtn.disabled = false;
+            });
     }, 400);
 }
 
