@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -24,17 +25,21 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--bg)
 h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
 
 table { width:100%; border-collapse:collapse; margin-top:15px; background: white; font-size: 13px; color: #000; }
-th,td { padding:10px; border:1px solid #cbd5e1; text-align:center; }
+th,td { padding:10px; border:1px solid #333; text-align:center; }
 th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 
 .btn-call { background: var(--primary); color: white; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; }
-.btn-payment { background: var(--success); color: white; width: auto; font-weight: bold; border: none; cursor: pointer; border-radius: 8px; padding: 10px 20px; }
-.btn-pdf { background: #475569; color: white; border: none; cursor: pointer; padding: 10px 20px; border-radius: 8px; font-weight: bold; }
+.btn-edit { background: #64748b; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+.btn-remind { background: #f59e0b; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+
+.btn-payment { background: var(--success); color: white; width: 100%; font-weight: bold; border: none; margin-top: 10px; cursor: pointer; border-radius: 8px; padding: 12px; }
+.btn-pdf, .btn-excel { background: #475569; color: white; border: none; cursor: pointer; margin-top: 10px; padding: 10px 20px; border-radius: 8px; font-weight: bold; margin-right:10px; }
 
 .summary-box { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
 .summary-item { flex: 1; min-width: 150px; background: #fff; padding: 15px; border-radius: 12px; border-top: 4px solid var(--primary); }
 
-#printArea { background-color: #ffffff !important; width: 100%; }
+#printArea { background-color: #ffffff !important; color: #000000 !important; width: 100%; }
+#printArea * { background-color: transparent !important; color: #000000 !important; }
 </style>
 </head>
 <body>
@@ -49,8 +54,13 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 
 <div class="container">
   <div class="summary-box">
-      <div class="summary-item" style="border-top-color: var(--danger);"><h6>মোট বকেয়া</h6><h3 id="totalDue" style="color: var(--danger); margin:0;">০৳</h3></div>
+      <div class="summary-item" style="border-top-color: var(--danger);"><h6>মোট পাওনা (বাকি)</h6><h3 id="totalDue" style="color: var(--danger); margin:0;">০৳</h3></div>
       <div class="summary-item" style="border-top-color: var(--success);"><h6>আজকের কালেকশন</h6><h3 id="todayCollection" style="color: var(--success); margin:0;">০৳</h3></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+      <div class="card"><h3>🔥 শীর্ষ ১০ বকেয়া কাস্টমার</h3><ul id="topDueList"></ul></div>
+      <div class="card"><h3>📊 বকেয়া চিত্র (Due Chart)</h3><div style="height: 250px;"><canvas id="dueChart"></canvas></div></div>
   </div>
 
   <div class="card">
@@ -70,50 +80,51 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 
   <div class="card" id="detailsSection" style="display:none;">
     <div id="printArea" style="padding:25px; background-color: #ffffff;">
-        <h2 style="text-align:center; color: #2563eb; margin:0; font-size: 24px; font-weight: bold;">S.I. Family Mart</h2>
-        <p style="text-align:center; font-size:12px; margin:5px 0; color: #64748b;">গ্রাহক হিসাব বিবরণী (Statement)</p>
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <h2 style="text-align:center; color: #2563eb; margin:0; font-size: 26px; font-weight: bold;">S.I. Family Mart</h2>
+        <p style="text-align:center; font-size:12px; margin:5px 0; color: #64748b;">কাস্টমার লেজার স্টেটমেন্ট</p>
+        <hr style="border:0; border-top:2px solid #2563eb; margin:15px 0; opacity:0.1;">
         
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
             <div style="text-align: left;">
-                <p style="margin:2px 0; font-size: 14px;"><b>নাম:</b> <span id="detailCustName"></span></p>
-                <p style="margin:2px 0; font-size: 14px;"><b>মোবাইল:</b> <span id="phoneDisplay"></span></p>
+                <p style="margin:2px 0; font-size: 15px;"><b>নাম:</b> <span id="detailCustName"></span></p>
+                <p style="margin:2px 0; font-size: 15px;"><b>মোবাইল:</b> <span id="phoneDisplay"></span></p>
             </div>
             <div style="text-align:right;">
-                <p id="genDate" style="font-weight:bold; margin:0; font-size: 12px;"></p>
+                <p id="genDate" style="font-weight:bold; margin:0; font-size: 12px; color:#475569;"></p>
             </div>
         </div>
         
-        <table id="transTable" style="width: 100%; border-collapse: collapse; border: 1.5px solid #000;">
+        <table id="transTable" style="width: 100%; border-collapse: collapse; border: 1.5px solid #333;">
             <thead>
-                <tr style="background-color: #f1f5f9;">
-                    <th style="border: 1.5px solid #000; padding: 8px;">তারিখ</th>
-                    <th style="border: 1.5px solid #000; padding: 8px;">পণ্যের দাম</th>
-                    <th style="border: 1.5px solid #000; padding: 8px;">জমা</th>
-                    <th style="border: 1.5px solid #000; padding: 8px;">বাকি</th>
+                <tr style="background-color: #f8fafc;">
+                    <th style="padding: 10px;">তারিখ</th>
+                    <th style="padding: 10px;">বিবরণ</th>
+                    <th style="padding: 10px;">মোট পণ্য</th>
+                    <th style="padding: 10px;">জমা</th>
+                    <th style="padding: 10px;">বাকি</th>
                 </tr>
             </thead>
             <tbody id="transBody"></tbody>
             <tfoot>
-                <tr style="background:#fff7ed;">
-                    <td colspan="3" style="text-align:right; padding:10px; border: 1.5px solid #000; font-weight: bold;">সর্বমোট বকেয়া:</td>
-                    <td id="finalDueDisplay" style="padding:10px; border: 1.5px solid #000; font-weight: bold; font-size: 16px; color:red;">০৳</td>
+                <tr style="background:#f1f5f9;">
+                    <td colspan="4" style="text-align:right; padding:12px; font-weight: bold; font-size: 15px;">সর্বমোট বকেয়া:</td>
+                    <td id="finalDueDisplay" style="padding:12px; font-weight: bold; font-size: 18px; color: #ef4444;">০৳</td>
                 </tr>
             </tfoot>
         </table>
-        <p style="text-align:center; margin-top: 20px; font-size: 10px;">সফটওয়্যার জেনারেটেড রিপোর্ট। S.I. Family Mart।</p>
     </div>
 
     <div style="background: #f1f5f9; padding: 25px; border-radius: 12px; margin-top: 25px;">
-        <label style="font-weight:bold;">বকেয়া টাকা জমা নিন:</label>
+        <label style="font-weight:bold;">বাকি টাকা জমা নিন:</label>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
             <input type="number" id="payAmount" placeholder="টাকার পরিমাণ..." style="flex:1; padding:12px; border-radius:8px; border: 1px solid #cbd5e1;">
-            <button class="btn-payment" id="btnPay" onclick="processPayment()">💸 জমা ও মেসেজ</button>
+            <button class="btn-payment" id="btnPay" style="width: auto; margin:0;" onclick="processPayment()">💸 জমা ও মেসেজ</button>
         </div>
     </div>
     
     <div style="margin-top:20px; text-align: right;">
         <button class="btn-pdf" id="pdfBtn" onclick="downloadStatement()">📄 PDF ডাউনলোড</button>
+        <button class="btn-excel" onclick="exportExcel()">📊 Excel ব্যাকআপ</button>
     </div>
   </div>
 </div>
@@ -132,31 +143,40 @@ const db = firebase.firestore();
 
 let currentCustomer = "", currentMobile = "", currentDueValue = 0;
 let customersData = {};
+let myChart = null;
 
 db.collection('sales').onSnapshot((snap)=>{
     let totalDue=0, todayColl=0;
     let customerMap={};
-    const todayStr = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
     
     snap.forEach(doc=>{
         const d = doc.data();
         const amt = Number(d.due||0);
         if(d.customer){
-            if(!customerMap[d.customer]) customerMap[d.customer]={due:0, mobile:d.mobile||'-'};
+            if(!customerMap[d.customer]) {
+                customerMap[d.customer]={due:0, mobile:d.mobile||'-', lastDate: d.date};
+            }
             customerMap[d.customer].due += amt;
+            if(d.date > customerMap[d.customer].lastDate) customerMap[d.customer].lastDate = d.date;
             if(d.date===todayStr && d.type==='DUE_COLLECTION') todayColl += Math.abs(amt);
         }
     });
 
     let filteredMap = {};
     for(let key in customerMap) {
-        if(Math.round(customerMap[key].due) > 0) {
-            filteredMap[key] = customerMap[key];
-            totalDue += customerMap[key].due;
+        const c = customerMap[key];
+        const lastDateObj = new Date(c.lastDate);
+        const diffDays = Math.ceil((today - lastDateObj) / (1000 * 60 * 60 * 24));
+        if(Math.abs(c.due) > 0.5 || diffDays <= 10) {
+            filteredMap[key] = c;
+            totalDue += c.due;
         }
     }
+    
     customersData = filteredMap;
-    renderCustomerTable();
+    renderCustomerTable(); renderTopDue(); renderDueChart();
     document.getElementById('totalDue').innerText=Math.round(totalDue)+"৳";
     document.getElementById('todayCollection').innerText=Math.round(todayColl)+"৳";
 });
@@ -169,8 +189,14 @@ function renderCustomerTable(){
         tbody.innerHTML += `<tr>
             <td style="font-weight:bold; color:var(--primary); cursor:pointer;" onclick="showCustomerDetails('${n}','${c.mobile}')">${n}</td>
             <td>${c.mobile}</td>
-            <td style="color:red; font-weight:bold;">${Math.round(c.due)}৳</td>
-            <td><a href="tel:${c.mobile}" class="btn-call">📞 Call</a></td>
+            <td style="color:${c.due > 0 ? 'red' : 'green'}; font-weight:bold;">${Math.round(c.due)}৳</td>
+            <td>
+                <div style="display:flex; gap:3px; justify-content:center;">
+                    <a href="tel:${c.mobile}" class="btn-call">📞 Call</a>
+                    <button class="btn-edit" onclick="editCustomer('${n}', '${c.mobile}')">✏️ Edit</button>
+                    <button class="btn-remind" onclick="sendReminder('${n}','${c.mobile}',${c.due})">🔔 Remind</button>
+                </div>
+            </td>
         </tr>`;
     }
 }
@@ -180,10 +206,10 @@ async function showCustomerDetails(name,mobile){
     document.getElementById('detailsSection').style.display="block";
     document.getElementById('detailCustName').innerText=name;
     document.getElementById('phoneDisplay').innerText=mobile;
-    document.getElementById('genDate').innerText="তারিখ: " + new Date().toLocaleDateString('bn-BD');
+    document.getElementById('genDate').innerText="তারিখ: " + new Date().toLocaleString('bn-BD');
     
     const transBody=document.getElementById('transBody'); 
-    transBody.innerHTML="<tr><td colspan='4'>লোড হচ্ছে...</td></tr>";
+    transBody.innerHTML="<tr><td colspan='5'>লোড হচ্ছে...</td></tr>";
     
     const snap=await db.collection('sales').where('customer','==',name).get();
     let transactions=[]; snap.forEach(d=>transactions.push(d.data()));
@@ -192,30 +218,28 @@ async function showCustomerDetails(name,mobile){
     let html=""; let runningDue=0;
     transactions.forEach(d=>{
         const amt=Number(d.due||0);
-        // নগদ কেনাকাটা (Due 0) লেজারে দেখানোর প্রয়োজন নেই
-        if(Math.round(amt) === 0 && d.type !== 'DUE_COLLECTION' && (!d.totalPrice || d.totalPrice === d.paidAmount)) return;
+        // নগদ কেনাকাটা বাদ
+        if(Math.abs(amt) < 0.1 && (!d.totalPrice || d.totalPrice === d.paidAmount)) return;
 
-        runningDue += amt;
-        
-        // আপনার চাওয়া নিখুঁত লজিক:
-        // ১. পণ্যের দাম কলামে totalPrice দেখাবে, না থাকলে পজিটিভ Due দেখাবে
-        // ২. জমা কলামে paidAmount দেখাবে, না থাকলে নেগেটিভ Due (টাকা জমা) দেখাবে
-        let priceDisplay = d.totalPrice ? d.totalPrice : (amt > 0 ? amt : "-");
-        let paidDisplay = d.paidAmount ? d.paidAmount : (amt < 0 ? Math.abs(amt) : "-");
+        runningDue+=amt;
+
+        // আপনার কাঙ্ক্ষিত লজিক: totalPrice এবং paidAmount থাকলে সেটা দেখাবে, না থাকলে Due দেখাবে
+        let priceCol = d.totalPrice ? d.totalPrice : (amt > 0 ? amt : "-");
+        let paidCol = d.paidAmount ? d.paidAmount : (amt < 0 ? Math.abs(amt) : "-");
         
         html+=`<tr>
-            <td style="border:1.5px solid #000; padding:8px;">${d.date||'-'}</td>
-            <td style="border:1.5px solid #000; padding:8px;">${priceDisplay}${priceDisplay != "-" ? "৳" : ""}</td>
-            <td style="border:1.5px solid #000; padding:8px; color: green; font-weight:bold;">${paidDisplay}${paidDisplay != "-" ? "৳" : ""}</td>
-            <td style="border:1.5px solid #000; padding:8px; font-weight:bold;">${Math.round(runningDue)}৳</td>
+            <td style="padding:8px; border: 1px solid #333;">${d.date||'-'}</td>
+            <td style="padding:8px; border: 1px solid #333;">${amt < 0 ? "টাকা জমা" : "পণ্য ক্রয়"}</td>
+            <td style="padding:8px; border: 1px solid #333;">${priceCol}${priceCol != "-" ? "৳" : ""}</td>
+            <td style="padding:8px; border: 1px solid #333; color:green; font-weight:bold;">${paidCol}${paidCol != "-" ? "৳" : ""}</td>
+            <td style="padding:8px; border: 1px solid #333; font-weight:bold;">${Math.round(runningDue)}৳</td>
         </tr>`;
     });
     
     currentDueValue=Math.round(runningDue);
     document.getElementById('finalDueDisplay').innerText=currentDueValue+"৳";
     document.getElementById('payAmount').value = currentDueValue > 0 ? currentDueValue : "";
-    transBody.innerHTML=html;
-    window.scrollTo({ top: document.getElementById('detailsSection').offsetTop - 70, behavior: 'smooth' });
+    transBody.innerHTML = html || "<tr><td colspan='5'>কোন বকেয়া লেনদেন নেই</td></tr>";
 }
 
 async function processPayment(){
@@ -232,13 +256,14 @@ async function processPayment(){
             customer:currentCustomer, 
             mobile:currentMobile, 
             due:-amount, 
-            paidAmount: amount,
-            totalPrice: 0,
+            paidAmount: amount, // জমা কলামে দেখানোর জন্য
+            totalPrice: 0,      // পেমেন্টের সময় পণ্যের দাম ০
             date:todayStr, 
             type:'DUE_COLLECTION' 
         });
         
-        let msg = newDue <= 0 ? `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\nআপনার বকেয়া সম্পূর্ণ পরিশোধ হয়েছে। ধন্যবাদ।` : `আপনার বকেয়া থেকে আজ *${amount}৳* জমা হয়েছে। বর্তমান বকেয়া *${newDue}৳*।`;
+        let msg = newDue <= 0 ? `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআলহামদুলিল্লাহ! আপনার বকেয়া হিসাবটি আজ সম্পূর্ণ পরিশোধ হয়েছে। 🤝\n\n✅ আজ জমা: *${amount}৳*\n✅ বর্তমান বকেয়া: *০৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒` : `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে। \n\n🔹 আজ জমা: *${amount}৳*\n🔹 বর্তমান মোট বকেয়া: *${newDue}৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒`;
+        
         window.open(`https://api.whatsapp.com/send?phone=${currentMobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
         showCustomerDetails(currentCustomer,currentMobile);
     } catch(e){ alert("ত্রুটি: " + e.message); }
@@ -248,19 +273,59 @@ async function processPayment(){
 function downloadStatement(){
     const element = document.getElementById('printArea');
     const pdfBtn = document.getElementById('pdfBtn');
-    pdfBtn.innerText = "অপেক্ষা করুন..."; pdfBtn.disabled = true;
+    pdfBtn.innerText = "লোডিং..."; pdfBtn.disabled = true;
     const opt = {
-        margin: [10, 10, 10, 10],
-        filename: `Statement_${currentCustomer}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        margin: [10, 5, 10, 5],
+        filename: `Ledger_${currentCustomer}.pdf`,
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
     setTimeout(() => {
         html2pdf().set(opt).from(element).save().then(() => {
             pdfBtn.innerText = "📄 PDF ডাউনলোড"; pdfBtn.disabled = false;
         });
-    }, 1000);
+    }, 1500);
+}
+
+async function editCustomer(oldName, oldMobile) {
+    const newName = prompt("নতুন নাম:", oldName);
+    const newMobile = prompt("নতুন মোবাইল:", oldMobile);
+    if (!newName || !newMobile) return;
+    try {
+        const batch = db.batch();
+        const snap = await db.collection('sales').where('customer', '==', oldName).get();
+        snap.forEach(doc => { batch.update(doc.ref, { customer: newName, mobile: newMobile }); });
+        await batch.commit();
+        alert("সফল হয়েছে!");
+    } catch (e) { alert("ত্রুটি: " + e.message); }
+}
+
+function sendReminder(name, mobile, due){
+    const msg = `আসসালামু আলাইকুম, জনাব *${name}*। 🤝\nআপনার বকেয়া (*${Math.round(due)}৳*) পরিশোধের জন্য অনুরোধ করা হলো।\n— *S.I. Family Mart*`;
+    window.open(`https://api.whatsapp.com/send?phone=${mobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
+}
+
+function exportExcel(){
+    let data=[['কাস্টমার','মোবাইল','বকেয়া']];
+    for(let n in customersData){ data.push([n, customersData[n].mobile, Math.round(customersData[n].due)]); }
+    const ws=XLSX.utils.aoa_to_sheet(data);
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Ledger");
+    XLSX.writeFile(wb,`Ledger_Report.xlsx`);
+}
+
+function renderTopDue(){
+    let arr=Object.entries(customersData).map(([n,v])=>({name:n, due:v.due})).sort((a,b)=>b.due-a.due).slice(0,10);
+    const ul=document.getElementById('topDueList'); ul.innerHTML="";
+    arr.forEach(c=>{ ul.innerHTML+=`<li><span>${c.name}</span> <span style="color:red; font-weight:bold;">${Math.round(c.due)}৳</span></li>`; });
+}
+
+function renderDueChart(){
+    const ctx=document.getElementById('dueChart').getContext('2d');
+    if(myChart) myChart.destroy();
+    const labels=[], data=[];
+    Object.entries(customersData).forEach(([n,v])=>{ labels.push(n); data.push(Math.round(v.due)); });
+    myChart = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{label:'বকেয়া টাকা', data, backgroundColor: 'rgba(37, 99, 235, 0.8)'}] }, options:{ maintainAspectRatio: false } });
 }
 
 function searchCustomer(){
