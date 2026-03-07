@@ -10,7 +10,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
@@ -29,6 +28,8 @@ h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; border-bottom: 2px
 table { width:100%; border-collapse:collapse; margin-top:15px; background: white; font-size: 14px; color: #000; }
 th,td { padding:12px; border:1px solid #cbd5e1; text-align:center; }
 th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
+.badge-pay { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-weight: bold; }
+.badge-buy { background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-weight: bold; }
 
 /* Buttons */
 .btn-call { background: var(--primary); color: white; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
@@ -42,8 +43,8 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 #topDueList { list-style: none; padding: 0; }
 #topDueList li { padding: 10px 0; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; font-weight: 500; }
 
-/* Print Area Styles - Force background for PDF */
-#printArea { background-color: white !important; color: black !important; }
+/* PDF Area Fix */
+#printArea { background: white !important; color: black !important; border: 1px solid #eee; }
 </style>
 </head>
 <body>
@@ -80,7 +81,7 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
         <input type="text" id="searchCustomer" placeholder="নাম বা মোবাইল..." onkeyup="searchCustomer()" style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; width: 220px;">
     </div>
     <div style="overflow-x:auto;">
-        <table>
+        <table id="customerTable">
             <thead>
                 <tr><th>কাস্টমার</th><th>মোবাইল</th><th>বাকি</th><th>অবস্থা</th><th>অ্যাকশন</th></tr>
             </thead>
@@ -107,7 +108,7 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
         </div>
         
         <div style="overflow-x:auto;">
-            <table style="border:1px solid #000; width: 100%;">
+            <table id="transTable" style="border:1px solid #000; width: 100%;">
                 <thead>
                     <tr style="background:#f1f5f9;">
                         <th style="border: 1px solid #000;">তারিখ</th>
@@ -131,10 +132,10 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
     <div style="background: #f1f5f9; padding: 25px; border-radius: 12px; margin-top: 25px; border: 1px solid #e2e8f0;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
             <label style="font-weight:bold; font-size: 16px;">বাকি টাকা জমা নিন:</label>
-            <span id="payHint" style="font-size: 13px; color: #991b1b; font-weight: bold;"></span>
+            <span id="payHint" style="font-size: 13px; color: #991b1b; background: #fee2e2; padding: 4px 12px; border-radius: 20px; font-weight: bold;"></span>
         </div>
         <div style="display: flex; gap: 10px;">
-            <input type="number" id="payAmount" placeholder="টাকার পরিমাণ..." style="flex:1; padding:12px; border-radius:8px; border: 1px solid #cbd5e1; outline: none;">
+            <input type="number" id="payAmount" placeholder="টাকার পরিমাণ..." style="flex:1; padding:12px; border-radius:8px; border: 1px solid #cbd5e1; font-size: 16px; outline: none;">
             <button class="btn-payment" id="btnPay" style="width: auto; padding: 0 30px;" onclick="processPayment()">💸 জমা ও মেসেজ</button>
         </div>
     </div>
@@ -148,7 +149,7 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 </div>
 
 <script>
-// Firebase Setup
+// Firebase Config
 const firebaseConfig = {
     apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
     authDomain:"fir-i-family-mart.firebaseapp.com",
@@ -164,7 +165,7 @@ let currentCustomer = "", currentMobile = "", currentDueValue = 0;
 let customersData = {};
 let myChart = null;
 
-// Realtime Listener
+// Snapshot listener
 db.collection('sales').onSnapshot((snap)=>{
     let totalDue=0, todayColl=0;
     let customerMap={};
@@ -183,7 +184,7 @@ db.collection('sales').onSnapshot((snap)=>{
 
     customersData = customerMap;
     for(let key in customerMap) { if(customerMap[key].due > 0.5) totalDue += customerMap[key].due; }
-    
+
     renderCustomerTable();
     renderTopDue();
     renderDueChart();
@@ -199,16 +200,18 @@ function renderCustomerTable(){
     
     for(let n in customersData){
         const c = customersData[n];
-        if(c.due<=1 && new Date(c.lastDate) < tenDaysAgo) continue;
+        const lastDate = new Date(c.lastDate);
+        if(c.due<=1 && lastDate < tenDaysAgo) continue;
+        const isPaid = c.due<=1;
         
         tbody.innerHTML += `<tr>
             <td style="font-weight:bold; color:var(--primary); cursor:pointer;" onclick="showCustomerDetails('${n}','${c.mobile}')">${n}</td>
             <td>${c.mobile}</td>
-            <td style="color:${c.due<=1?'green':'red'}; font-weight:bold;">${Math.round(c.due)}৳</td>
-            <td><span class="${c.due<=1?'badge-pay':'badge-buy'}">${c.due<=1?'Paid':'Due'}</span></td>
+            <td style="color:${isPaid?'green':'red'}; font-weight:bold;">${Math.round(c.due)}৳</td>
+            <td><span class="${isPaid?'badge-pay':'badge-buy'}">${isPaid?'Paid':'Due'}</span></td>
             <td>
                 <a href="tel:${c.mobile}" class="btn-call">📞 Call</a>
-                <button onclick="showCustomerDetails('${n}','${c.mobile}')" style="font-size:11px; padding:5px; margin-left:5px;">View</button>
+                <button onclick="showCustomerDetails('${n}','${c.mobile}')" style="font-size:11px; cursor:pointer; padding:5px; margin-left:5px;">View</button>
             </td>
         </tr>`;
     }
@@ -221,6 +224,9 @@ async function showCustomerDetails(name,mobile){
     document.getElementById('phoneDisplay').innerText=mobile;
     document.getElementById('genDate').innerText=new Date().toLocaleString('bn-BD');
 
+    const transBody=document.getElementById('transBody'); 
+    transBody.innerHTML="<tr><td colspan='4'>লোড হচ্ছে...</td></tr>";
+    
     const snap=await db.collection('sales').where('customer','==',name).get();
     let transactions=[]; snap.forEach(d=>transactions.push(d.data()));
     transactions.sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -229,9 +235,10 @@ async function showCustomerDetails(name,mobile){
     transactions.forEach(d=>{
         const amt=Number(d.due||0); runningDue+=amt;
         const typeText=amt < 0 ? "জমা" : "ক্রয়";
+        const typeStyle=amt < 0 ? "color:#166534;font-weight:bold;" : "color:#991b1b;font-weight:bold;";
         html+=`<tr>
             <td style="border:1px solid #000;">${d.date||'-'}</td>
-            <td style="border:1px solid #000; font-weight:bold; color:${amt<0?'green':'red'}">${typeText}</td>
+            <td style="border:1px solid #000; ${typeStyle}">${typeText}</td>
             <td style="border:1px solid #000;">${Math.abs(amt)}৳</td>
             <td style="border:1px solid #000;font-weight:bold;">${Math.round(runningDue)}৳</td>
         </tr>`;
@@ -240,66 +247,79 @@ async function showCustomerDetails(name,mobile){
     currentDueValue=Math.round(runningDue);
     document.getElementById('finalDueDisplay').innerText=currentDueValue+"৳";
     document.getElementById('payHint').innerText = currentDueValue > 0 ? `সর্বোচ্চ জমা: ${currentDueValue}৳` : "বকেয়া নেই";
-    document.getElementById('transBody').innerHTML=html;
+    transBody.innerHTML=html;
     
     window.scrollTo({ top: document.getElementById('detailsSection').offsetTop - 70, behavior: 'smooth' });
 }
 
 async function processPayment(){
     const amount=Math.round(Number(document.getElementById('payAmount').value));
-    if(!amount || amount<=0 || amount > currentDueValue) return alert("সঠিক পরিমাণ লিখুন");
-
     const btn = document.getElementById('btnPay');
+    
+    if(!amount || amount<=0) return alert("দয়া করে সঠিক পরিমাণ লিখুন");
+    if(currentDueValue<=0) return alert("এই কাস্টমারের কোনো বকেয়া নেই।");
+    if(amount > currentDueValue) return alert(`অতিরিক্ত টাকা জমা নেওয়া যাবে না! কাস্টমারের বকেয়া মাত্র ${currentDueValue}৳`);
+
     btn.disabled = true;
+    btn.innerText = "প্রসেসিং...";
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const newDue = currentDueValue - amount;
 
     try{
         await db.collection('sales').add({
-            customer:currentCustomer, mobile:currentMobile, due:-amount, date:new Date().toISOString().split('T')[0], type:'DUE_COLLECTION'
+            customer:currentCustomer, mobile:currentMobile, due:-amount, date:todayStr, type:'DUE_COLLECTION'
         });
         
-        const msg = `আসসালামু আলাইকুম, *${currentCustomer}*।\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে।\nএখন আপনার মোট বকেয়া: *${currentDueValue - amount}৳*।\nধন্যবাদ— *S.I. Family Mart*`;
+        const msg = `আসসালামু আলাইকুম, *${currentCustomer}*।\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে।\nএখন আপনার মোট বকেয়া: *${newDue}৳*।\nধন্যবাদ— *S.I. Family Mart*`;
         window.open(`https://api.whatsapp.com/send?phone=${currentMobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
         
         document.getElementById('payAmount').value="";
         showCustomerDetails(currentCustomer,currentMobile);
-        alert("জমা সফল হয়েছে!");
-    } catch(e){ alert("Error: " + e.message); }
-    finally { btn.disabled = false; }
+        alert("সফলভাবে জমা হয়েছে!");
+    } catch(e){ alert("ত্রুটি: " + e.message); }
+    finally {
+        btn.disabled = false;
+        btn.innerText = "💸 জমা ও মেসেজ";
+    }
 }
 
-// PDF সমাধান (বড় আপডেট)
+// PDF সমাধান (চূড়ান্ত আপডেট)
 function downloadStatement(){
     const element = document.getElementById('printArea');
     const pdfBtn = document.getElementById('pdfBtn');
     
-    pdfBtn.innerText = "অপেক্ষা করুন...";
+    pdfBtn.innerText = "প্রসেসিং... (অপেক্ষা করুন)";
     pdfBtn.disabled = true;
 
-    // পিডিএফ অপশন
+    // পিডিএফ এর জন্য অপশন সেটআপ
     const opt = {
         margin: [10, 10, 10, 10],
         filename: `Statement_${currentCustomer}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 2, // স্কেল ২ রাখলে মোবাইল ফ্রেন্ডলি হয় এবং সাদা হওয়ার চান্স কমে
+            scale: 2, 
             useCORS: true, 
             backgroundColor: '#ffffff',
-            letterRendering: true
+            letterRendering: true,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: element.scrollWidth
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // ২ সেকেন্ড ডিলে যাতে ডাটা পুরোপুরি রেন্ডার হয়
+    // ১ সেকেন্ড বিরতি দেওয়া হয়েছে যাতে ডাটা ঠিকমতো রেন্ডার হয়
     setTimeout(() => {
         html2pdf().from(element).set(opt).toPdf().get('pdf').save().then(() => {
             pdfBtn.innerText = "📄 PDF ডাউনলোড";
             pdfBtn.disabled = false;
         }).catch(err => {
             console.error(err);
-            pdfBtn.innerText = "📄 PDF ডাউনলোড";
+            alert("পিডিএফ তৈরি করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
             pdfBtn.disabled = false;
         });
-    }, 2000); 
+    }, 1000);
 }
 
 function exportExcel(){
@@ -307,11 +327,14 @@ function exportExcel(){
     for(let n in customersData){ if(customersData[n].due > 0.5) data.push([n, customersData[n].mobile, Math.round(customersData[n].due)]); }
     const ws=XLSX.utils.aoa_to_sheet(data);
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Ledger");
-    XLSX.writeFile(wb,`Ledger_Backup.xlsx`);
+    XLSX.writeFile(wb,`Ledger_Backup_${new Date().toLocaleDateString()}.xlsx`);
 }
 
 function renderTopDue(){
-    let arr=Object.entries(customersData).filter(([n,v])=> v.due > 0.5).map(([n,v])=>({name:n, due:v.due})).sort((a,b)=>b.due-a.due).slice(0,10);
+    let arr=Object.entries(customersData)
+        .filter(([n,v])=> v.due > 0.5)
+        .map(([n,v])=>({name:n, due:v.due}))
+        .sort((a,b)=>b.due-a.due).slice(0,10);
     const ul=document.getElementById('topDueList'); ul.innerHTML="";
     arr.forEach(c=>{ ul.innerHTML+=`<li><span>${c.name}</span> <span style="color:red; font-weight:bold;">${Math.round(c.due)}৳</span></li>`; });
 }
@@ -319,12 +342,23 @@ function renderTopDue(){
 function renderDueChart(){
     const ctx=document.getElementById('dueChart').getContext('2d');
     if(myChart) myChart.destroy();
+    
     const labels=[], data=[];
-    Object.entries(customersData).filter(([n,v])=> v.due > 100).forEach(([n,v])=>{ labels.push(n); data.push(Math.round(v.due)); });
+    Object.entries(customersData).filter(([n,v])=> v.due > 100).forEach(([n,v])=>{
+        labels.push(n); data.push(Math.round(v.due));
+    });
+    
     myChart = new Chart(ctx,{
         type:'bar', 
-        data:{ labels, datasets:[{label:'বকেয়া টাকা', data, backgroundColor: '#2563eb'}]},
-        options:{ responsive:true, maintainAspectRatio: false }
+        data:{
+            labels, 
+            datasets:[{label:'বকেয়া টাকা', data, backgroundColor: 'rgba(37, 99, 235, 0.8)', borderColor: '#2563eb', borderWidth: 1}]
+        },
+        options:{ 
+            responsive:true, 
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
     });
 }
 
