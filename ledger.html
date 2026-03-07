@@ -24,8 +24,8 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--bg)
 .card { background:white; padding:20px; margin-bottom:20px; border-radius:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
 h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
 
-table { width:100%; border-collapse:collapse; margin-top:15px; background: white; font-size: 14px; color: #000; }
-th,td { padding:12px; border:1px solid #cbd5e1; text-align:center; }
+table { width:100%; border-collapse:collapse; margin-top:15px; background: white; font-size: 13px; color: #000; }
+th,td { padding:10px; border:1px solid #cbd5e1; text-align:center; }
 th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 
 .btn-call { background: var(--primary); color: white; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; }
@@ -38,7 +38,6 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 .summary-box { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
 .summary-item { flex: 1; min-width: 150px; background: #fff; padding: 15px; border-radius: 12px; border-top: 4px solid var(--primary); }
 
-/* PDF Print Fix */
 #printArea { background-color: #ffffff !important; color: #000000 !important; width: 100%; }
 #printArea * { background-color: transparent !important; color: #000000 !important; }
 </style>
@@ -55,7 +54,7 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 
 <div class="container">
   <div class="summary-box">
-      <div class="summary-item" style="border-top-color: var(--danger);"><h6>মোট বাকি</h6><h3 id="totalDue" style="color: var(--danger); margin:0;">০৳</h3></div>
+      <div class="summary-item" style="border-top-color: var(--danger);"><h6>মোট পাওনা (বাকি)</h6><h3 id="totalDue" style="color: var(--danger); margin:0;">০৳</h3></div>
       <div class="summary-item" style="border-top-color: var(--success);"><h6>আজকের কালেকশন</h6><h3 id="todayCollection" style="color: var(--success); margin:0;">০৳</h3></div>
   </div>
 
@@ -66,13 +65,13 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
-        <h3 style="border:none;">👥 কাস্টমার তালিকা</h3>
+        <h3 style="border:none;">👥 কাস্টমার তালিকা (বাকি খাতা)</h3>
         <input type="text" id="searchCustomer" placeholder="নাম বা মোবাইল..." onkeyup="searchCustomer()" style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 220px;">
     </div>
     <div style="overflow-x:auto;">
         <table id="customerTable">
             <thead>
-                <tr><th>কাস্টমার</th><th>মোবাইল</th><th>বাকি</th><th>অ্যাকশন</th></tr>
+                <tr><th>কাস্টমার</th><th>মোবাইল</th><th>বর্তমান বাকি</th><th>অ্যাকশন</th></tr>
             </thead>
             <tbody id="custBody"></tbody>
         </table>
@@ -80,46 +79,46 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
   </div>
 
   <div class="card" id="detailsSection" style="display:none;">
-    <div id="printArea" style="padding:20px; background-color: #ffffff;">
-        <h2 style="text-align:center; color: #2563eb; margin:0; font-size: 24px; font-weight: bold;">S.I. Family Mart</h2>
-        <p style="text-align:center; font-size:12px; margin:5px 0; color: #64748b;">গ্রাহক হিসাব বিবরণী (Statement)</p>
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+    <div id="printArea" style="padding:25px; background-color: #ffffff;">
+        <h2 style="text-align:center; color: #2563eb; margin:0; font-size: 26px; font-weight: bold;">S.I. Family Mart</h2>
+        <p style="text-align:center; font-size:12px; margin:5px 0; color: #64748b;">কাস্টমার লেজার স্টেটমেন্ট</p>
+        <hr style="border:0; border-top:2px solid #2563eb; margin:15px 0; opacity:0.1;">
         
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
             <div style="text-align: left;">
-                <p style="margin:2px 0; font-size: 14px;"><b>নাম:</b> <span id="detailCustName"></span></p>
-                <p style="margin:2px 0; font-size: 14px;"><b>মোবাইল:</b> <span id="phoneDisplay"></span></p>
+                <p style="margin:2px 0; font-size: 15px;"><b>নাম:</b> <span id="detailCustName"></span></p>
+                <p style="margin:2px 0; font-size: 15px;"><b>মোবাইল:</b> <span id="phoneDisplay"></span></p>
             </div>
             <div style="text-align:right;">
-                <p style="font-size:10px; color:#64748b; margin:0;">তারিখ:</p>
-                <p id="genDate" style="font-weight:bold; margin:0; font-size: 12px;"></p>
+                <p id="genDate" style="font-weight:bold; margin:0; font-size: 12px; color:#475569;"></p>
             </div>
         </div>
         
-        <table id="transTable" style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
+        <table id="transTable" style="width: 100%; border-collapse: collapse; border: 1.5px solid #333;">
             <thead>
-                <tr style="background-color: #f1f5f9;">
-                    <th style="border: 1px solid #000; padding: 8px;">তারিখ</th>
-                    <th style="border: 1px solid #000; padding: 8px;">ধরণ</th>
-                    <th style="border: 1px solid #000; padding: 8px;">পরিমাণ</th>
-                    <th style="border: 1px solid #000; padding: 8px;">ব্যালেন্স</th>
+                <tr style="background-color: #f8fafc;">
+                    <th style="border: 1px solid #333; padding: 10px;">তারিখ</th>
+                    <th style="border: 1px solid #333; padding: 10px;">বিবরণ</th>
+                    <th style="border: 1px solid #333; padding: 10px;">মোট পণ্য</th>
+                    <th style="border: 1px solid #333; padding: 10px;">জমা</th>
+                    <th style="border: 1px solid #333; padding: 10px;">ব্যালেন্স</th>
                 </tr>
             </thead>
             <tbody id="transBody"></tbody>
             <tfoot>
-                <tr>
-                    <td colspan="3" style="text-align:right; padding:10px; border: 1px solid #000; font-weight: bold;">মোট বকেয়া:</td>
-                    <td id="finalDueDisplay" style="padding:10px; border: 1px solid #000; font-weight: bold; font-size: 16px;">০৳</td>
+                <tr style="background:#f1f5f9;">
+                    <td colspan="4" style="text-align:right; padding:12px; border: 1px solid #333; font-weight: bold; font-size: 15px;">সর্বমোট বকেয়া পাওনা:</td>
+                    <td id="finalDueDisplay" style="padding:12px; border: 1px solid #333; font-weight: bold; font-size: 18px; color: #ef4444;">০৳</td>
                 </tr>
             </tfoot>
         </table>
-        <p style="text-align:center; margin-top: 20px; font-size: 10px;">সফটওয়্যার জেনারেটেড রিপোর্ট। ভুলত্রুটি সংশোধনযোগ্য।</p>
+        <p style="text-align:center; margin-top: 30px; font-size: 11px; color: #94a3b8;">সফটওয়্যার জেনারেটেড রিপোর্ট। S.I. Family Mart-এর সাথে থাকার জন্য ধন্যবাদ।</p>
     </div>
 
     <div style="background: #f1f5f9; padding: 25px; border-radius: 12px; margin-top: 25px;">
-        <label style="font-weight:bold;">বাকি টাকা জমা নিন:</label>
+        <label style="font-weight:bold; color: var(--dark);">টাকা জমা রিসিভ করুন:</label>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <input type="number" id="payAmount" placeholder="টাকার পরিমাণ..." style="flex:1; padding:12px; border-radius:8px; border: 1px solid #cbd5e1;">
+            <input type="number" id="payAmount" placeholder="টাকার পরিমাণ..." style="flex:1; padding:12px; border-radius:8px; border: 1px solid #cbd5e1; font-size: 16px;">
             <button class="btn-payment" id="btnPay" style="width: auto; margin:0;" onclick="processPayment()">💸 জমা ও মেসেজ</button>
         </div>
     </div>
@@ -132,7 +131,6 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 </div>
 
 <script>
-// Firebase Config
 const firebaseConfig = {
     apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
     authDomain:"fir-i-family-mart.firebaseapp.com",
@@ -148,23 +146,32 @@ let currentCustomer = "", currentMobile = "", currentDueValue = 0;
 let customersData = {};
 let myChart = null;
 
-// Snapshot listener
 db.collection('sales').onSnapshot((snap)=>{
     let totalDue=0, todayColl=0;
     let customerMap={};
     const todayStr = new Date().toISOString().split('T')[0];
+    
     snap.forEach(doc=>{
         const d = doc.data();
         const amt = Number(d.due||0);
-        if(d.date===todayStr && d.type==='DUE_COLLECTION') todayColl += Math.abs(amt);
+        // শুধুমাত্র বাকি ট্রানজেকশনগুলো হিসাব হবে
         if(d.customer){
-            if(!customerMap[d.customer]) customerMap[d.customer]={due:0, mobile:d.mobile||'-', lastDate:d.date};
+            if(!customerMap[d.customer]) customerMap[d.customer]={due:0, mobile:d.mobile||'-'};
             customerMap[d.customer].due += amt;
-            if(d.date>customerMap[d.customer].lastDate) customerMap[d.customer].lastDate=d.date;
+            if(d.date===todayStr && d.type==='DUE_COLLECTION') todayColl += Math.abs(amt);
         }
     });
-    customersData = customerMap;
-    for(let key in customerMap) { if(customerMap[key].due > 0.5) totalDue += customerMap[key].due; }
+
+    // ফিল্টার: যাদের বকেয়া নেই তাদের তালিকা থেকে বাদ দেওয়া
+    let filteredMap = {};
+    for(let key in customerMap) {
+        if(Math.abs(customerMap[key].due) > 0.5) {
+            filteredMap[key] = customerMap[key];
+            totalDue += customerMap[key].due;
+        }
+    }
+    
+    customersData = filteredMap;
     renderCustomerTable(); renderTopDue(); renderDueChart();
     document.getElementById('totalDue').innerText=Math.round(totalDue)+"৳";
     document.getElementById('todayCollection').innerText=Math.round(todayColl)+"৳";
@@ -175,11 +182,10 @@ function renderCustomerTable(){
     tbody.innerHTML="";
     for(let n in customersData){
         const c = customersData[n];
-        const isPaid = c.due<=1;
         tbody.innerHTML += `<tr>
             <td style="font-weight:bold; color:var(--primary); cursor:pointer;" onclick="showCustomerDetails('${n}','${c.mobile}')">${n}</td>
             <td>${c.mobile}</td>
-            <td style="color:${isPaid?'green':'red'}; font-weight:bold;">${Math.round(c.due)}৳</td>
+            <td style="color:red; font-weight:bold;">${Math.round(c.due)}৳</td>
             <td>
                 <div style="display:flex; gap:3px; justify-content:center;">
                     <a href="tel:${c.mobile}" class="btn-call">📞 Call</a>
@@ -191,43 +197,37 @@ function renderCustomerTable(){
     }
 }
 
-async function editCustomer(oldName, oldMobile) {
-    const newName = prompt("কাস্টমারের নতুন নাম লিখুন:", oldName);
-    if (!newName) return;
-    const newMobile = prompt("কাস্টমারের নতুন মোবাইল নাম্বার লিখুন:", oldMobile);
-    if (!newMobile) return;
-    if (confirm(`আপনি কি নিশ্চিত যে '${oldName}' পরিবর্তন করতে চান?`)) {
-        try {
-            const batch = db.batch();
-            const snap = await db.collection('sales').where('customer', '==', oldName).get();
-            snap.forEach(doc => { batch.update(doc.ref, { customer: newName, mobile: newMobile }); });
-            await batch.commit();
-            alert("আপডেট সফল হয়েছে!");
-        } catch (e) { alert("ত্রুটি: " + e.message); }
-    }
-}
-
 async function showCustomerDetails(name,mobile){
     currentCustomer=name; currentMobile=mobile;
     document.getElementById('detailsSection').style.display="block";
     document.getElementById('detailCustName').innerText=name;
     document.getElementById('phoneDisplay').innerText=mobile;
-    document.getElementById('genDate').innerText=new Date().toLocaleString('bn-BD');
+    document.getElementById('genDate').innerText="রিপোর্ট জেনারেট: " + new Date().toLocaleString('bn-BD');
+    
     const transBody=document.getElementById('transBody'); 
-    transBody.innerHTML="<tr><td colspan='4'>লোড হচ্ছে...</td></tr>";
+    transBody.innerHTML="<tr><td colspan='5'>লোড হচ্ছে...</td></tr>";
+    
     const snap=await db.collection('sales').where('customer','==',name).get();
     let transactions=[]; snap.forEach(d=>transactions.push(d.data()));
     transactions.sort((a,b)=>new Date(a.date)-new Date(b.date));
+    
     let html=""; let runningDue=0;
     transactions.forEach(d=>{
-        const amt=Number(d.due||0); runningDue+=amt;
+        const amt=Number(d.due||0);
+        runningDue+=amt;
+        
+        let buyAmt = amt > 0 ? amt : "-"; // যদি পজিটিভ হয় তবে সেটা পণ্য ক্রয়
+        let payAmt = amt < 0 ? Math.abs(amt) : "-"; // যদি নেগেটিভ হয় তবে সেটা টাকা জমা
+        
         html+=`<tr>
-            <td style="border:1px solid #000; padding:8px;">${d.date||'-'}</td>
-            <td style="border:1px solid #000; padding:8px;">${amt < 0 ? "জমা" : "ক্রয়"}</td>
-            <td style="border:1px solid #000; padding:8px;">${Math.abs(amt)}৳</td>
-            <td style="border:1px solid #000; padding:8px; font-weight:bold;">${Math.round(runningDue)}৳</td>
+            <td style="border:1px solid #333; padding:8px;">${d.date||'-'}</td>
+            <td style="border:1px solid #333; padding:8px;">${amt < 0 ? "টাকা জমা" : "পণ্য ক্রয়"}</td>
+            <td style="border:1px solid #333; padding:8px;">${buyAmt}${buyAmt != "-" ? "৳" : ""}</td>
+            <td style="border:1px solid #333; padding:8px; color:green;">${payAmt}${payAmt != "-" ? "৳" : ""}</td>
+            <td style="border:1px solid #333; padding:8px; font-weight:bold;">${Math.round(runningDue)}৳</td>
         </tr>`;
     });
+    
     currentDueValue=Math.round(runningDue);
     document.getElementById('finalDueDisplay').innerText=currentDueValue+"৳";
     document.getElementById('payAmount').value = currentDueValue;
@@ -238,55 +238,67 @@ async function showCustomerDetails(name,mobile){
 async function processPayment(){
     const amount=Math.round(Number(document.getElementById('payAmount').value));
     const btn = document.getElementById('btnPay');
-    if(!amount || amount<=0 || amount > currentDueValue) return alert("সঠিক পরিমাণ লিখুন");
+    if(!amount || amount<=0) return alert("সঠিক পরিমাণ লিখুন");
+    
     btn.disabled = true; btn.innerText = "প্রসেসিং...";
     const todayStr = new Date().toISOString().split('T')[0];
     const newDue = currentDueValue - amount;
+    
     try{
-        await db.collection('sales').add({ customer:currentCustomer, mobile:currentMobile, due:-amount, date:todayStr, type:'DUE_COLLECTION' });
+        await db.collection('sales').add({ 
+            customer:currentCustomer, 
+            mobile:currentMobile, 
+            due:-amount, 
+            date:todayStr, 
+            type:'DUE_COLLECTION' 
+        });
+        
         let msg = newDue <= 0 ? `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআলহামদুলিল্লাহ! আপনার বকেয়া হিসাবটি আজ সম্পূর্ণ পরিশোধ হয়েছে। 🤝\n\n✅ আজ জমা: *${amount}৳*\n✅ বর্তমান বকেয়া: *০৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒` : `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে। \n\n🔹 আজ জমা: *${amount}৳*\n🔹 বর্তমান মোট বকেয়া: *${newDue}৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒`;
+        
         window.open(`https://api.whatsapp.com/send?phone=${currentMobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
         showCustomerDetails(currentCustomer,currentMobile);
     } catch(e){ alert("ত্রুটি: " + e.message); }
     finally { btn.disabled = false; btn.innerText = "💸 জমা ও মেসেজ"; }
 }
 
+async function editCustomer(oldName, oldMobile) {
+    const newName = prompt("কাস্টমারের নতুন নাম লিখুন:", oldName);
+    if (!newName) return;
+    const newMobile = prompt("কাস্টমারের নতুন মোবাইল নাম্বার লিখুন:", oldMobile);
+    if (!newMobile) return;
+    if (confirm(`আপনি কি নিশ্চিত?`)) {
+        try {
+            const batch = db.batch();
+            const snap = await db.collection('sales').where('customer', '==', oldName).get();
+            snap.forEach(doc => { batch.update(doc.ref, { customer: newName, mobile: newMobile }); });
+            await batch.commit();
+            alert("সফলভাবে আপডেট হয়েছে!");
+        } catch (e) { alert("ত্রুটি: " + e.message); }
+    }
+}
+
 function sendReminder(name, mobile, due){
-    const msg = `আসসালামু আলাইকুম, জনাব *${name}* সাহেব। 🤝\n\nআমাদের ক্যাশমেমো অনুযায়ী আপনার পূর্বের বকেয়া (*${Math.round(due)}৳*) পাওনা রয়েছে। বকেয়া টাকাটি পরিশোধ করে আমাদের ব্যবসায়িক সম্পর্ককে আরও সুদৃঢ় করতে আপনার সহযোগিতা কামনা করছি। 🙏\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒`;
+    const msg = `আসসালামু আলাইকুম, জনাব *${name}* সাহেব। 🤝\n\nআমাদের ক্যাশমেমো অনুযায়ী আপনার পূর্বের বকেয়া (*${Math.round(due)}৳*) পাওনা রয়েছে। বকেয়া টাকাটি দ্রুত পরিশোধ করার জন্য অনুরোধ করা হলো। 🙏\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒`;
     window.open(`https://api.whatsapp.com/send?phone=${mobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
 }
 
-// PDF সমাধান - এখানে পরিবর্তন করা হয়েছে
 function downloadStatement(){
     const element = document.getElementById('printArea');
     const pdfBtn = document.getElementById('pdfBtn');
-    
-    pdfBtn.innerText = "জেনারেট হচ্ছে...";
+    pdfBtn.innerText = "অপেক্ষা করুন...";
     pdfBtn.disabled = true;
 
-    // ক্লিনার লেআউটের জন্য সেটিংস
     const opt = {
         margin: [10, 5, 10, 5],
         filename: `Statement_${currentCustomer}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
-        html2canvas: { 
-            scale: 3, 
-            useCORS: true, 
-            letterRendering: true,
-            backgroundColor: '#ffffff',
-            scrollX: 0,
-            scrollY: 0
-        },
+        html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // ফন্ট এবং স্টাইল লোড হওয়ার জন্য একটু বেশি সময় দেওয়া হয়েছে
     setTimeout(() => {
         html2pdf().set(opt).from(element).save().then(() => {
             pdfBtn.innerText = "📄 PDF ডাউনলোড";
-            pdfBtn.disabled = false;
-        }).catch(err => {
-            alert("PDF তৈরিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
             pdfBtn.disabled = false;
         });
     }, 1500);
@@ -294,14 +306,14 @@ function downloadStatement(){
 
 function exportExcel(){
     let data=[['কাস্টমার','মোবাইল','বকেয়া']];
-    for(let n in customersData){ if(customersData[n].due > 0.5) data.push([n, customersData[n].mobile, Math.round(customersData[n].due)]); }
+    for(let n in customersData){ data.push([n, customersData[n].mobile, Math.round(customersData[n].due)]); }
     const ws=XLSX.utils.aoa_to_sheet(data);
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Ledger");
-    XLSX.writeFile(wb,`Ledger_Backup.xlsx`);
+    XLSX.writeFile(wb,`Ledger_Report.xlsx`);
 }
 
 function renderTopDue(){
-    let arr=Object.entries(customersData).filter(([n,v])=> v.due > 0.5).map(([n,v])=>({name:n, due:v.due})).sort((a,b)=>b.due-a.due).slice(0,10);
+    let arr=Object.entries(customersData).map(([n,v])=>({name:n, due:v.due})).sort((a,b)=>b.due-a.due).slice(0,10);
     const ul=document.getElementById('topDueList'); ul.innerHTML="";
     arr.forEach(c=>{ ul.innerHTML+=`<li><span>${c.name}</span> <span style="color:red; font-weight:bold;">${Math.round(c.due)}৳</span></li>`; });
 }
@@ -310,7 +322,7 @@ function renderDueChart(){
     const ctx=document.getElementById('dueChart').getContext('2d');
     if(myChart) myChart.destroy();
     const labels=[], data=[];
-    Object.entries(customersData).filter(([n,v])=> v.due > 100).forEach(([n,v])=>{ labels.push(n); data.push(Math.round(v.due)); });
+    Object.entries(customersData).forEach(([n,v])=>{ labels.push(n); data.push(Math.round(v.due)); });
     myChart = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{label:'বকেয়া টাকা', data, backgroundColor: 'rgba(37, 99, 235, 0.8)'}] }, options:{ maintainAspectRatio: false } });
 }
 
