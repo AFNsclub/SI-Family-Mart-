@@ -193,7 +193,7 @@ async function showCustomerDetails(name,mobile){
 async function processPayment(){
     const amount=Math.round(Number(document.getElementById('payAmount').value));
     if(!amount || amount<=0) return alert("সঠিক পরিমাণ লিখুন");
-    if(amount > currentDueValue) return alert("বকেয়ার চেয়ে বেশি জমা নেওয়া যাবে না!");
+    if(amount > currentDueValue) return alert("বকেয়ার চেয়ে বেশি জমা নেওয়া যাবে না!");
 
     const btn = document.getElementById('btnPay');
     btn.disabled = true; btn.innerText = "প্রসেসিং...";
@@ -206,13 +206,12 @@ async function processPayment(){
             customer:currentCustomer, mobile:currentMobile, due:-amount, date:todayStr, type:'DUE_COLLECTION'
         });
         
+        // মেসেজ টেমপ্লেট
         let msg = "";
         if(newDue <= 0){
-            // সম্পূর্ণ পরিশোধের মেসেজ
-            msg = `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআলহামদুলিল্লাহ! আপনার বকেয়া হিসাবটি আজ সম্পূর্ণ পরিশোধ হয়েছে। 🤝\n\n✅ আজ জমা: *${amount}৳*\n✅ বর্তমান বকেয়া: *০৳* (পরিশোধিত)\n\nআপনার মতো একজন সৎ ও সচেতন গ্রাহক আমাদের গর্ব। ব্যবসার এই লেনদেনে আপনার সততা আমাদের মুগ্ধ করেছে। আমাদের ওপর আস্থা রাখার জন্য আপনাকে অসংখ্য ধন্যবাদ। 🌸\n\nপরবর্তীতে আবার আপনার সেবায় নিয়োজিত হওয়ার অপেক্ষায় রইলাম। আপনার দিনটি আনন্দময় হোক!\n\nশুভেচ্ছান্তে,\n— *S.I. Family Mart* 🛒`;
+            msg = `প্রিয় *${currentCustomer}*,\nঅভিনন্দন! 🎉 আপনার সকল বকেয়া পরিশোধ হয়েছে।\nআজ জমা: *${amount}৳*\nবর্তমান বকেয়া: *০৳*\nআমাদের সাথে থাকার জন্য ধন্যবাদ।\n— *S.I. Family Mart*`;
         } else {
-            // আংশিক পরিশোধের মেসেজ
-            msg = `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nশুভেচ্ছা জানবেন। আপনার বকেয়া হিসাব থেকে আজ আংশিক টাকা জমা নেওয়া হয়েছে। \n\n🔹 আজ জমা দিয়েছেন: *${amount}৳*\n🔹 বর্তমান মোট বকেয়া: *${newDue}৳*\n\nআপনার সুন্দর সহযোগিতার জন্য আমরা আন্তরিকভাবে কৃতজ্ঞ। বকেয়া থাকা অবশিষ্ট টাকাটি আপনার সুবিধামতো সময়ে পরিশোধের জন্য বিনীত অনুরোধ রইলো। আমরা সব সময় আপনার সর্বোচ্চ সেবা নিশ্চিত করতে প্রতিশ্রুতিবদ্ধ। 😊\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒`;
+            msg = `প্রিয় *${currentCustomer}*,\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে।\nএখন আপনার মোট বকেয়া: *${newDue}৳*।\nদ্রুত বাকি টাকা পরিশোধের অনুরোধ রইলো।\nধন্যবাদ— *S.I. Family Mart*`;
         }
         
         window.open(`https://api.whatsapp.com/send?phone=${currentMobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
@@ -223,9 +222,7 @@ async function processPayment(){
 }
 
 function sendReminder(name, mobile, due){
-    // বকেয়া রিমাইন্ডার মেসেজ
-    const msg = `আসসালামু আলাইকুম, জনাব *${name}* সাহেব। 🤝\n\nআশা করি আল্লাহর রহমতে আপনি ও আপনার পরিবার ভালো আছেন। \n\nআমাদের ক্যাশমেমো অনুযায়ী আপনার পূর্বের কিছু বকেয়া (*${Math.round(due)}৳*) আমাদের কাছে পাওনা রয়েছে। ব্যস্ততার কারণে হয়তো বিষয়টি আপনার খেয়াল নেই। \n\nআপনার মতো একজন নিয়মিত ও প্রিয় গ্রাহকের সহযোগিতাই আমাদের ব্যবসার মূল চালিকাশক্তি। তাই বকেয়া টাকাটি পরিশোধ করে আমাদের এই সুন্দর ব্যবসায়িক সম্পর্ককে আরও সুদৃঢ় করতে আপনার আন্তরিক সহযোগিতা কামনা করছি। 🙏\n\nদোকানে আপনার উপস্থিতির অপেক্ষায় রইলাম। ভালো থাকবেন। 😊\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒`;
-    
+    const msg = `আসসালামু আলাইকুম, *${name}*।\nআপনার কাছে আমাদের দোকানের পূর্বের বকেয়া *${Math.round(due)}৳* পাওনা আছে। অনেকদিন যাবত কোনো লেনদেন না হওয়ায় অনুগ্রহ করে যোগাযোগ করার অনুরোধ রইলো।\nধন্যবাদ— *S.I. Family Mart*`;
     window.open(`https://api.whatsapp.com/send?phone=${mobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
 }
 
