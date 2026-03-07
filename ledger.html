@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 :root { --primary: #2563eb; --dark: #1e293b; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; }
@@ -58,12 +59,22 @@ th { background: #f1f5f9; color: var(--dark); font-weight: bold; }
       <div class="summary-item" style="border-top-color: var(--danger);"><h6>মোট বাকি</h6><h3 id="totalDue" style="color: var(--danger); margin:0;">০৳</h3></div>
       <div class="summary-item" style="border-top-color: var(--success);"><h6>আজকের কালেকশন</h6><h3 id="todayCollection" style="color: var(--success); margin:0;">০৳</h3></div>
   </div>
+    
+ <div class="card">
+   <h3>🔥 Top 10 Due Customer</h3>
+     <div id="topDueList"></div>
+ </div>
 
   <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3 style="border:none;">👥 কাস্টমার তালিকা</h3>
-        <input type="text" id="searchCustomer" placeholder="নাম বা মোবাইল..." onkeyup="searchCustomer()" style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; width: 200px;">
-    </div>
+        <div style="display:flex; gap:10px;">
+<input type="text" id="searchCustomer" placeholder="নাম বা মোবাইল..." onkeyup="searchCustomer()" style="padding:10px;border-radius:8px;border:1px solid #cbd5e1;outline:none;width:200px;">
+
+<button onclick="exportLedgerExcel()" style="padding:10px 15px;background:#10b981;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">
+📥 Backup
+</button>
+</div>
     <div style="overflow-x: auto;">
         <table>
           <thead>
