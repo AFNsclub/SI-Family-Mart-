@@ -38,8 +38,9 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 .summary-box { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
 .summary-item { flex: 1; min-width: 150px; background: #fff; padding: 15px; border-radius: 12px; border-top: 4px solid var(--primary); }
 
-#printArea { background-color: #ffffff !important; color: #000000 !important; width: 100%; padding: 20px; }
-#printArea table { border: 1px solid #000 !important; }
+/* PDF PRINT FIXES */
+#printArea { background-color: #ffffff !important; color: #000000 !important; width: 100%; padding: 20px; display: block !important; }
+#printArea table { border: 1px solid #000 !important; background-color: #fff !important; }
 #printArea th, #printArea td { border: 1px solid #000 !important; color: #000 !important; }
 </style>
 </head>
@@ -224,7 +225,6 @@ async function showCustomerDetails(name,mobile){
 
         runningDue+=amt;
 
-        // আপনার কাঙ্ক্ষিত কলাম লজিক
         let totalProduct = d.totalPrice ? d.totalPrice : (amt > 0 ? amt : "-");
         let deposit = d.paidAmount ? d.paidAmount : (amt < 0 ? Math.abs(amt) : "-");
         
@@ -240,7 +240,7 @@ async function showCustomerDetails(name,mobile){
     currentDueValue=Math.round(runningDue);
     document.getElementById('finalDueDisplay').innerText=currentDueValue+"৳";
     document.getElementById('payAmount').value = currentDueValue > 0 ? currentDueValue : "";
-    transBody.innerHTML = html || "<tr><td colspan='5'>কোন বকেয়া লেনদেন নেই</td></tr>";
+    transBody.innerHTML = html || "<tr><td colspan='5'>কোন বকেয়া লেনদেন নেই</td></tr>";
 }
 
 async function processPayment(){
@@ -263,7 +263,7 @@ async function processPayment(){
             type:'DUE_COLLECTION' 
         });
         
-        let msg = newDue <= 0 ? `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআলহামদুলিল্লাহ! আপনার বকেয়া হিসাবটি আজ সম্পূর্ণ পরিশোধ হয়েছে। 🤝\n\n✅ আজ জমা: *${amount}৳*\n✅ বর্তমান বকেয়া: *০৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒` : `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে। \n\n🔹 আজ জমা: *${amount}৳*\n🔹 বর্তমান মোট বকেয়া: *${newDue}৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒`;
+        let msg = newDue <= 0 ? `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআলহামদুলিল্লাহ! আপনার বকেয়া হিসাবটি আজ সম্পূর্ণ পরিশোধ হয়েছে। 🤝\n\n✅ আজ জমা: *${amount}৳*\n✅ বর্তমান বকেয়া: *০৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒` : `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে। \n\n🔹 আজ জমা: *${amount}৳*\n🔹 বর্তমান মোট বকেয়া: *${newDue}৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒`;
         
         window.open(`https://api.whatsapp.com/send?phone=${currentMobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
         showCustomerDetails(currentCustomer,currentMobile);
@@ -278,7 +278,7 @@ function downloadStatement(){
     pdfBtn.innerText = "PDF তৈরি হচ্ছে...";
     pdfBtn.disabled = true;
 
-    // পিডিএফ সাদা হওয়া রোধ করার জন্য বিশেষ সেটিংস
+    // PDF সেটিংস - মান ঠিক রেখে পারফরম্যান্স বাড়ানো হয়েছে
     const opt = {
         margin: [10, 5, 10, 5],
         filename: `Ledger_${currentCustomer}.pdf`,
@@ -287,21 +287,19 @@ function downloadStatement(){
             scale: 2, 
             useCORS: true, 
             backgroundColor: '#ffffff',
-            logging: false
+            removeContainer: true
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // রেন্ডারিং টাইমিং ঠিক করার জন্য ২ সেকেন্ড ডিলে
-    setTimeout(() => {
-        html2pdf().set(opt).from(element).save().then(() => {
-            pdfBtn.innerText = "📄 PDF ডাউনলোড";
-            pdfBtn.disabled = false;
-        }).catch(err => {
-            alert("PDF তৈরিতে সমস্যা হয়েছে।");
-            pdfBtn.disabled = false;
-        });
-    }, 2000);
+    // সরাসরি HTML2PDF কল করা হলো যেন ব্রাউজার কন্টেন্ট মিস না করে
+    html2pdf().set(opt).from(element).save().then(() => {
+        pdfBtn.innerText = "📄 PDF ডাউনলোড";
+        pdfBtn.disabled = false;
+    }).catch(err => {
+        alert("PDF তৈরিতে সমস্যা হয়েছে।");
+        pdfBtn.disabled = false;
+    });
 }
 
 async function editCustomer(oldName, oldMobile) {
@@ -313,17 +311,17 @@ async function editCustomer(oldName, oldMobile) {
         const snap = await db.collection('sales').where('customer', '==', oldName).get();
         snap.forEach(doc => { batch.update(doc.ref, { customer: newName, mobile: newMobile }); });
         await batch.commit();
-        alert("সফল হয়েছে!");
+        alert("সফল হয়েছে!");
     } catch (e) { alert("ত্রুটি: " + e.message); }
 }
 
 function sendReminder(name, mobile, due){
-    const msg = `আসসালামু আলাইকুম, জনাব *${name}*। 🤝\nআপনার বকেয়া (*${Math.round(due)}৳*) পরিশোধের জন্য অনুরোধ করা হলো।\n— *S.I. Family Mart*`;
+    const msg = `আসসালামু আলাইকুম, জনাব *${name}*। 🤝\nআপনার বকেয়া (*${Math.round(due)}৳*) পরিশোধের জন্য অনুরোধ করা হলো।\n— *S.I. Family Mart*`;
     window.open(`https://api.whatsapp.com/send?phone=${mobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
 }
 
 function exportExcel(){
-    let data=[['কাস্টমার','মোবাইল','বকেয়া']];
+    let data=[['কাস্টমার','মোবাইল','বকেয়া']];
     for(let n in customersData){ data.push([n, customersData[n].mobile, Math.round(customersData[n].due)]); }
     const ws=XLSX.utils.aoa_to_sheet(data);
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Ledger");
@@ -341,7 +339,7 @@ function renderDueChart(){
     if(myChart) myChart.destroy();
     const labels=[], data=[];
     Object.entries(customersData).forEach(([n,v])=>{ labels.push(n); data.push(Math.round(v.due)); });
-    myChart = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{label:'বকেয়া টাকা', data, backgroundColor: 'rgba(37, 99, 235, 0.8)'}] }, options:{ maintainAspectRatio: false } });
+    myChart = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{label:'বকেয়া টাকা', data, backgroundColor: 'rgba(37, 99, 235, 0.8)'}] }, options:{ maintainAspectRatio: false } });
 }
 
 function searchCustomer(){
