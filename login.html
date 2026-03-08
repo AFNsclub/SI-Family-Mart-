@@ -17,7 +17,7 @@ body { background: #f1f5f9; display: flex; justify-content: center; align-items:
     <h2>Login</h2>
     <div id="message"></div>
     <input type="email" id="email" class="form-control mb-2" placeholder="ইমেল লিখুন">
-    <input type="password" id="password" class="form-control mb-2" placeholder="পাসওয়ার্ড">
+    <input type="password" id="password" class="form-control mb-2" placeholder="পাসওয়ার্ড">
     <button class="btn btn-primary w-100 mb-2" onclick="login()">Login</button>
     <button class="btn btn-link w-100" onclick="resetPassword()">Forget Password?</button>
 </div>
@@ -26,7 +26,6 @@ body { background: #f1f5f9; display: flex; justify-content: center; align-items:
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
   authDomain: "fir-i-family-mart.firebaseapp.com",
@@ -39,33 +38,30 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Redirect if already logged in
 onAuthStateChanged(auth, user => {
-    if(user) { location.href = "index.html"; }
+    if(user) { location.href = "index.html"; } // ড্যাশবোর্ড ফাইলের নাম index.html
 });
 
-// Login Function
 window.login = () => {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
     const msg = document.getElementById('message');
     msg.innerText = '';
-    if(!email || !password) { msg.innerText = 'ইমেল এবং পাসওয়ার্ড দুইটাই লাগবে'; return; }
+    if(!email || !password) { msg.innerText = 'ইমেল এবং পাসওয়ার্ড দুইটাই লাগবে'; return; }
     
     signInWithEmailAndPassword(auth, email, password)
-        .then(userCredential => { location.href = "index.html"; })
-        .catch(error => { msg.innerText = error.message; });
+        .then(() => { location.href = "index.html"; })
+        .catch(error => { msg.innerText = "ভুল ইমেল বা পাসওয়ার্ড!"; });
 };
 
-// Password Reset Function
 window.resetPassword = () => {
     const email = document.getElementById('email').value.trim();
     const msg = document.getElementById('message');
     msg.innerText = '';
-    if(!email) { msg.innerText = 'ইমেল লিখুন পাসওয়ার্ড রিসেট করার জন্য'; return; }
+    if(!email) { msg.innerText = 'ইমেল লিখুন পাসওয়ার্ড রিসেট করার জন্য'; return; }
     
     sendPasswordResetEmail(auth, email)
-        .then(() => { msg.style.color = 'green'; msg.innerText = 'পাসওয়ার্ড রিসেট লিঙ্ক আপনার ইমেলে পাঠানো হয়েছে'; })
+        .then(() => { msg.style.color = 'green'; msg.innerText = 'রিসেট লিঙ্ক ইমেলে পাঠানো হয়েছে'; })
         .catch(error => { msg.innerText = error.message; });
 };
 </script>
