@@ -40,32 +40,32 @@ body{font-family:'Segoe UI', sans-serif; background:#f8fafc; color: #1e293b;}
         <label class="small fw-bold mb-1">শেষ</label>
         <input type="date" id="endDate" class="form-control">
       </div>
-      <div class="col-md-2"><button class="btn btn-primary w-100 fw-bold" id="filterBtn">📊 Filter</button></div>
+      <div class="col-md-2"><button class="btn btn-primary w-100 fw-bold" onclick="filterData()">📊 Filter</button></div>
       <div class="col-md-2"><button class="btn btn-success w-100 fw-bold" id="downloadExcelBtn">📗 Excel</button></div>
       <div class="col-md-2"><button class="btn btn-danger w-100 fw-bold" id="downloadPDFBtn">📕 PDF</button></div>
     </div>
   </div>
 
   <div class="row mt-2 g-3">
-    <div class="col-md-3"><div class="card stat-card text-center"><h5>আজকের বিক্রি</h5><h3 id="dS">0৳</h3></div></div>
-    <div class="col-md-3"><div class="card stat-card text-center" style="border-bottom: 5px solid var(--success);"><h5>আজকের লাভ</h5><h3 id="dP" class="text-success">0৳</h3></div></div>
+    <div class="col-md-3"><div class="card stat-card text-center"><h5>ফিল্টারকৃত মোট বিক্রি</h5><h3 id="dS">0৳</h3></div></div>
+    <div class="col-md-3"><div class="card stat-card text-center" style="border-bottom: 5px solid var(--success);"><h5>ফিল্টারকৃত মোট লাভ</h5><h3 id="dP" class="text-success">0৳</h3></div></div>
     <div class="col-md-3"><div class="card stat-card text-center"><h5>স্টক মূল্য (কেনা)</h5><h3 id="iV">0৳</h3></div></div>
     <div class="col-md-3"><div class="card stat-card text-center" style="border-bottom: 5px solid var(--danger);"><h5>মোট বাকি পাওনা</h5><h3 id="totalDue" class="text-danger">0৳</h3></div></div>
   </div>
 
   <div class="row">
-      <div class="col-md-8"><div class="card"><h5 class="fw-bold mb-4">📈 বিক্রয় প্রবণতা (Sales Trend)</h5><canvas id="salesChart" height="150"></canvas></div></div>
+      <div class="col-md-8"><div class="card"><h5 class="fw-bold mb-4">📈 বিক্রয় প্রবণতা (Sales Trend)</h5><canvas id="salesChart" height="150"></canvas></div></div>
       <div class="col-md-4"><div class="card"><h5 class="fw-bold mb-4">🏆 সেরা ৫ পণ্য</h5><canvas id="topProductsChart" height="340"></canvas></div></div>
   </div>
 
   <div class="card mt-2">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
         <h5 class="fw-bold m-0">👥 কাস্টমার লেজার ও বাকি তালিকা</h5>
-        <input type="text" id="searchCust" class="form-control w-50" placeholder="ক্রেতার নাম বা মোবাইল দিয়ে খুঁজুন...">
+        <input type="text" id="searchCust" class="form-control w-50" placeholder="ক্রেতার নাম বা মোবাইল দিয়ে খুঁজুন..." onkeyup="searchCustomer()">
     </div>
     <div class="table-responsive">
         <table class="table table-hover align-middle">
-          <thead><tr><th>ক্রেতার নাম</th><th>মোট বাকি</th><th>শেষ লেনদেন</th><th>বিস্তারিত</th></tr></thead>
+          <thead><tr><th>ক্রেতার নাম</th><th>মোবাইল</th><th>মোট বাকি</th><th>শেষ লেনদেন</th><th>বিস্তারিত</th></tr></thead>
           <tbody id="customerLedger"></tbody>
         </table>
     </div>
@@ -86,7 +86,7 @@ body{font-family:'Segoe UI', sans-serif; background:#f8fafc; color: #1e293b;}
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered">
-              <thead class="table-dark"><tr><th>মেমো</th><th>তারিখ</th><th>মোট বিল</th><th>জমা</th><th>বাকি</th><th>ছাড়</th></tr></thead>
+              <thead class="table-dark"><tr><th>তারিখ</th><th>বিবরণ</th><th>মোট বিল</th><th>জমা</th><th>বাকি</th></tr></thead>
               <tbody id="modalHistory"></tbody>
             </table>
         </div>
@@ -103,52 +103,83 @@ const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-let salesData=[], customerData=[], topProducts={};
+let allSales=[], filteredSales=[], customerMap={}, topProducts={};
 let salesChart=null, topChart=null;
 
-// লাইভ ডাটা লোড
 function initData(){
-  // Sales & Charts
+  // সরাসরি 'sales' থেকে ডাটা নিয়ে কাস্টমার ম্যাপ তৈরি করা হচ্ছে
   db.collection('sales').onSnapshot(snap=>{
-    salesData=[]; topProducts={};
-    snap.forEach(d=>{ 
-        const s=d.data(); 
-        salesData.push(s); 
-        if(s.items) s.items.forEach(it=>{topProducts[it.name]=(topProducts[it.name]||0)+it.qty;}); 
-    });
-    updateStats();
-    renderCharts();
-  });
+    allSales=[]; customerMap={}; topProducts={};
+    
+    snap.forEach(doc=>{
+        const s = doc.data();
+        allSales.push(s);
+        
+        // কাস্টমার লেজার ক্যালকুলেশন
+        if(s.customer){
+            if(!customerMap[s.customer]) {
+                customerMap[s.customer] = { name: s.customer, mobile: s.mobile || '-', due: 0, lastDate: s.date };
+            }
+            customerMap[s.customer].due += Number(s.due || 0);
+            if(s.date > customerMap[s.customer].lastDate) customerMap[s.customer].lastDate = s.date;
+        }
 
-  // Customers & Ledger
-  db.collection('customers').onSnapshot(snap=>{
-    customerData=[];
-    snap.forEach(d=>{ customerData.push({name:d.id, ...d.data()}); });
-    renderLedger();
-    updateStats();
+        // টপ প্রোডাক্ট ক্যালকুলেশন
+        if(s.items) {
+            s.items.forEach(it => {
+                topProducts[it.name] = (topProducts[it.name] || 0) + Number(it.qty || 0);
+            });
+        }
+    });
+
+    filterData(); // ডিফল্টভাবে সব ডাটা দেখাবে
+    updateInventoryValue();
   });
 }
 
+function filterData() {
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+
+    filteredSales = allSales.filter(s => {
+        if(!start && !end) return true;
+        return s.date >= (start || "0000-00-00") && s.date <= (end || "9999-99-99");
+    });
+
+    updateStats();
+    renderCharts();
+    renderLedger();
+}
+
 function updateStats(){
-  const today=new Date().toISOString().split('T')[0];
-  let todaySale=0, todayProfit=0, totalDue=0;
+  let totalSale=0, totalProfit=0, totalDue=0;
   
-  salesData.forEach(s=>{ if(s.date===today){ todaySale+=s.total; todayProfit+=s.profit; } });
-  customerData.forEach(c=>{ totalDue+=Number(c.due||0); });
+  filteredSales.forEach(s=>{ 
+      totalSale += Number(s.totalPrice || s.total || 0); 
+      totalProfit += Number(s.profit || 0); 
+  });
 
-  document.getElementById('dS').innerText=Math.round(todaySale)+"৳";
-  document.getElementById('dP').innerText=Math.round(todayProfit)+"৳";
+  // মোট বাকি সবসময় বর্তমান অবস্থা দেখাবে (ফিল্টার মুক্ত)
+  Object.values(customerMap).forEach(c => { totalDue += c.due; });
+
+  document.getElementById('dS').innerText=Math.round(totalSale)+"৳";
+  document.getElementById('dP').innerText=Math.round(totalProfit)+"৳";
   document.getElementById('totalDue').innerText=Math.round(totalDue)+"৳";
+}
 
-  db.collection('inventory').get().then(snap=>{ 
-      let val=0; snap.forEach(d=>{ const dt=d.data(); val+=(dt.stock||0)*(dt.buy||0); }); 
+function updateInventoryValue() {
+    db.collection('inventory').get().then(snap=>{ 
+      let val=0; snap.forEach(d=>{ const dt=d.data(); val+=(Number(dt.stock||0)*Number(dt.buy||0)); }); 
       document.getElementById('iV').innerText=Math.round(val)+"৳";
   });
 }
 
 function renderCharts(){
   const daily={}; 
-  salesData.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>{daily[s.date]=(daily[s.date]||0)+s.total;});
+  filteredSales.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>{
+      daily[s.date] = (daily[s.date] || 0) + Number(s.totalPrice || s.total || 0);
+  });
+  
   const labels=Object.keys(daily); const data=Object.values(daily);
   
   if(salesChart) salesChart.destroy();
@@ -169,13 +200,16 @@ function renderCharts(){
   });
 }
 
-function renderLedger(search=""){
+function renderLedger(){
+  const search = document.getElementById('searchCust').value.toLowerCase();
   let html=""; 
-  customerData.forEach(c=>{ 
-      if(c.name.toLowerCase().includes(search.toLowerCase()) || (c.mobile && c.mobile.includes(search))){ 
+  
+  Object.values(customerMap).forEach(c=>{ 
+      if(c.name.toLowerCase().includes(search) || c.mobile.includes(search)){ 
           html+=`<tr>
             <td class="fw-bold">${c.name}</td>
-            <td class="text-danger fw-bold">${Math.round(c.due||0)}৳</td>
+            <td>${c.mobile}</td>
+            <td class="text-danger fw-bold">${Math.round(c.due)}৳</td>
             <td>${c.lastDate||'-'}</td>
             <td><button class="btn btn-sm btn-outline-primary" onclick="showCustomerDetails('${c.name}')">View History</button></td>
           </tr>`; 
@@ -184,41 +218,48 @@ function renderLedger(search=""){
   document.getElementById('customerLedger').innerHTML=html;
 }
 
-document.getElementById('searchCust').addEventListener('input', e=>renderLedger(e.target.value));
+function searchCustomer() { renderLedger(); }
 
 async function showCustomerDetails(name){
   const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
-  const cust = customerData.find(c=>c.name===name);
   document.getElementById('modalName').innerText=name;
-  document.getElementById('modalDue').innerText=Math.round(cust.due||0);
+  document.getElementById('modalDue').innerText=Math.round(customerMap[name].due);
   
-  const snap=await db.collection('sales').where('customer','==',name).orderBy('date','desc').get();
-  let html=""; 
-  snap.forEach(doc=>{ 
-      const d=doc.data(); 
-      html+=`<tr><td>${d.memo||'-'}</td><td>${d.date}</td><td>${d.total}৳</td><td>${d.paid||0}৳</td><td>${d.due||0}৳</td><td>${d.discount||0}৳</td></tr>`; 
+  const snap = await db.collection('sales').where('customer','==',name).get();
+  let trans = []; snap.forEach(d => trans.push(d.data()));
+  trans.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  let html=""; let runningDue = 0;
+  trans.forEach(d=>{ 
+      const amt = Number(d.due || 0);
+      runningDue += amt;
+      html+=`<tr>
+        <td>${d.date}</td>
+        <td>${amt < 0 ? "টাকা জমা" : "পণ্য ক্রয়"}</td>
+        <td>${d.totalPrice || d.total || 0}৳</td>
+        <td>${d.paidAmount || d.paid || 0}৳</td>
+        <td class="fw-bold">${Math.round(runningDue)}৳</td>
+      </tr>`; 
   });
-  document.getElementById('modalHistory').innerHTML=html; 
+  document.getElementById('modalHistory').innerHTML=html || "<tr><td colspan='5'>লেনদেন পাওয়া যায়নি</td></tr>"; 
   modal.show();
 }
 
-// Download Excel
+// Excel Export (Filtered)
 document.getElementById('downloadExcelBtn').addEventListener('click',()=>{
   const wb=XLSX.utils.book_new();
-  const wsSales=XLSX.utils.json_to_sheet(salesData);
-  XLSX.utils.book_append_sheet(wb, wsSales, "Sales");
-  const wsCust=XLSX.utils.json_to_sheet(customerData);
-  XLSX.utils.book_append_sheet(wb, wsCust, "Customers");
-  XLSX.writeFile(wb, "SI_FamilyMart_Report.xlsx");
+  const wsSales=XLSX.utils.json_to_sheet(filteredSales);
+  XLSX.utils.book_append_sheet(wb, wsSales, "Filtered_Sales");
+  XLSX.writeFile(wb, "SI_Mart_Report.xlsx");
 });
 
-// Download PDF
+// PDF Export (Ledger)
 document.getElementById('downloadPDFBtn').addEventListener('click', ()=>{
   const { jsPDF } = window.jspdf; const doc = new jsPDF('p','pt','a4');
-  doc.text("S.I. Family Mart | Complete Business Report", 40, 40);
-  const tableData = customerData.map(c=>[c.name, c.mobile || '-', c.due||0, c.lastDate||'-']);
+  doc.text("S.I. Family Mart | Customer Ledger Report", 40, 40);
+  const tableData = Object.values(customerMap).map(c=>[c.name, c.mobile, Math.round(c.due), c.lastDate]);
   doc.autoTable({ head: [['Name', 'Mobile', 'Due', 'Last Date']], body: tableData, startY: 60 });
-  doc.save("SI_FamilyMart_Report.pdf");
+  doc.save("SI_Mart_Ledger.pdf");
 });
 
 initData();
