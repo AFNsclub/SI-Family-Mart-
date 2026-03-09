@@ -138,9 +138,11 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-
   </div>
 
   <div class="text-center mt-3 no-print border-top pt-3">
-      <div id="optionButtonArea" class="mb-3 d-grid gap-2"></div>
-      
-      <button class="btn btn-outline-dark w-100 px-4 mt-2" onclick="location.reload()">🔄 নতুন মেমো</button>
+      <div id="wpButtonArea" class="mb-3 d-grid gap-2"></div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary w-100 fw-bold px-4" onclick="window.print()">🖨️ প্রিন্ট মেমো</button>
+        <button class="btn btn-outline-dark w-100 px-4" onclick="location.reload()">🔄 নতুন মেমো</button>
+      </div>
   </div>
 </div>
 
@@ -263,14 +265,10 @@ async function finalizeSale(){
       
       JsBarcode("#rBarcode", memoNum, {format:"CODE128", width:1.5, height:30, displayValue:false});
 
-      // মেমো ছবি এবং প্রিন্ট বাটন
-      document.getElementById('optionButtonArea').innerHTML = `
-          <button class="btn btn-primary fw-bold py-2" onclick="window.print()">
-          🖨️ মেমো প্রিন্ট করুন
-          </button>
-          <button class="btn btn-success text-white fw-bold py-2" 
-          onclick="downloadPhotoMemo('${cust}', '${custMobile}', '${memoNum}')">
-          📸 মেমোর ছবি ডাউনলোড (WhatsApp)
+      // মেমো ছবি ডাউনলোড বাটন
+      document.getElementById('wpButtonArea').innerHTML = `
+          <button class="btn btn-success fw-bold py-3 shadow" onclick="sendPhotoMemo('${cust}', '${custMobile}', '${memoNum}')">
+          📸 মেমোর ছবি ডাউনলোড ও WhatsApp ওপেন
           </button>`;
 
       document.querySelector('.container').style.display='none';
@@ -280,35 +278,37 @@ async function finalizeSale(){
   } catch (e) { alert("ভুল হয়েছে!"); finalBtn.disabled=false; }
 }
 
-// ছবির মাধ্যমে মেমো তৈরির ফাংশন (শুধু ডাউনলোড করবে)
-async function downloadPhotoMemo(name, mobile, memoNum) {
+// ছবির মাধ্যমে মেমো পাঠানোর মেইন ফাংশন
+async function sendPhotoMemo(name, mobile, memoNum) {
+    if(!mobile || mobile === "-" || mobile.length < 11) return alert("মোবাইল নাম্বার সঠিক নয়!");
+    
     const receipt = document.getElementById('receipt');
     
     try {
+        // ছবি তৈরির সময় বাটন এরিয়া হাইড করা
         const canvas = await html2canvas(receipt, {
             scale: 2,
             useCORS: true,
-            ignoreElements: (el) => el.classList.contains('no-print') // বাটনগুলো ছবিতে আসবে না
+            ignoreElements: (el) => el.classList.contains('no-print')
         });
         
         const image = canvas.toDataURL("image/png");
         const link = document.createElement('a');
-        link.download = `Memo_${memoNum}_${name}.png`;
+        link.download = `Memo_${memoNum}.png`;
         link.href = image;
-        link.click(); // ছবি ডাউনলোড হবে
+        link.click(); // ১. ছবি ডাউনলোড হবে
 
-        // WhatsApp-এর মেসেজ টেক্সট সরিয়ে দেওয়া হলো
         let cleanMobile = mobile.replace(/[^0-9]/g, "");
-        if(cleanMobile.length === 11 && cleanMobile.startsWith("0")) {
-            cleanMobile = "88" + cleanMobile;
-        }
+        if(cleanMobile.length === 11 && cleanMobile.startsWith("0")) cleanMobile = "88" + cleanMobile;
         
-        // শুধু হোয়াটসঅ্যাপ চ্যাট ওপেন হবে, ইউজার ছবি পেস্ট বা এটাচ করে দেবে
-        alert("মেমোটি ছবি হিসেবে ডাউনলোড হয়েছে। এখন ক্রেতার হোয়াটসঅ্যাপে এটি ফাইল হিসেবে পাঠিয়ে দিন।");
+        // ২. অ্যালার্ট দেখাবে এবং ইউজার যখন "OK" ক্লিক করবে...
+        alert("মেমোটি ছবি হিসেবে ডাউনলোড হয়েছে। এখন কাস্টমারের হোয়াটসঅ্যাপে এটি পাঠিয়ে দিন।");
+        
+        // ৩. তখনই হোয়াটসঅ্যাপ ওপেন হবে
         window.open(`https://wa.me/${cleanMobile}`, '_blank');
         
     } catch (e) {
-        alert("ছবি তৈরিতে সমস্যা হয়েছে!");
+        alert("ছবি তৈরিতে সমস্যা হয়েছে!");
     }
 }
 
