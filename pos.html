@@ -8,6 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.6/umd/index.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <style>
 :root {--primary:#2563eb;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg:#f1f5f9;--card-bg:#fff;}
 body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-top: 60px;}
@@ -136,9 +138,9 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-
   </div>
 
   <div class="text-center mt-3 no-print border-top pt-3">
-      <div id="wpButtonArea" class="mb-3"></div>
-      <button class="btn btn-primary me-2 px-4" onclick="window.print()">🖨️ প্রিন্ট করুন</button>
-      <button class="btn btn-outline-dark px-4" onclick="location.reload()">🔄 নতুন মেমো</button>
+      <div id="optionButtonArea" class="mb-3 d-grid gap-2"></div>
+      
+      <button class="btn btn-outline-dark w-100 px-4 mt-2" onclick="location.reload()">🔄 নতুন মেমো</button>
   </div>
 </div>
 
@@ -191,7 +193,7 @@ function addToCart(){
       cart.push({name:name, qty:qty, price:item.sell, buyPrice:item.buy, total: item.sell * qty});
   }
   renderCart();
-  updateCalculations(); // অটো ক্যালকুলেশন কল
+  updateCalculations();
 }
 
 function renderCart(){
@@ -205,15 +207,12 @@ function removeItem(i){
     updateCalculations();
 }
 
-// অটো পেমেন্ট ও ডিসকাউন্ট ক্যালকুলেশন লজিক
 function updateCalculations() {
     let subTotal = cart.reduce((s,it)=>s+it.total,0);
     let dVal = Number(document.getElementById('totalDisc').value) || 0;
     let dType = document.getElementById('totalDType').value;
     let dAmt = (dType==='percent') ? (subTotal*dVal/100) : dVal;
     let grand = subTotal - dAmt;
-    
-    // কার্টে পণ্য থাকলে অটোমেটিক পেমেন্টের ঘরে পুরো টাকা বসানো
     document.getElementById('paidAmount').value = Math.round(grand);
 }
 
@@ -247,7 +246,6 @@ async function finalizeSale(){
         date: today, memo: memoNum, time: new Date().toLocaleTimeString()
       });
 
-      // মেমো রেন্ডারিং
       let rHtml=""; cart.forEach(it=>{rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}৳</td><td>${it.total}৳</td></tr>`;});
       document.getElementById('rItemsBody').innerHTML=rHtml;
       document.getElementById('rSub').innerText=Math.round(subTotal);
@@ -256,12 +254,7 @@ async function finalizeSale(){
       document.getElementById('rPaid').innerText=Math.round(paidAmt);
       document.getElementById('rDue').innerText=Math.round(due);
       
-      // বকেয়া না থাকলে ডিউ রো হাইড করা
-      if(Math.round(due) <= 0) {
-          document.getElementById('dueDisplayRow').style.display = 'none';
-      } else {
-          document.getElementById('dueDisplayRow').style.display = 'block';
-      }
+      document.getElementById('dueDisplayRow').style.display = (Math.round(due) <= 0) ? 'none' : 'block';
 
       document.getElementById('custName').innerText=cust;
       document.getElementById('custMobileDisplay').innerText=custMobile;
@@ -270,10 +263,14 @@ async function finalizeSale(){
       
       JsBarcode("#rBarcode", memoNum, {format:"CODE128", width:1.5, height:30, displayValue:false});
 
-      document.getElementById('wpButtonArea').innerHTML = `
-          <button class="btn btn-success w-100 fw-bold py-2 mb-2" 
-          onclick="sendWPMemo('${cust}', '${custMobile}', '${Math.round(grand)}', '${Math.round(due)}', '${memoNum}')">
-          💬 WhatsApp-এ মেমো পাঠান
+      // মেমো ছবি এবং প্রিন্ট বাটন
+      document.getElementById('optionButtonArea').innerHTML = `
+          <button class="btn btn-primary fw-bold py-2" onclick="window.print()">
+          🖨️ মেমো প্রিন্ট করুন
+          </button>
+          <button class="btn btn-success text-white fw-bold py-2" 
+          onclick="downloadPhotoMemo('${cust}', '${custMobile}', '${memoNum}')">
+          📸 মেমোর ছবি ডাউনলোড (WhatsApp)
           </button>`;
 
       document.querySelector('.container').style.display='none';
@@ -283,19 +280,36 @@ async function finalizeSale(){
   } catch (e) { alert("ভুল হয়েছে!"); finalBtn.disabled=false; }
 }
 
-function sendWPMemo(name, mobile, total, due, memo) {
-    if(!mobile || mobile === "-" || mobile.length < 11) return alert("মোবাইল নাম্বার সঠিক নয়!");
-    let text = `🛍️ *S.I. Family Mart* \n` +
-               `--------------------------\n` +
-               `প্রিয় *${name}*,\n` +
-               `আমাদের দোকান থেকে কেনাকাটা করার জন্য ধন্যবাদ।\n\n` +
-               `📄 মেমো নং: ${memo}\n` +
-               `💰 মোট বিল: *${total}৳*\n` +
-               (due > 0 ? `🛑 বকেয়া: *${due}৳*\n` : `✅ পরিশোধিত: *${total}৳*\n`) +
-               `আবার আসবেন! 😊`;
-    let cleanMobile = mobile.replace(/[^0-9]/g, "");
-    if(cleanMobile.startsWith("0")) cleanMobile = "88" + cleanMobile;
-    window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(text)}`, '_blank');
+// ছবির মাধ্যমে মেমো তৈরির ফাংশন (শুধু ডাউনলোড করবে)
+async function downloadPhotoMemo(name, mobile, memoNum) {
+    const receipt = document.getElementById('receipt');
+    
+    try {
+        const canvas = await html2canvas(receipt, {
+            scale: 2,
+            useCORS: true,
+            ignoreElements: (el) => el.classList.contains('no-print') // বাটনগুলো ছবিতে আসবে না
+        });
+        
+        const image = canvas.toDataURL("image/png");
+        const link = document.createElement('a');
+        link.download = `Memo_${memoNum}_${name}.png`;
+        link.href = image;
+        link.click(); // ছবি ডাউনলোড হবে
+
+        // WhatsApp-এর মেসেজ টেক্সট সরিয়ে দেওয়া হলো
+        let cleanMobile = mobile.replace(/[^0-9]/g, "");
+        if(cleanMobile.length === 11 && cleanMobile.startsWith("0")) {
+            cleanMobile = "88" + cleanMobile;
+        }
+        
+        // শুধু হোয়াটসঅ্যাপ চ্যাট ওপেন হবে, ইউজার ছবি পেস্ট বা এটাচ করে দেবে
+        alert("মেমোটি ছবি হিসেবে ডাউনলোড হয়েছে। এখন ক্রেতার হোয়াটসঅ্যাপে এটি ফাইল হিসেবে পাঠিয়ে দিন।");
+        window.open(`https://wa.me/${cleanMobile}`, '_blank');
+        
+    } catch (e) {
+        alert("ছবি তৈরিতে সমস্যা হয়েছে!");
+    }
 }
 
 const codeReader = new ZXing.BrowserMultiFormatReader();
