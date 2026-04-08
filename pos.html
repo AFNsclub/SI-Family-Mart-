@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S.I. Family Mart | POS / Billings</title>
+<title>মায়াঘর | POS / Billings</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -44,7 +44,7 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-
 
 <div class="container mt-4 no-print">
   <header class="header">
-    <h2 class="fw-bold m-0">S.I. Family Mart | POS</h2>
+    <h2 class="fw-bold m-0">মায়াঘর | POS</h2>
     <p class="m-0 opacity-75">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
   </header>
 
@@ -53,8 +53,8 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-
       <div class="card border-0">
         <h5 class="fw-bold mb-3 text-primary">🛒 কাস্টমার ও পণ্য</h5>
         <div class="mb-2">
-            <input type="text" id="cust" class="form-control mb-2" placeholder="ক্রেতার নাম (আবশ্যক)">
-            <input type="text" id="custMobile" class="form-control mb-2" placeholder="মোবাইল নাম্বার">
+            <input type="text" id="custMobile" class="form-control mb-2" placeholder="মোবাইল নাম্বার দিন..." oninput="autoFillCustomer('mobile')">
+            <input type="text" id="cust" class="form-control mb-2" placeholder="ক্রেতার নাম (আবশ্যক)" oninput="autoFillCustomer('name')">
         </div>
         <hr>
         <div class="mb-3">
@@ -106,7 +106,7 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-
 
 <div id="receipt">
   <div class="text-center receipt-header">
-    <h2 class="fw-bold m-0" style="letter-spacing: 1px;">S.I. FAMILY MART</h2>
+    <h2 class="fw-bold m-0" style="letter-spacing: 1px;">মায়াঘর</h2>
     <p class="small m-0">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
     <p class="small m-0">প্রয়োজনে: <b>01568683171</b></p>
     <div class="my-2"><svg id="rBarcode"></svg></div>
@@ -134,14 +134,14 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-
   </div>
 
   <div class="text-center promo-msg">
-    "আপনার প্রতিটি কেনাকাটা আমাদের কাছে মূল্যবান। পরবর্তী কেনাকাটায় বিশেষ অফার পেতে এই মেমোটি সাথে রাখুন। S.I. Family Mart-এর সাথেই থাকুন!"
+    "আপনার প্রতিটি কেনাকাটা আমাদের কাছে মূল্যবান। পরবর্তী কেনাকাটায় বিশেষ অফার পেতে এই মেমোটি সাথে রাখুন। মায়াঘর-এর সাথেই থাকুন!"
   </div>
 
   <div class="text-center mt-3 no-print border-top pt-3">
-      <div id="wpButtonArea" class="mb-3 d-grid gap-2"></div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary w-100 fw-bold px-4" onclick="window.print()">🖨️ প্রিন্ট মেমো</button>
-        <button class="btn btn-outline-dark w-100 px-4" onclick="location.reload()">🔄 নতুন মেমো</button>
+      <div class="d-grid gap-3">
+        <button class="btn btn-primary py-3 fw-bold shadow-sm" onclick="window.print()">🖨️ মেমো প্রিন্ট করুন</button>
+        <div id="wpButtonArea"></div>
+        <button class="btn btn-outline-dark py-2" onclick="location.reload()">🔄 নতুন মেমো তৈরি করুন</button>
       </div>
   </div>
 </div>
@@ -154,13 +154,35 @@ const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-let inv={}, cart=[];
+let inv={}, cart=[], allCustomers={};
 
 db.collection('inventory').onSnapshot(snap=>{
   let ops="<option value=''>পণ্য বাছুন</option>";
   snap.forEach(d=>{ const data=d.data(); inv[data.name]=data; ops+=`<option value="${data.name}">${data.name} (স্টক: ${data.stock})</option>`; });
   document.getElementById('sItem').innerHTML=ops;
 });
+
+db.collection('sales').onSnapshot(snap => {
+    snap.forEach(doc => {
+        const data = doc.data();
+        if(data.customer && data.mobile) {
+            allCustomers[data.mobile] = data.customer;
+            allCustomers[data.customer] = data.mobile;
+        }
+    });
+});
+
+function autoFillCustomer(type) {
+    const nameInput = document.getElementById('cust');
+    const mobileInput = document.getElementById('custMobile');
+    if(type === 'mobile') {
+        const val = mobileInput.value.trim();
+        if(allCustomers[val]) nameInput.value = allCustomers[val];
+    } else {
+        const val = nameInput.value.trim();
+        if(allCustomers[val]) mobileInput.value = allCustomers[val];
+    }
+}
 
 function autoFillBarcode(name) {
     if(name && inv[name]) document.getElementById('barcodeInput').value = inv[name].barcode || "";
@@ -185,7 +207,6 @@ function addToCart(){
   const qty=Number(document.getElementById('sQ').value);
   if(!name || qty<1) return;
   if(inv[name].stock < qty) return alert("পর্যাপ্ত স্টক নেই!");
-  
   const item=inv[name];
   const existing = cart.find(c => c.name === name);
   if(existing) {
@@ -203,11 +224,7 @@ function renderCart(){
   document.getElementById('cartBody').innerHTML=h;
 }
 
-function removeItem(i){
-    cart.splice(i,1);
-    renderCart();
-    updateCalculations();
-}
+function removeItem(i){ cart.splice(i,1); renderCart(); updateCalculations(); }
 
 function updateCalculations() {
     let subTotal = cart.reduce((s,it)=>s+it.total,0);
@@ -222,15 +239,12 @@ async function finalizeSale(){
   const cust=document.getElementById('cust').value.trim();
   if(cart.length===0) return alert("কার্ট খালি!");
   if(!cust) return alert("ক্রেতার নাম দিন!");
-
   const finalBtn = document.getElementById('finalBtn');
   finalBtn.disabled=true;
-
   const custMobile=document.getElementById('custMobile').value.trim() || "-";
   const paidAmt=Number(document.getElementById('paidAmount').value) || 0;
   const dVal=Number(document.getElementById('totalDisc').value) || 0;
   const dType=document.getElementById('totalDType').value;
-  
   let subTotal = cart.reduce((s,it)=>s+it.total,0);
   let dAmt = (dType==='percent') ? (subTotal*dVal/100) : dVal;
   let grand = subTotal - dAmt;
@@ -241,13 +255,7 @@ async function finalizeSale(){
 
   try {
       for(let it of cart){ await db.collection('inventory').doc(it.name).update({ stock: firebase.firestore.FieldValue.increment(-it.qty) }); }
-
-      await db.collection('sales').add({
-        customer: cust, mobile: custMobile, items: cart,
-        totalPrice: grand, paidAmount: paidAmt, due: due, profit: profit,
-        date: today, memo: memoNum, time: new Date().toLocaleTimeString()
-      });
-
+      await db.collection('sales').add({ customer: cust, mobile: custMobile, items: cart, totalPrice: grand, paidAmount: paidAmt, due: due, profit: profit, date: today, memo: memoNum, time: new Date().toLocaleTimeString() });
       let rHtml=""; cart.forEach(it=>{rHtml+=`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}৳</td><td>${it.total}৳</td></tr>`;});
       document.getElementById('rItemsBody').innerHTML=rHtml;
       document.getElementById('rSub').innerText=Math.round(subTotal);
@@ -255,61 +263,41 @@ async function finalizeSale(){
       document.getElementById('rDiscount').innerText=Math.round(dAmt);
       document.getElementById('rPaid').innerText=Math.round(paidAmt);
       document.getElementById('rDue').innerText=Math.round(due);
-      
       document.getElementById('dueDisplayRow').style.display = (Math.round(due) <= 0) ? 'none' : 'block';
-
       document.getElementById('custName').innerText=cust;
       document.getElementById('custMobileDisplay').innerText=custMobile;
       document.getElementById('memoNum').innerText="মেমো নং: "+memoNum;
       document.getElementById('saleDate').innerText="তারিখ: "+new Date().toLocaleDateString();
-      
       JsBarcode("#rBarcode", memoNum, {format:"CODE128", width:1.5, height:30, displayValue:false});
-
-      // মেমো ছবি ডাউনলোড বাটন
+      
       document.getElementById('wpButtonArea').innerHTML = `
-          <button class="btn btn-success fw-bold py-3 shadow" onclick="sendPhotoMemo('${cust}', '${custMobile}', '${memoNum}')">
-          📸 মেমোর ছবি ডাউনলোড ও WhatsApp ওপেন
+          <button class="btn btn-success py-3 fw-bold w-100 shadow-sm" onclick="sendPhotoMemo('${cust}', '${custMobile}', '${memoNum}')">
+          💬 হোয়াটসঅ্যাপে মেমো পাঠান
           </button>`;
-
       document.querySelector('.container').style.display='none';
       document.getElementById('receipt').style.display='block';
       window.scrollTo(0,0);
-
   } catch (e) { alert("ভুল হয়েছে!"); finalBtn.disabled=false; }
 }
 
-// ছবির মাধ্যমে মেমো পাঠানোর মেইন ফাংশন
 async function sendPhotoMemo(name, mobile, memoNum) {
     if(!mobile || mobile === "-" || mobile.length < 11) return alert("মোবাইল নাম্বার সঠিক নয়!");
-    
     const receipt = document.getElementById('receipt');
-    
+    const wpBtn = document.querySelector('#wpButtonArea button');
+    wpBtn.disabled = true; wpBtn.innerText = "⏳ ছবি তৈরি হচ্ছে...";
     try {
-        // ছবি তৈরির সময় বাটন এরিয়া হাইড করা
-        const canvas = await html2canvas(receipt, {
-            scale: 2,
-            useCORS: true,
-            ignoreElements: (el) => el.classList.contains('no-print')
-        });
-        
+        const canvas = await html2canvas(receipt, { scale: 2, useCORS: true, ignoreElements: (el) => el.classList.contains('no-print') });
         const image = canvas.toDataURL("image/png");
         const link = document.createElement('a');
-        link.download = `Memo_${memoNum}.png`;
+        link.download = `MayaGhor_${memoNum}.png`;
         link.href = image;
-        link.click(); // ১. ছবি ডাউনলোড হবে
-
+        link.click();
         let cleanMobile = mobile.replace(/[^0-9]/g, "");
         if(cleanMobile.length === 11 && cleanMobile.startsWith("0")) cleanMobile = "88" + cleanMobile;
-        
-        // ২. অ্যালার্ট দেখাবে এবং ইউজার যখন "OK" ক্লিক করবে...
-        alert("মেমোটি ছবি হিসেবে ডাউনলোড হয়েছে। এখন কাস্টমারের হোয়াটসঅ্যাপে এটি পাঠিয়ে দিন।");
-        
-        // ৩. তখনই হোয়াটসঅ্যাপ ওপেন হবে
+        alert("মেমোটি ডাউনলোড হয়েছে। এখন হোয়াটসঅ্যাপে পেস্ট করে পাঠিয়ে দিন।");
         window.open(`https://wa.me/${cleanMobile}`, '_blank');
-        
-    } catch (e) {
-        alert("ছবি তৈরিতে সমস্যা হয়েছে!");
-    }
+    } catch (e) { alert("ছবি তৈরিতে সমস্যা হয়েছে!"); }
+    finally { wpBtn.disabled = false; wpBtn.innerText = "💬 হোয়াটসঅ্যাপে মেমো পাঠান"; }
 }
 
 const codeReader = new ZXing.BrowserMultiFormatReader();
