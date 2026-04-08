@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ledger Dashboard | S.I. Family Mart</title>
+<title>Ledger Dashboard | মায়াঘর</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -37,7 +37,6 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 .summary-box { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
 .summary-item { flex: 1; min-width: 150px; background: #fff; padding: 15px; border-radius: 12px; border-top: 4px solid var(--primary); }
 
-/* প্রিন্ট করার জন্য বিশেষ CSS */
 @media print {
     body * { visibility: hidden; }
     #printArea, #printArea * { visibility: visible; }
@@ -77,7 +76,7 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
     <div style="overflow-x:auto;">
         <table id="customerTable">
             <thead>
-                <tr><th>কাস্টমার</th><th>মোবাইল</th><th>বাকি</th><th>অ্যাকশন</th></tr>
+                <tr><th>কাস্টমার</th><th>মোাবাইল</th><th>বাকি</th><th>অ্যাকশন</th></tr>
             </thead>
             <tbody id="custBody"></tbody>
         </table>
@@ -86,7 +85,7 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 
   <div class="card" id="detailsSection" style="display:none;">
     <div id="printArea">
-        <h2 style="text-align:center; color: #2563eb; margin:0; font-size: 26px; font-weight: bold;">S.I. Family Mart</h2>
+        <h2 style="text-align:center; color: #2563eb; margin:0; font-size: 26px; font-weight: bold;">মায়াঘর</h2>
         <p style="text-align:center; font-size:12px; margin:5px 0; color: #64748b;">কাস্টমার লেজার স্টেটমেন্ট</p>
         <hr style="border:0; border-top:2px solid #2563eb; margin:15px 0; opacity:0.1;">
         
@@ -118,7 +117,7 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
                 </tr>
             </tfoot>
         </table>
-        <p style="text-align:center; margin-top: 30px; font-size: 11px; color: #94a3b8;">সফটওয়্যার জেনারেটেড রিপোর্ট। S.I. Family Mart।</p>
+        <p style="text-align:center; margin-top: 30px; font-size: 11px; color: #94a3b8;">সফটওয়্যার জেনারেটেড রিপোর্ট। মায়াঘর।</p>
     </div>
 
     <div style="background: #f1f5f9; padding: 25px; border-radius: 12px; margin-top: 25px;">
@@ -137,7 +136,6 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
 </div>
 
 <script>
-// Firebase initialization remains same
 const firebaseConfig = {
     apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",
     authDomain:"fir-i-family-mart.firebaseapp.com",
@@ -164,9 +162,10 @@ db.collection('sales').onSnapshot((snap)=>{
         const amt = Number(d.due||0);
         if(d.customer){
             if(!customerMap[d.customer]) {
-                customerMap[d.customer]={due:0, mobile:d.mobile||'-', lastDate: d.date};
+                customerMap[d.customer]={due:0, mobile:d.mobile||'-', lastDate: d.date, ids: []};
             }
             customerMap[d.customer].due += amt;
+            customerMap[d.customer].ids.push(doc.id);
             if(d.date > customerMap[d.customer].lastDate) customerMap[d.customer].lastDate = d.date;
             if(d.date===todayStr && d.type==='DUE_COLLECTION') todayColl += Math.abs(amt);
         }
@@ -177,10 +176,15 @@ db.collection('sales').onSnapshot((snap)=>{
         const c = customerMap[key];
         const lastDateObj = new Date(c.lastDate);
         const diffDays = Math.ceil((today - lastDateObj) / (1000 * 60 * 60 * 24));
-        if(Math.abs(c.due) > 0.5 || diffDays <= 10) {
-            filteredMap[key] = c;
-            totalDue += c.due;
+        
+        // ১ মাসের বেশি বাকি না থাকলে ডাটা মুছে ফেলা
+        if(Math.abs(c.due) < 0.5 && diffDays > 30) {
+            deleteFromFirebase(c.ids);
+            continue;
         }
+
+        filteredMap[key] = c;
+        totalDue += c.due;
     }
     
     customersData = filteredMap;
@@ -188,6 +192,12 @@ db.collection('sales').onSnapshot((snap)=>{
     document.getElementById('totalDue').innerText=Math.round(totalDue)+"৳";
     document.getElementById('todayCollection').innerText=Math.round(todayColl)+"৳";
 });
+
+async function deleteFromFirebase(ids) {
+    const batch = db.batch();
+    ids.forEach(id => { batch.delete(db.collection('sales').doc(id)); });
+    await batch.commit();
+}
 
 function renderCustomerTable(){
     const tbody=document.getElementById('custBody');
@@ -235,7 +245,7 @@ async function showCustomerDetails(name,mobile){
         
         html+=`<tr>
             <td style="padding:8px; border:1px solid #333;">${d.date||'-'}</td>
-            <td style="padding:8px; border:1px solid #333;">${amt < 0 ? "টাকা জমা" : "পণ্য ক্রয়"}</td>
+            <td style="padding:8px; border:1px solid #333;">${amt < 0 ? "টাকা জমা" : "পণ্য ক্রয়"}</td>
             <td style="padding:8px; border:1px solid #333;">${totalProduct}${totalProduct != "-" ? "৳" : ""}</td>
             <td style="padding:8px; border:1px solid #333; color:green; font-weight:bold;">${deposit}${deposit != "-" ? "৳" : ""}</td>
             <td style="padding:8px; border:1px solid #333; font-weight:bold;">${Math.round(runningDue)}৳</td>
@@ -248,15 +258,15 @@ async function showCustomerDetails(name,mobile){
     transBody.innerHTML = html || "<tr><td colspan='5'>কোন বকেয়া লেনদেন নেই</td></tr>";
 }
 
-// প্রিন্ট ফাংশন - এটি কখনোই সাদা দেখাবে না
-function downloadStatement(){
-    window.print();
-}
+function downloadStatement(){ window.print(); }
 
 async function processPayment(){
     const amount=Math.round(Number(document.getElementById('payAmount').value));
     const btn = document.getElementById('btnPay');
+    
+    if(currentDueValue <= 0) return alert("এই কাস্টমারের কোনো বকেয়া নেই, জমা নেওয়া সম্ভব নয়।");
     if(!amount || amount<=0) return alert("সঠিক পরিমাণ লিখুন");
+    if(amount > currentDueValue) return alert("বকেয়ার চেয়ে বেশি জমা নেওয়া সম্ভব নয়। সর্বোচ্চ " + currentDueValue + "৳ জমা নিতে পারবেন।");
     
     btn.disabled = true; btn.innerText = "প্রসেসিং...";
     const todayStr = new Date().toISOString().split('T')[0];
@@ -273,7 +283,7 @@ async function processPayment(){
             type:'DUE_COLLECTION' 
         });
         
-        let msg = newDue <= 0 ? `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআলহামদুলিল্লাহ! আপনার বকেয়া হিসাবটি আজ সম্পূর্ণ পরিশোধ হয়েছে। 🤝\n\n✅ আজ জমা: *${amount}৳*\n✅ বর্তমান বকেয়া: *০৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒` : `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে। \n\n🔹 আজ জমা: *${amount}৳*\n🔹 বর্তমান মোট বকেয়া: *${newDue}৳*\n\nধন্যবাদান্তে,\n— *S.I. Family Mart* 🛒`;
+        let msg = newDue <= 0 ? `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআলহামদুলিল্লাহ! আপনার বকেয়া হিসাবটি আজ সম্পূর্ণ পরিশোধ হয়েছে। 🤝\n\n✅ আজ জমা: *${amount}৳*\n✅ বর্তমান বকেয়া: *০৳*\n\nধন্যবাদান্তে,\n— *মায়াঘর* 🛒` : `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে। \n\n🔹 আজ জমা: *${amount}৳*\n🔹 বর্তমান মোট বকেয়া: *${newDue}৳*\n\nধন্যবাদান্তে,\n— *মায়াঘর* 🛒`;
         
         window.open(`https://api.whatsapp.com/send?phone=${currentMobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
         showCustomerDetails(currentCustomer,currentMobile);
@@ -295,16 +305,16 @@ async function editCustomer(oldName, oldMobile) {
 }
 
 function sendReminder(name, mobile, due){
-    const msg = `আসসালামু আলাইকুম, জনাব *${name}*। 🤝\nআপনার বকেয়া (*${Math.round(due)}৳*) পরিশোধের জন্য অনুরোধ করা হলো।\n— *S.I. Family Mart*`;
+    const msg = `আসসালামু আলাইকুম, জনাব *${name}*। 🤝\nআপনার বকেয়া (*${Math.round(due)}৳*) পরিশোধের জন্য অনুরোধ করা হলো।\n— *মায়াঘর*`;
     window.open(`https://api.whatsapp.com/send?phone=${mobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
 }
 
 function exportExcel(){
-    let data=[['কাস্টমার','মোবাইল','বকেয়া']];
+    let data=[['কাস্টমার','মোবাইল','বকেয়া']];
     for(let n in customersData){ data.push([n, customersData[n].mobile, Math.round(customersData[n].due)]); }
     const ws=XLSX.utils.aoa_to_sheet(data);
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Ledger");
-    XLSX.writeFile(wb,`Ledger_Report.xlsx`);
+    XLSX.writeFile(wb,`MayaGhor_Ledger.xlsx`);
 }
 
 function renderTopDue(){
@@ -317,8 +327,8 @@ function renderDueChart(){
     const ctx=document.getElementById('dueChart').getContext('2d');
     if(myChart) myChart.destroy();
     const labels=[], data=[];
-    Object.entries(customersData).forEach(([n,v])=>{ labels.push(n); data.push(Math.round(v.due)); });
-    myChart = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{label:'বকেয়া টাকা', data, backgroundColor: 'rgba(37, 99, 235, 0.8)'}] }, options:{ maintainAspectRatio: false } });
+    Object.entries(customersData).forEach(([n,v])=>{ if(v.due > 0){ labels.push(n); data.push(Math.round(v.due)); }});
+    myChart = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{label:'বকেয়া টাকা', data, backgroundColor: 'rgba(37, 99, 235, 0.8)'}] }, options:{ maintainAspectRatio: false } });
 }
 
 function searchCustomer(){
