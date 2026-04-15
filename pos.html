@@ -134,7 +134,7 @@ body {background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-
   </div>
 
   <div class="text-center promo-msg">
-    "আপনার প্রতিটি কেনাকাটা আমাদের কাছে মূল্যবান। পরবর্তী কেনাকাটায় বিশেষ অফার পেতে এই মেমোটি সাথে রাখুন। মায়াঘর-এর সাথেই থাকুন!"
+    "আপনার প্রতিটি কেনাকাটা আমাদের কাছে মূল্যবান। মায়াঘরের সাথেই থাকুন!"
   </div>
 
   <div class="text-center mt-3 no-print border-top pt-3">
@@ -248,7 +248,11 @@ async function finalizeSale(){
   let subTotal = cart.reduce((s,it)=>s+it.total,0);
   let dAmt = (dType==='percent') ? (subTotal*dVal/100) : dVal;
   let grand = subTotal - dAmt;
-  let due = grand - paidAmt;
+  
+  // ১ টাকার কম বকেয়া হলে সেটি ০ হিসেবে ধরা হবে
+  let rawDue = grand - paidAmt;
+  let due = rawDue < 1 ? 0 : rawDue; 
+
   let profit = cart.reduce((s,it)=>s+(it.total - (it.buyPrice * it.qty)), 0) - dAmt;
   const memoNum = "MEMO-" + Math.floor(1000 + Math.random() * 9000);
   const today = new Date().toISOString().split('T')[0];
@@ -272,7 +276,7 @@ async function finalizeSale(){
       
       document.getElementById('wpButtonArea').innerHTML = `
           <button class="btn btn-success py-3 fw-bold w-100 shadow-sm" onclick="sendPhotoMemo('${cust}', '${custMobile}', '${memoNum}')">
-          💬 হোয়াটসঅ্যাপে মেমো পাঠান
+          💬 হোয়াটসঅ্যাপে মেমো পাঠান
           </button>`;
       document.querySelector('.container').style.display='none';
       document.getElementById('receipt').style.display='block';
@@ -281,7 +285,7 @@ async function finalizeSale(){
 }
 
 async function sendPhotoMemo(name, mobile, memoNum) {
-    if(!mobile || mobile === "-" || mobile.length < 11) return alert("মোবাইল নাম্বার সঠিক নয়!");
+    if(!mobile || mobile === "-" || mobile.length < 5) return alert("সঠিক মোবাইল নাম্বার নেই!");
     const receipt = document.getElementById('receipt');
     const wpBtn = document.querySelector('#wpButtonArea button');
     wpBtn.disabled = true; wpBtn.innerText = "⏳ ছবি তৈরি হচ্ছে...";
@@ -292,12 +296,13 @@ async function sendPhotoMemo(name, mobile, memoNum) {
         link.download = `MayaGhor_${memoNum}.png`;
         link.href = image;
         link.click();
+        
+        // কান্ট্রি কোড ছাড়াই সরাসরি নাম্বার পাঠানো
         let cleanMobile = mobile.replace(/[^0-9]/g, "");
-        if(cleanMobile.length === 11 && cleanMobile.startsWith("0")) cleanMobile = "88" + cleanMobile;
-        alert("মেমোটি ডাউনলোড হয়েছে। এখন হোয়াটসঅ্যাপে পেস্ট করে পাঠিয়ে দিন।");
-        window.open(`https://wa.me/${cleanMobile}`, '_blank');
+        alert("মেমোটি ডাউনলোড হয়েছে। এখন হোয়াটসঅ্যাপে পেস্ট করে পাঠিয়ে দিন।");
+        window.open(`https://api.whatsapp.com/send?phone=${cleanMobile}`, '_blank');
     } catch (e) { alert("ছবি তৈরিতে সমস্যা হয়েছে!"); }
-    finally { wpBtn.disabled = false; wpBtn.innerText = "💬 হোয়াটসঅ্যাপে মেমো পাঠান"; }
+    finally { wpBtn.disabled = false; wpBtn.innerText = "💬 হোয়াটসঅ্যাপে মেমো পাঠান"; }
 }
 
 const codeReader = new ZXing.BrowserMultiFormatReader();
