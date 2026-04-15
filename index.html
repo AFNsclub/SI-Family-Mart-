@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>মায়াঘর | Admin Dashboard</title>
+<title>মায়াঘর | অ্যাডমিন ড্যাশবোর্ড</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,36 +11,39 @@
 :root { --primary:#2563eb; --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --bg:#f8fafc; }
 body { background:var(--bg); font-family:'Segoe UI', Tahoma, sans-serif; padding-bottom: 50px; }
 
-/* Header Styling */
+/* আধুনিক হেডার ডিজাইন */
 .header { text-align:center; padding:40px 20px; background:linear-gradient(135deg,var(--primary),#1e3a8a); color:#fff; border-radius:0 0 40px 40px; box-shadow:0 10px 30px rgba(0,0,0,0.15); }
-.header .btn { margin:5px; border-radius:12px; font-weight:600; padding: 10px 20px; transition: 0.3s; border:none; border-bottom: 3px solid rgba(0,0,0,0.2); }
+.header .btn { margin:5px; border-radius:12px; font-weight:600; padding: 10px 22px; transition: 0.3s; border:none; border-bottom: 3px solid rgba(0,0,0,0.2); }
 .header .btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
 
-/* Stats Card */
+/* স্ট্যাটাস কার্ড অ্যানিমেশন */
 .stats .card { border-radius:20px; text-align:center; padding:25px; color:white; border:none; transition:0.3s; box-shadow:0 8px 20px rgba(0,0,0,0.08); }
-.stats .card:hover { transform: scale(1.03); }
+.stats .card:hover { transform: translateY(-5px); }
 .bg-sale { background: linear-gradient(135deg,#84cc16,#10b981); }
 .bg-profit { background: linear-gradient(135deg,#2563eb,#3b82f6); }
 .bg-inventory { background: linear-gradient(135deg,#f59e0b,#f97316); }
 .bg-due { background: linear-gradient(135deg,#ef4444,#f87171); }
 
-.alert-card { background: #fff; border-radius: 20px; padding: 20px; border-left: 8px solid var(--danger); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-.chart-container { background:white; padding:25px; border-radius:20px; box-shadow:0 5px 20px rgba(0,0,0,0.05); margin-top:20px; min-height: 320px; }
+.alert-card { background: #fff; border-radius: 20px; padding: 20px; border-left: 8px solid var(--danger); box-shadow: 0 5px 15px rgba(0,0,0,0.05); animation: pulse 2s infinite; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+.chart-container { background:white; padding:25px; border-radius:20px; box-shadow:0 5px 20px rgba(0,0,0,0.05); margin-top:20px; min-height: 350px; }
 </style>
 </head>
 <body>
 
 <div class="container mt-4">
     <header class="header">
-        <h1 class="fw-bold">মায়াঘর Admin Panel</h1>
+        <h1 class="fw-bold">মায়াঘর Admin Panel</h1>
         <p class="opacity-75">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
         <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
-            <a href="pos.html" class="btn btn-light text-primary">🛒 POS</a>
-            <a href="stock.html" class="btn btn-info text-white">📦 Stock</a>
-            <a href="expense.html" class="btn btn-danger text-white">💸 Expense</a>
-            <a href="ledger.html" class="btn btn-warning text-dark">📔 Ledger</a>
-            <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#dueModal">💰 বকেয়া জমা</button>
-            <button class="btn btn-outline-light ms-md-2" onclick="handleLogout()">🚪 Logout</button>
+            <a href="pos.html" class="btn btn-light text-primary shadow">🛒 POS / Billing</a>
+            <a href="stock.html" class="btn btn-info text-white shadow">📦 Stock</a>
+            <a href="expense.html" class="btn btn-danger text-white shadow">💸 Expenses</a>
+            <a href="ledger.html" class="btn btn-warning text-dark shadow">📔 Ledger</a>
+            <a href="report.html" class="btn btn-success shadow">📊 Reports</a>
+            <button class="btn btn-dark shadow" data-bs-toggle="modal" data-bs-target="#dueModal">💰 বাকি জমা</button>
+            <button class="btn btn-outline-light ms-md-2" id="logoutBtn" onclick="handleLogout()">🚪 Logout</button>
         </div>
     </header>
 
@@ -56,15 +59,15 @@ body { background:var(--bg); font-family:'Segoe UI', Tahoma, sans-serif; padding
             <div class="col-6 col-md-3"><div class="card bg-sale"><h6>আজকের বিক্রি</h6><h3 id="dS">০৳</h3></div></div>
             <div class="col-6 col-md-3"><div class="card bg-profit"><h6>আজকের লাভ</h6><h3 id="dP">০৳</h3></div></div>
             <div class="col-6 col-md-3"><div class="card bg-inventory"><h6>স্টক ভ্যালু</h6><h3 id="iV">০৳</h3></div></div>
-            <div class="col-6 col-md-3"><div class="card bg-due"><h6>মোট বকেয়া</h6><h3 id="dDue">০৳</h3></div></div>
+            <div class="col-6 col-md-3"><div class="card bg-due"><h6>মোট বাকি</h6><h3 id="dDue">০৳</h3></div></div>
         </div>
     </section>
 
     <section class="charts mt-2">
         <div class="row g-3">
-            <div class="col-md-12"><div class="chart-container text-center"><h6 class="fw-bold mb-3 text-primary">📈 বিক্রয় প্রবণতা (Daily Sales)</h6><canvas id="weeklySalesChart" height="100"></canvas></div></div>
-            <div class="col-md-6"><div class="chart-container"><h6 class="fw-bold mb-3 text-info text-center">👑 সেরা ৫ কাস্টমার</h6><canvas id="topBuyersChart"></canvas></div></div>
-            <div class="col-md-6"><div class="chart-container"><h6 class="fw-bold mb-3 text-danger text-center">⚠️ সর্বোচ্চ ৫ বকেয়া</h6><canvas id="topDueChart"></canvas></div></div>
+            <div class="col-md-12"><div class="chart-container text-center"><h6 class="fw-bold mb-3 text-primary">📈 বিক্রয় প্রবণতা (Sales Trend)</h6><canvas id="weeklySalesChart" height="100"></canvas></div></div>
+            <div class="col-md-6"><div class="chart-container"><h6 class="fw-bold mb-3 text-info text-center">👑 সেরা ৫ ক্রেতা</h6><canvas id="topBuyersChart"></canvas></div></div>
+            <div class="col-md-6"><div class="chart-container"><h6 class="fw-bold mb-3 text-danger text-center">⚠️ টপ ৫ বাকি কাস্টমার</h6><canvas id="topDueChart"></canvas></div></div>
         </div>
     </section>
 </div>
@@ -72,22 +75,25 @@ body { background:var(--bg); font-family:'Segoe UI', Tahoma, sans-serif; padding
 <div class="modal fade" id="dueModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow-lg border-0" style="border-radius: 25px;">
-      <div class="modal-header bg-primary text-white border-0 py-3"><h5 class="modal-title">💰 কাস্টমার বকেয়া পরিশোধ</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-header bg-primary text-white border-0 py-3">
+          <h5 class="modal-title">💰 কাস্টমার বাকি পরিশোধ</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
       <div class="modal-body p-4">
         <div class="mb-3">
             <label class="small fw-bold">কাস্টমারের নাম</label>
-            <input type="text" id="dueCustName" class="form-control rounded-pill" placeholder="নাম টাইপ করুন..." list="customerSuggestions" oninput="checkDueAmount(this.value)">
+            <input type="text" id="dueCustName" class="form-control rounded-pill" placeholder="নাম টাইপ করুন" list="customerSuggestions" onchange="checkDueAmount(this.value)">
         </div>
-        <div id="dueAmountNotice" class="alert alert-warning py-2 rounded-4 d-none text-center">বর্তমান বকেয়া: <span id="currentDueVal" class="fw-bold text-danger">০</span>৳</div>
+        <div id="dueAmountNotice" class="alert alert-warning py-2 rounded-4 d-none text-center">বকেয়া: <span id="currentDueVal" class="fw-bold text-danger">০</span>৳</div>
         <div class="mb-3">
             <label class="small fw-bold">জমার পরিমাণ</label>
-            <input type="number" id="payAmount" class="form-control rounded-pill" placeholder="কত টাকা জমা দিতে চান?">
+            <input type="number" id="payAmount" class="form-control rounded-pill" placeholder="টাকার পরিমাণ">
         </div>
         <div class="mb-3">
-            <label class="small fw-bold">মোবাইল নম্বর (ঐচ্ছিক)</label>
-            <input type="text" id="dueCustMob" class="form-control rounded-pill" placeholder="01XXXXXXXXX">
+            <label class="small fw-bold">মোবাইল (ঐচ্ছিক)</label>
+            <input type="text" id="dueCustMob" class="form-control rounded-pill" placeholder="017XXXXXXXX">
         </div>
-        <button id="btnCollect" class="btn btn-success w-100 fw-bold py-2 rounded-pill mt-2" onclick="collectDue()">কনফার্ম জমা নিন</button>
+        <button id="btnCollect" class="btn btn-success w-100 fw-bold py-2 rounded-pill shadow" onclick="collectDue()">কনফার্ম জমা নিন</button>
       </div>
     </div>
   </div>
@@ -100,20 +106,20 @@ body { background:var(--bg); font-family:'Segoe UI', Tahoma, sans-serif; padding
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
-// Firebase Initialization
+// Firebase Config
 const firebaseConfig={apiKey:"AIzaSyBI8FZjLO48gYACKhJRkptj-y03NHRK5Ho",authDomain:"fir-i-family-mart.firebaseapp.com",projectId:"fir-i-family-mart",storageBucket:"fir-i-family-mart.firebasestorage.app",messagingSenderId:"73889024539",appId:"1:73889024539:web:271561c9dba17b5a6b06be"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const auth=firebase.auth();
 
-// Auth Check (যদি লগইন না থাকে)
+// Auth Check: লগইন না থাকলে বের করে দেবে
 auth.onAuthStateChanged(user => {
     if (!user) window.location.replace("login.html");
 });
 
 let customerMap = {};
 
-// ১. ড্যাশবোর্ড ডাটা রিয়েল-টাইম লোড
+// রিয়েল-টাইম সেলস এবং কাস্টমার ডাটা লোড
 db.collection('sales').onSnapshot(snap => {
     let todaySale=0, todayProfit=0, totalDue=0, dailyTrend={};
     customerMap={};
@@ -132,9 +138,9 @@ db.collection('sales').onSnapshot(snap => {
         if(d.customer){
             const name = d.customer.trim();
             if(!customerMap[name]) customerMap[name]={name:name, due:0, spent:0, mob:d.mobile||""};
-            customerMap[name].due += dueAmt;
-            customerMap[name].spent += saleAmt;
-            totalDue += dueAmt;
+            customerMap[name].due+=dueAmt;
+            customerMap[name].spent+=saleAmt;
+            totalDue+=dueAmt;
         }
         if(d.date) dailyTrend[d.date]=(dailyTrend[d.date]||0)+saleAmt;
     });
@@ -149,7 +155,7 @@ db.collection('sales').onSnapshot(snap => {
     updateCharts(dailyTrend);
 });
 
-// ২. ইনভেন্টরি ও স্টক অ্যালার্ট লোড
+// ইনভেন্টরি এবং লো-স্টক অ্যালার্ট
 db.collection('inventory').onSnapshot(snap => {
     let invV=0, lowItems=[];
     snap.forEach(doc => {
@@ -162,11 +168,11 @@ db.collection('inventory').onSnapshot(snap => {
     document.getElementById('lowStockList').innerText="স্টক ফুরিয়েছে: "+lowItems.join(", ");
 });
 
-// ৩. বকেয়া চেক করা
+// বকেয়া চেক করা
 function checkDueAmount(name) {
     const cust=customerMap[name.trim()];
     const notice = document.getElementById('dueAmountNotice');
-    if(cust && cust.due > 0.9){ // ১ টাকার উপরে বকেয়া থাকলে দেখাবে
+    if(cust && cust.due > 0.5){
         document.getElementById('currentDueVal').innerText=Math.round(cust.due);
         notice.classList.remove('d-none');
         document.getElementById('payAmount').value=Math.round(cust.due);
@@ -176,13 +182,13 @@ function checkDueAmount(name) {
     }
 }
 
-// ৪. বকেয়া জমা নেয়া
+// বকেয়া জমা নেয়ার ফাংশন
 async function collectDue() {
     const name=document.getElementById('dueCustName').value.trim();
     const amount=Number(document.getElementById('payAmount').value);
     const mobile=document.getElementById('dueCustMob').value;
     
-    if(!name || amount<=0) return alert("দয়া করে সঠিক নাম এবং টাকার পরিমাণ দিন");
+    if(!name || amount<=0) return alert("সঠিক তথ্য প্রদান করুন");
     
     document.getElementById('btnCollect').disabled=true;
     try {
@@ -197,60 +203,47 @@ async function collectDue() {
             type:"DUE_COLLECTION",
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-        alert("সফলভাবে বকেয়া জমা হয়েছে!");
+        alert("সফলভাবে জমা হয়েছে!");
         bootstrap.Modal.getInstance(document.getElementById('dueModal')).hide();
+        // ইনপুট ক্লিয়ার
         document.getElementById('dueCustName').value = "";
         document.getElementById('payAmount').value = "";
-    } catch(e){ alert("ত্রুটি হয়েছে!"); }
+    } catch(e){ alert("ত্রুটি হয়েছে! আবার চেষ্টা করুন।"); }
     document.getElementById('btnCollect').disabled=false;
 }
 
-// ৫. লগ-আউট
+// লগ-আউট
 function handleLogout() {
     if(confirm("আপনি কি লগ-আউট করতে চান?")) {
         auth.signOut().then(() => {
+            sessionStorage.clear();
+            localStorage.clear();
             window.location.replace("login.html");
-        });
+        }).catch(err => alert("লগ-আউট ব্যর্থ হয়েছে!"));
     }
 }
 
-// ৬. চার্ট ফাংশন
-let salesChart, dPieChart, bBarChart;
+// চার্ট আপডেট ফাংশন
+let sChart, dChart, bChart;
 function updateCharts(trend){
-    // বিক্রয় প্রবণতা চার্ট
+    // বিক্রয় প্রবণতা চার্ট
     const dates=Object.keys(trend).sort().slice(-7);
-    if(salesChart) salesChart.destroy();
-    salesChart = new Chart(document.getElementById('weeklySalesChart'),{
+    if(sChart) sChart.destroy();
+    sChart = new Chart(document.getElementById('weeklySalesChart'),{
         type:'line',
-        data:{
-            labels:dates,
-            datasets:[{label:'বিক্রি',data:dates.map(d=>trend[d]),borderColor:'#2563eb',fill:true,backgroundColor:'rgba(37,99,235,0.1)',tension:0.4}]
-        },
+        data:{labels:dates,datasets:[{label:'বিক্রি',data:dates.map(d=>trend[d]),borderColor:'#2563eb',fill:true,backgroundColor:'rgba(37,99,235,0.1)',tension:0.4}]},
         options: { responsive: true, maintainAspectRatio: false }
     });
 
-    // বকেয়া কাস্টমার পাই চার্ট
+    // বকেয়া পাই চার্ট
     const dueSorted=Object.values(customerMap).filter(x=>x.due>0).sort((a,b)=>b.due-a.due).slice(0,5);
-    if(dPieChart) dPieChart.destroy();
-    dPieChart=new Chart(document.getElementById('topDueChart'),{
-        type:'pie',
-        data:{
-            labels:dueSorted.map(x=>x.name),
-            datasets:[{data:dueSorted.map(x=>x.due),backgroundColor:['#ef4444','#f59e0b','#3b82f6','#10b981','#6366f1']}]
-        }
-    });
+    if(dChart) dChart.destroy();
+    dChart=new Chart(document.getElementById('topDueChart'),{type:'pie',data:{labels:dueSorted.map(x=>x.name),datasets:[{data:dueSorted.map(x=>x.due),backgroundColor:['#ef4444','#f59e0b','#3b82f6','#10b981','#6366f1']}]}});
 
-    // সেরা ক্রেতা চার্ট
+    // টপ বায়ার বার চার্ট
     const buySorted=Object.values(customerMap).sort((a,b)=>b.spent-a.spent).slice(0,5);
-    if(bBarChart) bBarChart.destroy();
-    bBarChart=new Chart(document.getElementById('topBuyersChart'),{
-        type:'bar',
-        data:{
-            labels:buySorted.map(x=>x.name),
-            datasets:[{label:'মোট কেনাকাটা',data:buySorted.map(x=>x.spent),backgroundColor:'#10b981'}]
-        },
-        options:{indexAxis:'y', responsive: true}
-    });
+    if(bChart) bChart.destroy();
+    bChart=new Chart(document.getElementById('topBuyersChart'),{type:'bar',data:{labels:buySorted.map(x=>x.name),datasets:[{label:'মোট কেনাকাটা',data:buySorted.map(x=>x.spent),backgroundColor:'#10b981'}]},options:{indexAxis:'y', responsive: true}});
 }
 </script>
 </body>
