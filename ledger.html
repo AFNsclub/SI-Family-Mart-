@@ -7,44 +7,34 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 <style>
 :root { --primary: #2563eb; --dark: #1e293b; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; }
 body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--bg); margin:0; color: #333; padding-top: 60px; }
-
 .nav-index { background: #fff; position: fixed; top: 0; width: 100%; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; padding: 10px; }
 .nav-index a { text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; color: var(--dark); background: #f1f5f9; transition: 0.3s; }
 .nav-index a.active { background: var(--primary); color: #fff; }
-
 .container { padding:15px; max-width: 1200px; margin: auto; }
 .card { background:white; padding:20px; margin-bottom:20px; border-radius:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
 h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-
 table { width:100%; border-collapse:collapse; margin-top:15px; background: white; font-size: 13px; color: #000; }
 th,td { padding:10px; border:1px solid #333; text-align:center; }
 th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
-
 .btn-call { background: var(--primary); color: white; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; }
 .btn-edit { background: #64748b; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
 .btn-remind { background: #f59e0b; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
-
 .btn-payment { background: var(--success); color: white; width: 100%; font-weight: bold; border: none; margin-top: 10px; cursor: pointer; border-radius: 8px; padding: 12px; }
 .btn-pdf, .btn-excel { background: #475569; color: white; border: none; cursor: pointer; margin-top: 10px; padding: 10px 20px; border-radius: 8px; font-weight: bold; margin-right:10px; }
-
 .summary-box { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
 .summary-item { flex: 1; min-width: 150px; background: #fff; padding: 15px; border-radius: 12px; border-top: 4px solid var(--primary); }
-
 @media print {
     body * { visibility: hidden; }
     #printArea, #printArea * { visibility: visible; }
     #printArea { position: absolute; left: 0; top: 0; width: 100% !important; margin: 0; padding: 10px; }
     .nav-index, .btn-pdf, .btn-excel, .summary-box, .card:not(#detailsSection), #payAmount, #btnPay, label { display: none !important; }
 }
-
-#printArea { background-color: #ffffff; color: #000; width: 100%; }
 </style>
 </head>
 <body>
@@ -76,7 +66,7 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
     <div style="overflow-x:auto;">
         <table id="customerTable">
             <thead>
-                <tr><th>কাস্টমার</th><th>মোাবাইল</th><th>বাকি</th><th>অ্যাকশন</th></tr>
+                <tr><th>কাস্টমার</th><th>মোবাইল</th><th>বাকি</th><th>অ্যাকশন</th></tr>
             </thead>
             <tbody id="custBody"></tbody>
         </table>
@@ -88,7 +78,6 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
         <h2 style="text-align:center; color: #2563eb; margin:0; font-size: 26px; font-weight: bold;">মায়াঘর</h2>
         <p style="text-align:center; font-size:12px; margin:5px 0; color: #64748b;">কাস্টমার লেজার স্টেটমেন্ট</p>
         <hr style="border:0; border-top:2px solid #2563eb; margin:15px 0; opacity:0.1;">
-        
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
             <div style="text-align: left;">
                 <p style="margin:2px 0; font-size: 15px;"><b>নাম:</b> <span id="detailCustName"></span></p>
@@ -98,15 +87,10 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
                 <p id="genDate" style="font-weight:bold; margin:0; font-size: 12px; color:#475569;"></p>
             </div>
         </div>
-        
         <table id="transTable" style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="background-color: #f8fafc;">
-                    <th style="padding: 10px;">তারিখ</th>
-                    <th style="padding: 10px;">বিবরণ</th>
-                    <th style="padding: 10px;">মোট পণ্য</th>
-                    <th style="padding: 10px;">জমা</th>
-                    <th style="padding: 10px;">বাকি</th>
+                    <th>তারিখ</th><th>বিবরণ</th><th>মোট পণ্য</th><th>জমা</th><th>বাকি</th>
                 </tr>
             </thead>
             <tbody id="transBody"></tbody>
@@ -117,19 +101,16 @@ th { background: #f1f5f9; color: #1e293b; font-weight: bold; }
                 </tr>
             </tfoot>
         </table>
-        <p style="text-align:center; margin-top: 30px; font-size: 11px; color: #94a3b8;">সফটওয়্যার জেনারেটেড রিপোর্ট। মায়াঘর।</p>
     </div>
-
     <div style="background: #f1f5f9; padding: 25px; border-radius: 12px; margin-top: 25px;">
         <label style="font-weight:bold;">বাকি টাকা জমা নিন:</label>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
             <input type="number" id="payAmount" placeholder="টাকার পরিমাণ..." style="flex:1; padding:12px; border-radius:8px; border: 1px solid #cbd5e1;">
-            <button class="btn-payment" id="btnPay" style="width: auto; margin:0;" onclick="processPayment()">💸 জমা ও মেসেজ</button>
+            <button class="btn-payment" id="btnPay" onclick="processPayment()">💸 জমা ও মেসেজ</button>
         </div>
     </div>
-    
     <div style="margin-top:20px; text-align: right;">
-        <button class="btn-pdf" id="pdfBtn" onclick="downloadStatement()">📄 PDF ডাউনলোড (প্রিন্ট)</button>
+        <button class="btn-pdf" onclick="window.print()">📄 PDF ডাউনলোড</button>
         <button class="btn-excel" onclick="exportExcel()">📊 Excel ব্যাকআপ</button>
     </div>
   </div>
@@ -162,11 +143,11 @@ db.collection('sales').onSnapshot((snap)=>{
         const amt = Number(d.due||0);
         if(d.customer){
             if(!customerMap[d.customer]) {
-                customerMap[d.customer]={due:0, mobile:d.mobile||'-', lastDate: d.date, ids: []};
+                customerMap[d.customer]={due:0, mobile:d.mobile||'-', lastDate: d.date || todayStr, ids: []};
             }
             customerMap[d.customer].due += amt;
             customerMap[d.customer].ids.push(doc.id);
-            if(d.date > customerMap[d.customer].lastDate) customerMap[d.customer].lastDate = d.date;
+            if(d.date && d.date > customerMap[d.customer].lastDate) customerMap[d.customer].lastDate = d.date;
             if(d.date===todayStr && d.type==='DUE_COLLECTION') todayColl += Math.abs(amt);
         }
     });
@@ -177,11 +158,14 @@ db.collection('sales').onSnapshot((snap)=>{
         const lastDateObj = new Date(c.lastDate);
         const diffDays = Math.ceil((today - lastDateObj) / (1000 * 60 * 60 * 24));
         
-        // ১ মাসের বেশি বাকি না থাকলে ডাটা মুছে ফেলা
-        if(Math.abs(c.due) < 0.5 && diffDays > 30) {
+        // ১ টাকার কম বকেয়া এবং ১ মাসের বেশি পুরনো হলে ডাটা মুছে ফেলা (Clean up)
+        if(Math.abs(c.due) < 1 && diffDays > 30) {
             deleteFromFirebase(c.ids);
             continue;
         }
+
+        // ১ টাকার কম হলে সেটি প্রদর্শনীর জন্য ০ ধরা হবে
+        if(Math.abs(c.due) < 1) c.due = 0;
 
         filteredMap[key] = c;
         totalDue += c.due;
@@ -225,7 +209,6 @@ async function showCustomerDetails(name,mobile){
     document.getElementById('detailCustName').innerText=name;
     document.getElementById('phoneDisplay').innerText=mobile;
     document.getElementById('genDate').innerText="তারিখ: " + new Date().toLocaleString('bn-BD');
-    
     const transBody=document.getElementById('transBody'); 
     transBody.innerHTML="<tr><td colspan='5'>লোড হচ্ছে...</td></tr>";
     
@@ -236,51 +219,40 @@ async function showCustomerDetails(name,mobile){
     let html=""; let runningDue=0;
     transactions.forEach(d=>{
         const amt=Number(d.due||0);
-        if(Math.abs(amt) < 0.1 && (!d.totalPrice || d.totalPrice === d.paidAmount)) return;
-
         runningDue+=amt;
-
         let totalProduct = d.totalPrice ? d.totalPrice : (amt > 0 ? amt : "-");
         let deposit = d.paidAmount ? d.paidAmount : (amt < 0 ? Math.abs(amt) : "-");
-        
         html+=`<tr>
-            <td style="padding:8px; border:1px solid #333;">${d.date||'-'}</td>
-            <td style="padding:8px; border:1px solid #333;">${amt < 0 ? "টাকা জমা" : "পণ্য ক্রয়"}</td>
-            <td style="padding:8px; border:1px solid #333;">${totalProduct}${totalProduct != "-" ? "৳" : ""}</td>
-            <td style="padding:8px; border:1px solid #333; color:green; font-weight:bold;">${deposit}${deposit != "-" ? "৳" : ""}</td>
-            <td style="padding:8px; border:1px solid #333; font-weight:bold;">${Math.round(runningDue)}৳</td>
+            <td>${d.date||'-'}</td>
+            <td>${amt < 0 ? "টাকা জমা" : "পণ্য ক্রয়"}</td>
+            <td>${totalProduct}${totalProduct != "-" ? "৳" : ""}</td>
+            <td style="color:green; font-weight:bold;">${deposit}${deposit != "-" ? "৳" : ""}</td>
+            <td style="font-weight:bold;">${Math.round(runningDue)}৳</td>
         </tr>`;
     });
     
     currentDueValue=Math.round(runningDue);
+    if(currentDueValue < 1) currentDueValue = 0; // ১ টাকার কম বকেয়া হলে ০ দেখানো
     document.getElementById('finalDueDisplay').innerText=currentDueValue+"৳";
     document.getElementById('payAmount').value = currentDueValue > 0 ? currentDueValue : "";
-    transBody.innerHTML = html || "<tr><td colspan='5'>কোন বকেয়া লেনদেন নেই</td></tr>";
+    transBody.innerHTML = html;
 }
-
-function downloadStatement(){ window.print(); }
 
 async function processPayment(){
     const amount=Math.round(Number(document.getElementById('payAmount').value));
     const btn = document.getElementById('btnPay');
-    
-    if(currentDueValue <= 0) return alert("এই কাস্টমারের কোনো বকেয়া নেই, জমা নেওয়া সম্ভব নয়।");
+    if(currentDueValue <= 0) return alert("বকেয়া নেই।");
     if(!amount || amount<=0) return alert("সঠিক পরিমাণ লিখুন");
-    if(amount > currentDueValue) return alert("বকেয়ার চেয়ে বেশি জমা নেওয়া সম্ভব নয়। সর্বোচ্চ " + currentDueValue + "৳ জমা নিতে পারবেন।");
     
     btn.disabled = true; btn.innerText = "প্রসেসিং...";
     const todayStr = new Date().toISOString().split('T')[0];
-    const newDue = currentDueValue - amount;
+    let newDue = currentDueValue - amount;
+    if(newDue < 1) newDue = 0; // ১ টাকার নিচে নামলে বকেয়া ০ করে দেওয়া
     
     try{
         await db.collection('sales').add({ 
-            customer:currentCustomer, 
-            mobile:currentMobile, 
-            due:-amount, 
-            paidAmount: amount,
-            totalPrice: 0,
-            date:todayStr, 
-            type:'DUE_COLLECTION' 
+            customer:currentCustomer, mobile:currentMobile, due:-amount, 
+            paidAmount: amount, totalPrice: 0, date:todayStr, type:'DUE_COLLECTION' 
         });
         
         let msg = newDue <= 0 ? `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআলহামদুলিল্লাহ! আপনার বকেয়া হিসাবটি আজ সম্পূর্ণ পরিশোধ হয়েছে। 🤝\n\n✅ আজ জমা: *${amount}৳*\n✅ বর্তমান বকেয়া: *০৳*\n\nধন্যবাদান্তে,\n— *মায়াঘর* 🛒` : `আসসালামু আলাইকুম, সম্মানিত গ্রাহক *${currentCustomer}*। ✨\n\nআপনার বকেয়া থেকে আজ *${amount}৳* জমা নেওয়া হয়েছে। \n\n🔹 আজ জমা: *${amount}৳*\n🔹 বর্তমান মোট বকেয়া: *${newDue}৳*\n\nধন্যবাদান্তে,\n— *মায়াঘর* 🛒`;
@@ -291,26 +263,14 @@ async function processPayment(){
     finally { btn.disabled = false; btn.innerText = "💸 জমা ও মেসেজ"; }
 }
 
-async function editCustomer(oldName, oldMobile) {
-    const newName = prompt("নতুন নাম:", oldName);
-    const newMobile = prompt("নতুন মোবাইল:", oldMobile);
-    if (!newName || !newMobile) return;
-    try {
-        const batch = db.batch();
-        const snap = await db.collection('sales').where('customer', '==', oldName).get();
-        snap.forEach(doc => { batch.update(doc.ref, { customer: newName, mobile: newMobile }); });
-        await batch.commit();
-        alert("সফল হয়েছে!");
-    } catch (e) { alert("ত্রুটি: " + e.message); }
-}
-
 function sendReminder(name, mobile, due){
+    if(due < 1) return alert("কোনো বকেয়া নেই।");
     const msg = `আসসালামু আলাইকুম, জনাব *${name}*। 🤝\nআপনার বকেয়া (*${Math.round(due)}৳*) পরিশোধের জন্য অনুরোধ করা হলো।\n— *মায়াঘর*`;
     window.open(`https://api.whatsapp.com/send?phone=${mobile.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`,'_blank');
 }
 
 function exportExcel(){
-    let data=[['কাস্টমার','মোবাইল','বকেয়া']];
+    let data=[['কাস্টমার','মোবাইল','বকেয়া']];
     for(let n in customersData){ data.push([n, customersData[n].mobile, Math.round(customersData[n].due)]); }
     const ws=XLSX.utils.aoa_to_sheet(data);
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Ledger");
@@ -327,8 +287,8 @@ function renderDueChart(){
     const ctx=document.getElementById('dueChart').getContext('2d');
     if(myChart) myChart.destroy();
     const labels=[], data=[];
-    Object.entries(customersData).forEach(([n,v])=>{ if(v.due > 0){ labels.push(n); data.push(Math.round(v.due)); }});
-    myChart = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{label:'বকেয়া টাকা', data, backgroundColor: 'rgba(37, 99, 235, 0.8)'}] }, options:{ maintainAspectRatio: false } });
+    Object.entries(customersData).forEach(([n,v])=>{ if(v.due > 0.9){ labels.push(n); data.push(Math.round(v.due)); }});
+    myChart = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{label:'বকেয়া টাকা', data, backgroundColor: 'rgba(37, 99, 235, 0.8)'}] }, options:{ maintainAspectRatio: false } });
 }
 
 function searchCustomer(){
@@ -337,4 +297,4 @@ function searchCustomer(){
 }
 </script>
 </body>
-</html>
+                                                                                                              </html>
