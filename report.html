@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S.I. Family Mart | Complete Reports</title>
+<title>মায়াঘর | পূর্ণাঙ্গ রিপোর্ট</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,61 +11,75 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
-:root { --primary: #2563eb; --success: #10b981; --danger: #ef4444; }
-body{font-family:'Segoe UI', sans-serif; background:#f8fafc; color: #1e293b;}
+:root { --primary: #2563eb; --success: #10b981; --danger: #ef4444; --bg: #f1f5f9; }
+body{font-family:'Segoe UI', Tahoma, sans-serif; background:var(--bg); color: #1e293b; padding-top: 60px;}
+
+.nav-index { background: #fff; position: fixed; top: 0; width: 100%; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; padding: 10px; }
+.nav-index a { text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; color: #1e293b; background: #f1f5f9; transition: 0.3s; }
+.nav-index a:hover, .nav-index a.active { background: var(--primary); color: #fff; }
+
 .header{background:linear-gradient(135deg,#2563eb,#1e3a8a); color:#fff; text-align:center; padding:30px; border-radius:0 0 30px 30px; box-shadow: 0 10px 25px rgba(30, 58, 138, 0.2);}
-.header h2{font-weight:700; margin:0;}
 .card{border-radius:20px; border:none; box-shadow:0 4px 20px rgba(0,0,0,0.05); padding:25px; margin-bottom:20px; background:#fff;}
-.stat-card h5 { color: #64748b; font-size: 0.9rem; margin-bottom: 10px; }
-.stat-card h3 { font-weight: 800; color: #1e293b; }
+.stat-card h5 { color: #64748b; font-size: 0.85rem; margin-bottom: 8px; font-weight: 600; }
+.stat-card h3 { font-weight: 800; color: #1e293b; font-size: 1.5rem; }
 .table thead { background: #f1f5f9; }
 .modal-content { border-radius: 25px; border: none; }
+
+@media print { .no-print, .nav-index { display: none !important; } }
 </style>
 </head>
 <body>
 
-<div class="container mt-4">
+<nav class="nav-index no-print">
+    <a href="index.html">📊 Admin</a>
+    <a href="pos.html">🛒 POS</a>
+    <a href="stock.html">📦 Stock</a>
+    <a href="ledger.html">📔 Ledger</a>
+    <a href="report.html" class="active">📑 Reports</a>
+</nav>
+
+<div class="container">
   <header class="header">
-    <h2>S.I. Family Mart | Complete Reports</h2>
-    <p class="mb-0">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
+    <h2 class="fw-bold">মায়াঘর | রিপোর্ট ও এনালাইটিক্স</h2>
+    <p class="mb-0 opacity-75">বংশীপুর, শ্যামনগর, সাতক্ষীরা</p>
   </header>
 
-  <div class="card mt-4 no-print">
+  <div class="card mt-4 no-print border-top border-primary border-4">
     <div class="row g-2 align-items-end">
-      <div class="col-md-3">
+      <div class="col-md-3 col-6">
         <label class="small fw-bold mb-1">শুরু</label>
         <input type="date" id="startDate" class="form-control">
       </div>
-      <div class="col-md-3">
+      <div class="col-md-3 col-6">
         <label class="small fw-bold mb-1">শেষ</label>
         <input type="date" id="endDate" class="form-control">
       </div>
-      <div class="col-md-2"><button class="btn btn-primary w-100 fw-bold" onclick="filterData()">📊 Filter</button></div>
-      <div class="col-md-2"><button class="btn btn-success w-100 fw-bold" id="downloadExcelBtn">📗 Excel</button></div>
-      <div class="col-md-2"><button class="btn btn-danger w-100 fw-bold" id="downloadPDFBtn">📕 PDF</button></div>
+      <div class="col-md-2 col-4"><button class="btn btn-primary w-100 fw-bold" onclick="filterData()">📊 ফিল্টার</button></div>
+      <div class="col-md-2 col-4"><button class="btn btn-success w-100 fw-bold" id="downloadExcelBtn">📗 Excel</button></div>
+      <div class="col-md-2 col-4"><button class="btn btn-danger w-100 fw-bold" id="downloadPDFBtn">📕 PDF</button></div>
     </div>
   </div>
 
   <div class="row mt-2 g-3">
-    <div class="col-md-3"><div class="card stat-card text-center"><h5>ফিল্টারকৃত মোট বিক্রি</h5><h3 id="dS">0৳</h3></div></div>
-    <div class="col-md-3"><div class="card stat-card text-center" style="border-bottom: 5px solid var(--success);"><h5>ফিল্টারকৃত মোট লাভ</h5><h3 id="dP" class="text-success">0৳</h3></div></div>
-    <div class="col-md-3"><div class="card stat-card text-center"><h5>স্টক মূল্য (কেনা)</h5><h3 id="iV">0৳</h3></div></div>
-    <div class="col-md-3"><div class="card stat-card text-center" style="border-bottom: 5px solid var(--danger);"><h5>মোট বাকি পাওনা</h5><h3 id="totalDue" class="text-danger">0৳</h3></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card text-center"><h5>মোট বিক্রি (ফিল্টার)</h5><h3 id="dS">0৳</h3></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card text-center" style="border-bottom: 5px solid var(--success);"><h5>মোট লাভ (ফিল্টার)</h5><h3 id="dP" class="text-success">0৳</h3></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card text-center"><h5>স্টক মূল্য (কেনা)</h5><h3 id="iV">0৳</h3></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card text-center" style="border-bottom: 5px solid var(--danger);"><h5>মোট বকেয়া পাওনা</h5><h3 id="totalDue" class="text-danger">0৳</h3></div></div>
   </div>
 
   <div class="row">
-      <div class="col-md-8"><div class="card"><h5 class="fw-bold mb-4">📈 বিক্রয় প্রবণতা (Sales Trend)</h5><canvas id="salesChart" height="150"></canvas></div></div>
-      <div class="col-md-4"><div class="card"><h5 class="fw-bold mb-4">🏆 সেরা ৫ পণ্য</h5><canvas id="topProductsChart" height="340"></canvas></div></div>
+      <div class="col-md-8"><div class="card"><h6 class="fw-bold mb-4 text-primary">📈 বিক্রয় প্রবণতা (Sales Trend)</h6><canvas id="salesChart" height="150"></canvas></div></div>
+      <div class="col-md-4"><div class="card"><h6 class="fw-bold mb-4 text-primary text-center">🏆 সেরা ৫ পণ্য</h6><canvas id="topProductsChart" height="300"></canvas></div></div>
   </div>
 
   <div class="card mt-2">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <h5 class="fw-bold m-0">👥 কাস্টমার লেজার ও বাকি তালিকা</h5>
-        <input type="text" id="searchCust" class="form-control w-50" placeholder="ক্রেতার নাম বা মোবাইল দিয়ে খুঁজুন..." onkeyup="searchCustomer()">
+        <h5 class="fw-bold m-0">👥 কাস্টমার লেজার ও বকেয়া তালিকা</h5>
+        <input type="text" id="searchCust" class="form-control w-auto mt-2" placeholder="নাম বা মোবাইল দিয়ে খুঁজুন..." onkeyup="searchCustomer()">
     </div>
     <div class="table-responsive">
         <table class="table table-hover align-middle">
-          <thead><tr><th>ক্রেতার নাম</th><th>মোবাইল</th><th>মোট বাকি</th><th>শেষ লেনদেন</th><th>বিস্তারিত</th></tr></thead>
+          <thead><tr><th>ক্রেতার নাম</th><th>মোবাইল</th><th>বকেয়া</th><th>শেষ লেনদেন</th><th>অ্যাকশন</th></tr></thead>
           <tbody id="customerLedger"></tbody>
         </table>
     </div>
@@ -75,18 +89,18 @@ body{font-family:'Segoe UI', sans-serif; background:#f8fafc; color: #1e293b;}
 <div class="modal fade" id="detailsModal" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content shadow">
-      <div class="modal-header border-0 bg-light">
-        <h5 class="modal-title fw-bold">Customer Transaction History</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div class="modal-header border-0 bg-primary text-white">
+        <h5 class="modal-title fw-bold">লেনদেনের বিস্তারিত ইতিহাস</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
         <div class="row mb-4">
             <div class="col-6"><h6>নাম: <span id="modalName" class="fw-bold"></span></h6></div>
-            <div class="col-6 text-end"><h6>বর্তমান বাকি: <span id="modalDue" class="text-danger fw-bold"></span>৳</h6></div>
+            <div class="col-6 text-end"><h6>বর্তমান বкеয়া: <span id="modalDue" class="text-danger fw-bold"></span>৳</h6></div>
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered">
-              <thead class="table-dark"><tr><th>তারিখ</th><th>বিবরণ</th><th>মোট বিল</th><th>জমা</th><th>বাকি</th></tr></thead>
+              <thead class="table-dark"><tr><th>তারিখ</th><th>বিবরণ</th><th>মোট বিল</th><th>জমা</th><th>ব্যালেন্স</th></tr></thead>
               <tbody id="modalHistory"></tbody>
             </table>
         </div>
@@ -106,8 +120,12 @@ const db=firebase.firestore();
 let allSales=[], filteredSales=[], customerMap={}, topProducts={};
 let salesChart=null, topChart=null;
 
+// ডিফল্ট আজকের তারিখ সেট করা
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('startDate').value = today;
+document.getElementById('endDate').value = today;
+
 function initData(){
-  // সরাসরি 'sales' থেকে ডাটা নিয়ে কাস্টমার ম্যাপ তৈরি করা হচ্ছে
   db.collection('sales').onSnapshot(snap=>{
     allSales=[]; customerMap={}; topProducts={};
     
@@ -115,16 +133,15 @@ function initData(){
         const s = doc.data();
         allSales.push(s);
         
-        // কাস্টমার লেজার ক্যালকুলেশন
         if(s.customer){
-            if(!customerMap[s.customer]) {
-                customerMap[s.customer] = { name: s.customer, mobile: s.mobile || '-', due: 0, lastDate: s.date };
+            const name = s.customer.trim();
+            if(!customerMap[name]) {
+                customerMap[name] = { name: name, mobile: s.mobile || '-', due: 0, lastDate: s.date };
             }
-            customerMap[s.customer].due += Number(s.due || 0);
-            if(s.date > customerMap[s.customer].lastDate) customerMap[s.customer].lastDate = s.date;
+            customerMap[name].due += Number(s.due || 0);
+            if(s.date > customerMap[name].lastDate) customerMap[name].lastDate = s.date;
         }
 
-        // টপ প্রোডাক্ট ক্যালকুলেশন
         if(s.items) {
             s.items.forEach(it => {
                 topProducts[it.name] = (topProducts[it.name] || 0) + Number(it.qty || 0);
@@ -132,7 +149,7 @@ function initData(){
         }
     });
 
-    filterData(); // ডিফল্টভাবে সব ডাটা দেখাবে
+    filterData();
     updateInventoryValue();
   });
 }
@@ -153,14 +170,13 @@ function filterData() {
 
 function updateStats(){
   let totalSale=0, totalProfit=0, totalDue=0;
-  
   filteredSales.forEach(s=>{ 
       totalSale += Number(s.totalPrice || s.total || 0); 
       totalProfit += Number(s.profit || 0); 
   });
-
-  // মোট বাকি সবসময় বর্তমান অবস্থা দেখাবে (ফিল্টার মুক্ত)
-  Object.values(customerMap).forEach(c => { totalDue += c.due; });
+  
+  // বকেয়া সবসময় রিয়েলটাইম হিসাব হবে (ফিল্টার ছাড়াই)
+  Object.values(customerMap).forEach(c => { if(c.due > 0.5) totalDue += c.due; });
 
   document.getElementById('dS').innerText=Math.round(totalSale)+"৳";
   document.getElementById('dP').innerText=Math.round(totalProfit)+"৳";
@@ -186,7 +202,7 @@ function renderCharts(){
   salesChart=new Chart(document.getElementById('salesChart'),{
       type:'line',
       data:{labels, datasets:[{label:'বিক্রি (৳)', data, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', fill:true, tension: 0.3}]},
-      options:{responsive:true}
+      options:{responsive:true, maintainAspectRatio: false}
   });
 
   const topLabels=Object.keys(topProducts).sort((a,b)=>topProducts[b]-topProducts[a]).slice(0,5);
@@ -211,7 +227,7 @@ function renderLedger(){
             <td>${c.mobile}</td>
             <td class="text-danger fw-bold">${Math.round(c.due)}৳</td>
             <td>${c.lastDate||'-'}</td>
-            <td><button class="btn btn-sm btn-outline-primary" onclick="showCustomerDetails('${c.name}')">View History</button></td>
+            <td><button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="showCustomerDetails('${c.name}')">ইতিহাস</button></td>
           </tr>`; 
       } 
   });
@@ -227,39 +243,40 @@ async function showCustomerDetails(name){
   
   const snap = await db.collection('sales').where('customer','==',name).get();
   let trans = []; snap.forEach(d => trans.push(d.data()));
-  trans.sort((a,b) => new Date(a.date) - new Date(b.date));
+  trans.sort((a,b) => new Date(a.date + " " + (a.time || "00:00")) - new Date(b.date + " " + (b.time || "00:00")));
 
   let html=""; let runningDue = 0;
   trans.forEach(d=>{ 
       const amt = Number(d.due || 0);
       runningDue += amt;
+      const type = amt < 0 ? "<span class='text-success'>বকেয়া জমা</span>" : "<span class='text-primary'>পণ্য ক্রয়</span>";
       html+=`<tr>
         <td>${d.date}</td>
-        <td>${amt < 0 ? "টাকা জমা" : "পণ্য ক্রয়"}</td>
-        <td>${d.totalPrice || d.total || 0}৳</td>
-        <td>${d.paidAmount || d.paid || 0}৳</td>
+        <td>${type} ${d.memo ? '<br><small>'+d.memo+'</small>' : ''}</td>
+        <td>${Math.round(d.totalPrice || d.total || 0)}৳</td>
+        <td>${Math.round(d.paidAmount || d.paid || 0)}৳</td>
         <td class="fw-bold">${Math.round(runningDue)}৳</td>
       </tr>`; 
   });
-  document.getElementById('modalHistory').innerHTML=html || "<tr><td colspan='5'>লেনদেন পাওয়া যায়নি</td></tr>"; 
+  document.getElementById('modalHistory').innerHTML=html || "<tr><td colspan='5' class='text-center'>লেনদেন পাওয়া যায়নি</td></tr>"; 
   modal.show();
 }
 
-// Excel Export (Filtered)
+// Excel
 document.getElementById('downloadExcelBtn').addEventListener('click',()=>{
   const wb=XLSX.utils.book_new();
   const wsSales=XLSX.utils.json_to_sheet(filteredSales);
   XLSX.utils.book_append_sheet(wb, wsSales, "Filtered_Sales");
-  XLSX.writeFile(wb, "SI_Mart_Report.xlsx");
+  XLSX.writeFile(wb, "MayaGhor_Report.xlsx");
 });
 
-// PDF Export (Ledger)
+// PDF
 document.getElementById('downloadPDFBtn').addEventListener('click', ()=>{
   const { jsPDF } = window.jspdf; const doc = new jsPDF('p','pt','a4');
-  doc.text("S.I. Family Mart | Customer Ledger Report", 40, 40);
-  const tableData = Object.values(customerMap).map(c=>[c.name, c.mobile, Math.round(c.due), c.lastDate]);
+  doc.text("Maya Ghor | Customer Ledger Report", 40, 40);
+  const tableData = Object.values(customerMap).filter(c=>c.due > 0).map(c=>[c.name, c.mobile, Math.round(c.due), c.lastDate]);
   doc.autoTable({ head: [['Name', 'Mobile', 'Due', 'Last Date']], body: tableData, startY: 60 });
-  doc.save("SI_Mart_Ledger.pdf");
+  doc.save("MayaGhor_Ledger.pdf");
 });
 
 initData();
