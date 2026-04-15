@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stock & Bulk Barcode | S.I. Family Mart</title>
+<title>Stock & Bulk Barcode | মায়াঘর</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
 <style>
 :root { --primary: #2563eb; --success: #10b981; --bg: #f1f5f9; }
 body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding-top: 60px; }
@@ -18,27 +19,32 @@ body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding
 .header { background: linear-gradient(135deg, var(--primary), #1e3a8a); color: #fff; text-align: center; padding: 25px; border-radius: 0 0 25px 25px; }
 .card { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; background: #fff; }
 
-/* স্টিকার ডিজাইন */
+/* স্টিকার ডিজাইন (প্রিন্ট ফরম্যাট) */
+#printArea { display: none; }
 .barcode-sticker {
     display: inline-block;
-    width: 180px;
-    padding: 10px;
-    border: 1px solid #ddd;
+    width: 38mm; /* Standard Sticker Size */
+    height: 25mm;
+    padding: 2mm;
+    border: 0.1mm solid #eee;
     text-align: center;
-    margin: 5px;
+    overflow: hidden;
     background: #fff;
-    border-radius: 5px;
+    margin: 1mm;
 }
-.sticker-shop { font-size: 10px; font-weight: bold; margin: 0; }
-.sticker-name { font-size: 12px; margin: 2px 0; white-space: nowrap; overflow: hidden; }
-.sticker-price { font-size: 14px; font-weight: bold; margin: 0; color: #000; }
-
-#printArea { display: none; }
+.sticker-shop { font-size: 8px; font-weight: bold; margin: 0; text-transform: uppercase; }
+.sticker-name { font-size: 10px; margin: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sticker-price { font-size: 12px; font-weight: bold; margin: 0; }
+.barcode-svg { width: 100%; height: 10mm !important; }
 
 @media print {
     body * { visibility: hidden; }
     #printArea, #printArea * { visibility: visible; }
-    #printArea { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+    #printArea { 
+        position: absolute; left: 0; top: 0; width: 100%; 
+        display: block !important; background: white;
+    }
+    .barcode-sticker { border: none; page-break-inside: avoid; }
     .no-print { display: none !important; }
 }
 </style>
@@ -50,35 +56,44 @@ body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; padding
     <a href="pos.html">🛒 POS</a>
     <a href="stock.html" class="active">📦 Stock</a>
     <a href="ledger.html">📔 Ledger</a>
+    <a href="expense.html">💸 Expense</a>
 </nav>
 
 <div class="container mt-4 no-print">
     <header class="header">
-        <h2>Stock & Bulk Barcode</h2>
-        <p class="mb-0">স্টক আপডেট করুন এবং স্টিকার প্রিন্ট করুন</p>
+        <h2 class="fw-bold">Stock & Bulk Barcode</h2>
+        <p class="mb-0 opacity-75">মায়াঘর | বংশীপুর, শ্যামনগর</p>
     </header>
 
     <div class="card mt-4">
-        <h5 class="fw-bold border-bottom pb-2 mb-3 text-primary">📦 নতুন স্টক ও বারকোড</h5>
+        <h5 class="fw-bold border-bottom pb-2 mb-3 text-primary">📦 নতুন স্টক ইনপুট</h5>
         <div class="row g-3">
             <div class="col-md-3"><label class="small fw-bold">পণ্যের নাম</label><input type="text" id="pName" class="form-control" placeholder="যেমন: Lux Soap"></div>
-            <div class="col-md-2"><label class="small fw-bold">কেনা দাম (লট)</label><input type="number" id="pTotalBuy" class="form-control"></div>
+            <div class="col-md-2"><label class="small fw-bold">কেনা দাম (মোট লট)</label><input type="number" id="pTotalBuy" class="form-control"></div>
             <div class="col-md-2"><label class="small fw-bold">পরিমাণ (পিস)</label><input type="number" id="pStock" class="form-control"></div>
-            <div class="col-md-2"><label class="small fw-bold">বিক্রয় মূল্য</label><input type="number" id="pSell" class="form-control"></div>
-            <div class="col-md-3"><label class="small fw-bold">বারকোড (ID)</label><input type="text" id="pBarcode" class="form-control" placeholder="যেমন: 1001"></div>
-            <div class="col-12"><button class="btn btn-success w-100 fw-bold py-2 shadow" id="submitBtn" onclick="addOrUpdateItem()">✅ সেভ করুন</button></div>
+            <div class="col-md-2"><label class="small fw-bold">বিক্রয় মূল্য (পিস)</label><input type="number" id="pSell" class="form-control"></div>
+            <div class="col-md-3"><label class="small fw-bold">বারকোড / ID</label><input type="text" id="pBarcode" class="form-control" placeholder="যেমন: 1001"></div>
+            <div class="col-12"><button class="btn btn-primary w-100 fw-bold py-2 shadow" id="submitBtn" onclick="addOrUpdateItem()">✅ স্টক সেভ করুন</button></div>
         </div>
     </div>
 
     <div class="card">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">📊 স্টক তালিকা</h5>
+            <h5 class="fw-bold mb-0">📊 বর্তমান স্টক তালিকা</h5>
             <input type="text" id="searchItem" class="form-control w-50" placeholder="পণ্য খুঁজুন...">
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
-                    <tr><th>পণ্যের নাম</th><th>বিক্রয় মূল্য</th><th>স্টক</th><th>বারকোড</th><th class="text-center">প্রিন্ট কপি</th><th class="text-center">অ্যাকশন</th></tr>
+                    <tr>
+                        <th>পণ্যের নাম</th>
+                        <th>কেনা (পিস)</th>
+                        <th>বিক্রয়</th>
+                        <th>স্টক</th>
+                        <th>বারকোড</th>
+                        <th class="text-center">প্রিন্ট কপি</th>
+                        <th class="text-center">অ্যাকশন</th>
+                    </tr>
                 </thead>
                 <tbody id="stockBody"></tbody>
             </table>
@@ -105,7 +120,7 @@ const db = firebase.firestore();
 
 let inv = {};
 
-// লাইভ ডাটা লোড
+// ইনভেন্টরি ডাটা রিয়েলটাইম লোড
 db.collection('inventory').onSnapshot(snap=>{
     inv={};
     snap.forEach(d=>{ const data=d.data(); inv[data.name]=data; });
@@ -114,56 +129,63 @@ db.collection('inventory').onSnapshot(snap=>{
 
 function renderStock(filter=""){
     let html="";
-    for(let name in inv){
-        if(filter && !name.toLowerCase().includes(filter.toLowerCase())) continue;
+    const sortedNames = Object.keys(inv).sort();
+    
+    sortedNames.forEach(name => {
+        if(filter && !name.toLowerCase().includes(filter.toLowerCase())) return;
         const item = inv[name];
         html += `<tr>
             <td class="fw-bold">${item.name}</td>
+            <td>${item.buy}৳</td>
             <td>${item.sell}৳</td>
             <td><span class="badge ${item.stock < 5 ? 'bg-danger' : 'bg-success'}">${item.stock}</span></td>
-            <td><small>${item.barcode || '-'}</small></td>
-            <td class="text-center" style="width: 150px;">
-                <input type="number" id="qty_${item.barcode}" class="form-control form-control-sm d-inline-block w-50" value="1" min="1">
+            <td><code>${item.barcode || '-'}</code></td>
+            <td class="text-center" style="width: 120px;">
+                <input type="number" id="qty_${item.barcode}" class="form-control form-control-sm text-center" value="1" min="1">
             </td>
             <td class="text-center">
                 <button class="btn btn-sm btn-dark" onclick="bulkPrint('${item.name}', '${item.barcode}', ${item.sell})">🖨️ প্রিন্ট</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${item.name}')">✖</button>
+                <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteItem('${item.name}')">✖</button>
             </td>
         </tr>`;
-    }
+    });
     document.getElementById('stockBody').innerHTML = html;
 }
 
-// Bulk Print Function
+// Bulk Barcode Print
 function bulkPrint(name, code, price) {
-    const qty = document.getElementById('qty_' + code).value;
+    if(!code || code === '-') return alert("এই পণ্যের বারকোড নেই!");
+    
+    const qty = parseInt(document.getElementById('qty_' + code).value);
     const printArea = document.getElementById('printArea');
-    printArea.innerHTML = ""; // Clear old data
+    printArea.innerHTML = ""; 
 
     for (let i = 0; i < qty; i++) {
-        const stickerId = `sticker_${i}`;
         printArea.innerHTML += `
             <div class="barcode-sticker">
-                <p class="sticker-shop">S.I. FAMILY MART</p>
+                <p class="sticker-shop">MAYA GHOR</p>
                 <p class="sticker-name">${name}</p>
-                <svg id="${stickerId}"></svg>
-                <p class="sticker-price">৳ ${price}</p>
+                <svg class="barcode-svg" id="sticker_${i}"></svg>
+                <p class="sticker-price">TK: ${price}</p>
             </div>
         `;
     }
 
-    // Generate barcodes for all stickers
+    // বারকোড জেনারেট করার জন্য সামান্য সময় বিরতি
     setTimeout(() => {
         for (let i = 0; i < qty; i++) {
             JsBarcode(`#sticker_${i}`, code, {
                 format: "CODE128",
-                width: 1.5,
+                width: 2,
                 height: 40,
                 displayValue: true,
-                fontSize: 10
+                fontSize: 12,
+                margin: 0
             });
         }
         window.print();
+        // প্রিন্ট শেষে প্রিন্ট এরিয়া পরিষ্কার করুন
+        setTimeout(() => { printArea.innerHTML = ""; }, 1000);
     }, 500);
 }
 
@@ -174,24 +196,36 @@ async function addOrUpdateItem(){
     const sell = Number(document.getElementById('pSell').value);
     const barcode = document.getElementById('pBarcode').value.trim();
 
-    if(!name || !totalBuy || !qty || !sell || !barcode) return alert("সবগুলো তথ্য দিন!");
+    if(!name || !totalBuy || !qty || !sell || !barcode) return alert("দয়া করে সব ঘর পূরণ করুন!");
 
     const buyPerPiece = parseFloat((totalBuy / qty).toFixed(2));
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerText = "সেভ হচ্ছে...";
 
     try {
         await db.collection('inventory').doc(name).set({
-            name, buy: buyPerPiece, sell, 
+            name, 
+            buy: buyPerPiece, 
+            sell, 
             stock: firebase.firestore.FieldValue.increment(qty),
             barcode: barcode
         }, { merge: true });
         
-        alert("সফলভাবে সেভ হয়েছে!");
+        alert("স্টক আপডেট হয়েছে!");
         ['pName', 'pTotalBuy', 'pStock', 'pSell', 'pBarcode'].forEach(id => document.getElementById(id).value = "");
-    } catch (e) { alert("ভুল হয়েছে!"); }
+    } catch (e) { 
+        alert("ডেটাবেজ এরর!"); 
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "✅ স্টক সেভ করুন";
+    }
 }
 
 function deleteItem(name){
-    if(confirm(`${name} মুছে ফেলবেন?`)) db.collection('inventory').doc(name).delete();
+    if(confirm(`"${name}" পণ্যটি তালিকা থেকে চিরতরে মুছে ফেলতে চান?`)) {
+        db.collection('inventory').doc(name).delete();
+    }
 }
 
 document.getElementById('searchItem').addEventListener('input', e=> renderStock(e.target.value));
